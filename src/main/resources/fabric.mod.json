@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "tankstorage",
+	"version": "0.0.1+1.20.1",
+	"name": "Tank Storage",
+	"description": "A portable fluid storage device.",
+	"authors": [
+		"Natte"
+	],
+	"contact": {
+		"homepage": "https://github.com/Natanaelel/TankStorage",
+		"sources": "https://github.com/Natanaelel/TankStorage"
+	},
+	"license": "MIT",
+	"icon": "assets/tankstorage/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.natte.tankstorage.TankStorage"
+		],
+		"client": [
+			"net.natte.tankstorage.TankStorageClient"
+		]
+	},
+	"mixins": [
+		"tankstorage.mixins.json",
+		{
+			"config": "tankstorage.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.20.1",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+	}
+}
