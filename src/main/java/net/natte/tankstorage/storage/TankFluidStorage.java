@@ -13,37 +13,49 @@ public class TankFluidStorage implements Storage<FluidVariant> {
     private List<TankSingleFluidStorage> parts;
     private InsertMode insertMode;
 
+    public boolean isDirty = false;
+    private Runnable onMarkDirty;
+
     public TankFluidStorage(List<TankSingleFluidStorage> parts, InsertMode insertMode) {
         this.parts = parts;
         this.insertMode = insertMode;
     }
 
+    public void setMarkDirtyListener(Runnable listener) {
+        this.onMarkDirty = listener;
+    }
+
     @Override
     public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
+        if (maxAmount == 0)
+            return 0;
+
         long insertedAmount = 0;
+
         switch (insertMode) {
             case ALL:
                 insertedAmount += insertIntoLockedSlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount += insertIntoNonEmptySlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount += insertIntoAnySlots(insertedVariant, maxAmount - insertedAmount, transaction);
-                return insertedAmount;
-
+                break;
             case FILTERED:
                 insertedAmount += insertIntoLockedSlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount += insertIntoNonEmptySlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 if (hasSlotWithVariant(insertedVariant))
                     insertedAmount += insertIntoAnySlots(insertedVariant, maxAmount - insertedAmount, transaction);
-                return insertedAmount;
+                break;
 
             case VOID_OVERFLOW:
                 insertedAmount += insertIntoLockedSlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount += insertIntoNonEmptySlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount = maxAmount;
-                return insertedAmount;
-            // >:( dumb java lsp
-            default:
-                return 0;
+                break;
         }
+        if (insertedAmount > 0)
+            markDirty();
+
+        return insertedAmount;
+
     }
 
     private boolean hasSlotWithVariant(FluidVariant insertedVariant) {
@@ -88,7 +100,11 @@ public class TankFluidStorage implements Storage<FluidVariant> {
 
     @Override
     public long extract(FluidVariant resource, long maxAmount, TransactionContext transaction) {
+        if (maxAmount == 0)
+            return 0;
+
         long extractedAmount = 0;
+
         for (TankSingleFluidStorage part : parts) {
             if (extractedAmount == maxAmount)
                 break;
@@ -99,11 +115,17 @@ public class TankFluidStorage implements Storage<FluidVariant> {
 
     @Override
     public Iterator<StorageView<FluidVariant>> iterator() {
-        return parts.stream().map(StorageView::getUnderlyingView).iterator();
+        return parts.stream().map(x -> (StorageView<FluidVariant>) x).iterator();
     }
 
-    public TankSingleFluidStorage getSingleFluidStorage(int index){
+    public TankSingleFluidStorage getSingleFluidStorage(int index) {
         return this.parts.get(index);
+    }
+
+    private void markDirty() {
+        this.isDirty = true;
+        if (this.onMarkDirty != null)
+            this.onMarkDirty.run();
     }
 
 }

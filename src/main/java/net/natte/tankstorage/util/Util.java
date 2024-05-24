@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
 
+import com.google.common.base.Supplier;
+
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
@@ -19,6 +21,8 @@ import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankOptions;
 
 public class Util {
+
+    public static Supplier<Boolean> isShiftDown = () -> false;
 
     public static Identifier ID(String id) {
         return new Identifier(TankStorage.MOD_ID, id);
@@ -89,5 +93,6 @@ public class Util {
     public static boolean isTankLike(ItemStack stack){
         return stack.getItem() instanceof TankItem || stack.getItem() instanceof TankLinkItem;
     }
+    
 
 }

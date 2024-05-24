@@ -4,22 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
@@ -35,33 +25,9 @@ public class TankFluidStorageState {
         this.type = type;
         this.uuid = uuid;
     }
-    
-    public TankFluidStorage getFluidStorage(InsertMode insertMode){
+
+    public TankFluidStorage getFluidStorage(InsertMode insertMode) {
         return new TankFluidStorage(fluidStorageParts, insertMode);
-    }
-    // server-side only
-    public ExtendedScreenHandlerFactory getScreenHandlerFactory(ItemStack tankItem, ScreenHandlerContext screenHandlerContext){
-        return new ExtendedScreenHandlerFactory() {
-            @Override
-            public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity playerEntity) {
-                return new TankScreenHandler(syncId, playerInventory, type, TankFluidStorageState.this, tankItem, screenHandlerContext);
-            }
-
-            @Override
-            public Text getDisplayName() {
-                return tankItem.getName();
-            }
-
-            @Override
-            public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
-                buf.writeItemStack(tankItem);
-            }
-            
-        };
-    }
-
-    public ExtendedScreenHandlerFactory getScreenHandlerFactory(ItemStack tankItem){
-        return getScreenHandlerFactory(tankItem, ScreenHandlerContext.EMPTY);
     }
 
     public TankFluidStorageState asType(TankType type) {
@@ -73,8 +39,6 @@ public class TankFluidStorageState {
         }
         return this;
     }
-
-
 
     public TankFluidStorageState changeType(TankType type) {
         TankStorage.LOGGER
@@ -98,7 +62,7 @@ public class TankFluidStorageState {
         TankType type = TankType.fromName(nbt.getString("type"));
 
         List<TankSingleFluidStorage> parts = new ArrayList<>();
-        NbtList fluids = nbt.getList("fluids", NbtCompound.LIST_TYPE);
+        NbtList fluids = nbt.getList("fluids", NbtElement.COMPOUND_TYPE);
 
         for (NbtElement nbtElement : fluids) {
             NbtCompound fluidNbt = (NbtCompound) nbtElement;

@@ -1,7 +1,5 @@
 package net.natte.tankstorage.screenhandler;
 
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -12,7 +10,6 @@ import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
 import net.natte.tankstorage.state.TankFluidStorageState;
-import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.util.Util;
 
@@ -23,26 +20,20 @@ public class TankScreenHandler extends ScreenHandler {
     private TankFluidStorageState tank;
     private TankFluidStorage fluidStorage;
 
-    public TankScreenHandler(int syncId, PlayerInventory playerInventory, TankType tankType, @Nullable TankFluidStorageState tank, ItemStack itemStack,
-            ScreenHandlerContext screenHandlerContext) {
+    public TankScreenHandler(int syncId, PlayerInventory playerInventory, TankFluidStorageState tank, TankType tankType,
+            ItemStack tankItem, ScreenHandlerContext screenHandlerContext) {
+
         super(tankType.getScreenhandlerType(), syncId);
-        this.context = screenHandlerContext;
-        this.tankType = tankType;
+
         this.tank = tank;
+        this.tankType = tankType;
+        this.context = screenHandlerContext;
         
-        if(this.tank == null)
-                this.tank = TankFluidStorageState.create(this.tankType, null);
-
-                InsertMode insertMode = Util.getInsertMode(itemStack);
-
-        this.fluidStorage = this.tank.getFluidStorage(insertMode);
-
+        this.fluidStorage = this.tank.getFluidStorage(Util.getInsertMode(tankItem));
 
         int rows = this.tankType.height();
         int cols = this.tankType.width();
 
-        
-        
         // tank
         for (int y = 0; y < rows; ++y) {
             for (int x = 0; x < cols; ++x) {
@@ -66,11 +57,12 @@ public class TankScreenHandler extends ScreenHandler {
             // TODO: v
             // cannot move opened bank
             // if (playerInventory.selectedSlot == x
-            //         && Util.isTankLike(playerInventory.getStack(playerInventory.selectedSlot))
-            //         && this.context == ScreenHandlerContext.EMPTY) {
-            //     this.addSlot(new LockedSlot(playerInventory, x, 8 + x * 18, inventoryY + 58));
+            // && Util.isTankLike(playerInventory.getStack(playerInventory.selectedSlot))
+            // && this.context == ScreenHandlerContext.EMPTY) {
+            // this.addSlot(new LockedSlot(playerInventory, x, 8 + x * 18, inventoryY +
+            // 58));
             // } else {
-                this.addSlot(new Slot(playerInventory, x, 8 + x * 18, inventoryY + 58));
+            this.addSlot(new Slot(playerInventory, x, 8 + x * 18, inventoryY + 58));
             // }
         }
     }

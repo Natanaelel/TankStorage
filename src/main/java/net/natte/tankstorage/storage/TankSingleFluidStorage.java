@@ -3,13 +3,15 @@ package net.natte.tankstorage.storage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 
-public class TankSingleFluidStorage implements SingleSlotStorage<FluidVariant> {
+public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> implements SingleSlotStorage<FluidVariant> {
 
     private long capacity;
     private long amount;
     private FluidVariant fluidVariant;
     private boolean isLocked;
+    private boolean isDirty = false;
 
     public TankSingleFluidStorage(long capacity, long amount, FluidVariant fluidVariant, boolean isLocked) {
         this.capacity = capacity;
@@ -18,14 +20,23 @@ public class TankSingleFluidStorage implements SingleSlotStorage<FluidVariant> {
         this.isLocked = isLocked;
     }
 
-    public TankSingleFluidStorage(long capacity){
+    public TankSingleFluidStorage(long capacity) {
         this(capacity, 0, FluidVariant.blank(), false);
+    }
+
+    public TankSingleFluidStorage update(long amount, FluidVariant fluidVariant, boolean isLocked) {
+        this.amount = amount;
+        this.fluidVariant = fluidVariant;
+        this.isLocked = isLocked;
+        return this;
     }
 
     @Override
     public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
         if (!canInsert(insertedVariant))
             return 0;
+
+        updateSnapshots(transaction);
 
         long space = capacity - amount;
         long insertedAmount = Math.min(maxAmount, space);
@@ -43,10 +54,12 @@ public class TankSingleFluidStorage implements SingleSlotStorage<FluidVariant> {
         if (!canExtract(extractedVariant))
             return 0;
 
+        updateSnapshots(transaction);
+
         long extractedAmount = Math.min(maxAmount, this.amount);
 
         this.amount -= extractedAmount;
-        if(this.amount == 0 && !this.isLocked)
+        if (this.amount == 0 && !this.isLocked)
             this.fluidVariant = FluidVariant.blank();
 
         return extractedAmount;
@@ -89,6 +102,28 @@ public class TankSingleFluidStorage implements SingleSlotStorage<FluidVariant> {
 
     public boolean isLocked() {
         return isLocked;
+    }
+
+    @Override
+    protected FluidSlotData createSnapshot() {
+        return new FluidSlotData(fluidVariant, capacity, amount, isLocked);
+    }
+
+    @Override
+    protected void readSnapshot(FluidSlotData snapshot) {
+        this.fluidVariant = snapshot.fluidVariant();
+        this.capacity = snapshot.capacity();
+        this.amount = snapshot.amount();
+        this.isLocked = snapshot.isLocked();
+    }
+
+    @Override
+    protected void onFinalCommit() {
+        markDirty();
+    }
+
+    private void markDirty() {
+        this.isDirty = true;
     }
 
 }

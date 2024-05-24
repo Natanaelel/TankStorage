@@ -4,11 +4,11 @@ import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.ScreenHandlerType;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.item.TankItem;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.util.Util;
 
 public class TankType {
@@ -32,10 +32,7 @@ public class TankType {
         this.item = new TankItem(new Item.Settings(), this);
         Registry.register(Registries.ITEM, Util.ID(this.name), this.item);
 
-        this.screenHandlerType = new ExtendedScreenHandlerType<TankScreenHandler>((syncId, inventory, buf) -> {
-            // client side
-            return new TankScreenHandler(syncId, inventory, this, null, buf.readItemStack(), ScreenHandlerContext.EMPTY);
-        });
+        this.screenHandlerType = new ExtendedScreenHandlerType<TankScreenHandler>(TankScreenHandlerFactory::createClientScreenHandler);
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
 
     }

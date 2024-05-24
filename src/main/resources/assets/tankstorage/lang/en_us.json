@@ -1,11 +1,14 @@
 {
-    "item.tankstorage.tank_1": "Tank 1",   
-    "item.tankstorage.tank_2": "Tank 2",   
-    "item.tankstorage.tank_3": "Tank 3",   
-    "item.tankstorage.tank_4": "Tank 4",   
-    "item.tankstorage.tank_5": "Tank 5",   
-    "item.tankstorage.tank_6": "Tank 6",   
-    "item.tankstorage.tank_7": "Tank 7",   
-    "item.tankstorage.tank_link": "Tank Link",   
-    "block.tankstorage.tank_dock": "Tank Dock"   
+    "item.tankstorage.tank_1": "Tank 1",
+    "item.tankstorage.tank_2": "Tank 2",
+    "item.tankstorage.tank_3": "Tank 3",
+    "item.tankstorage.tank_4": "Tank 4",
+    "item.tankstorage.tank_5": "Tank 5",
+    "item.tankstorage.tank_6": "Tank 6",
+    "item.tankstorage.tank_7": "Tank 7",
+    "item.tankstorage.tank_link": "Tank Link",
+    "block.tankstorage.tank_dock": "Tank Dock",
+
+    "tooltip.tankstorage.emptyfluid": "Empty",
+    "tooltip.tankstorage.uh_insert_maebe": "Uhh insert or extract maybe?"
 }

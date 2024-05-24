@@ -16,6 +16,7 @@ import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.util.Util;
 
 public class TankDockBlock extends Block implements BlockEntityProvider {
@@ -62,9 +63,10 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
 
             // open bank screen
             if (!world.isClient) {
-                NamedScreenHandlerFactory screenHandlerFactory = Util
-                        .getOrCreateFluidStorage(tankDock.getTank(), world)
-                        .getScreenHandlerFactory(tankDock.getTank(), ScreenHandlerContext.create(world, pos));
+                NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
+                        Util.getOrCreateFluidStorage(tankDock.getTank(), world),
+                        tankDock.getTank(),
+                        ScreenHandlerContext.create(world, pos));
                 player.openHandledScreen(screenHandlerFactory);
             }
 

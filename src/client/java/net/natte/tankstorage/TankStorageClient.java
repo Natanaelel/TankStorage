@@ -1,13 +1,20 @@
 package net.natte.tankstorage;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.rendering.TankDockBlockEntityRenderer;
 import net.natte.tankstorage.screen.TankScreen;
+import net.natte.tankstorage.util.Util;
 
 public class TankStorageClient implements ClientModInitializer {
+
+
+	static {
+		Util.isShiftDown = () -> Screen.hasShiftDown();
+	}
 
 	@Override
 	public void onInitializeClient() {

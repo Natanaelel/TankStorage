@@ -1,16 +1,15 @@
 package net.natte.tankstorage.gui;
 
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 
-public class ItemlessSlot extends Slot {
+public class NonBackedSlot extends Slot {
 
-    
-    public ItemlessSlot(Inventory inventory, int index, int x, int y) {
-        super(inventory, index, x, y);
+    private ItemStack stack = ItemStack.EMPTY;
+
+    public NonBackedSlot(int x, int y) {
+        super(new DummyInventory(), 0, x, y);
     }
 
     @Override
@@ -25,8 +24,7 @@ public class ItemlessSlot extends Slot {
 
     @Override
     public ItemStack getStack() {
-        return Items.ACACIA_BOAT.getDefaultStack();
-        // return ItemStack.EMPTY;
+        return this.stack;
     }
 
     @Override
@@ -41,10 +39,12 @@ public class ItemlessSlot extends Slot {
     
     @Override
     public void setStack(ItemStack stack) {
+        this.stack = stack;
     }
 
     @Override
     public void setStackNoCallbacks(ItemStack stack) {
+        this.stack = stack;
     }
 
     @Override
