@@ -7,6 +7,7 @@ import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.rendering.TankDockBlockEntityRenderer;
 import net.natte.tankstorage.screen.TankScreen;
+import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.util.Util;
 
 public class TankStorageClient implements ClientModInitializer {
@@ -26,7 +27,7 @@ public class TankStorageClient implements ClientModInitializer {
 
 	private void registerHandledScreens() {
 		for (TankType type : TankStorage.TANK_TYPES) {
-			HandledScreens.register(type.getScreenhandlerType(), (screenhandler, playerInventory, title) -> {
+			HandledScreens.<TankScreenHandler, TankScreen>register(type.getScreenhandlerType(), (screenhandler, playerInventory, title) -> {
 				return new TankScreen(screenhandler, playerInventory, title, type);
 			});
 		}
