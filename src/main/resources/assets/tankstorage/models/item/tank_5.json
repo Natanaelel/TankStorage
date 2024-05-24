@@ -1,0 +1,14 @@
+{
+  "parent": "tankstorage:model/tank_cube",
+  "textures": {
+    "1": "tankstorage:item/tank_5"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "has_color": 1
+      },
+      "model": "tankstorage:item/tank_5_dyed"
+    }
+  ]
+}

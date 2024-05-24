@@ -1,0 +1,14 @@
+{
+  "parent": "tankstorage:model/tank_link",
+  "textures": {
+    "1": "tankstorage:item/tank_link"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "has_color": 1
+      },
+      "model": "tankstorage:item/tank_link_dyed"
+    }
+  ]
+}

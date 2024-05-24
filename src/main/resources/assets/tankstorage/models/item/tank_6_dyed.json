@@ -1,0 +1,6 @@
+{
+  "parent": "tankstorage:model/tank_cube_dyed",
+  "textures": {
+    "1": "tankstorage:item/tank_6"
+  }
+}
