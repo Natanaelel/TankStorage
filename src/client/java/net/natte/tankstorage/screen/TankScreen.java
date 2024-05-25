@@ -3,20 +3,13 @@ package net.natte.tankstorage.screen;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.core.config.builder.api.Component;
-
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.natte.tankstorage.container.TankType;
@@ -96,19 +89,23 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
     @Override
     protected void drawMouseoverTooltip(DrawContext context, int x, int y) {
-        if(this.focusedSlot instanceof FluidSlot fluidSlot){
+        if (this.focusedSlot instanceof FluidSlot fluidSlot) {
             // long capacity = fluidSlot.getCapacity();
             // long amount = fluidSlot.getAmount();
-            // Text text = Text.of((amount * 1000 / FluidConstants.BUCKET) + "/" + (capacity * 1000/ FluidConstants.BUCKET) + "mB");
+            // Text text = Text.of((amount * 1000 / FluidConstants.BUCKET) + "/" + (capacity
+            // * 1000/ FluidConstants.BUCKET) + "mB");
             // context.drawTooltip(textRenderer, List.of(text), x, y);
             // return;
-
+            if (fluidSlot.getAmount() == 0)
+                return;
 
             FluidVariant fluidVariant = fluidSlot.getFluidVariant();
             List<Text> tooltip = new ArrayList<>(
-                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity(), false));
+                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity(),
+                            false));
 
-            tooltip.add(Text.translatable("tooltip.tankstorage.uh_insert_maebe").setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
+            tooltip.add(Text.translatable("tooltip.tankstorage.uh_insert_maebe")
+                    .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
             context.drawTooltip(textRenderer, tooltip, x, y);
             return;
         }

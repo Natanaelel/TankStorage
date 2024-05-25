@@ -1,21 +1,12 @@
 package net.natte.tankstorage.rendering;
- // package aztech.modern_industrialization.util;
-
-// import aztech.modern_industrialization.MIText;
-// import aztech.modern_industrialization.proxy.CommonProxy;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.core.config.builder.api.Component;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.minecraft.text.Style;
-// import net.minecraft.network.chat.Text;
-// import net.minecraft.network.chat.MutableComponent;
-// import net.minecraft.network.chat.Style;
-// import net.minecraft.network.chat.TextColor;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.natte.tankstorage.util.Util;
@@ -79,7 +70,7 @@ public class FluidHelper {
 
         if (fluid.isBlank()) {
             ArrayList<Text> list = new ArrayList<>();
-            list.add(getFluidName(fluid, grayIfEmpty));
+            // list.add(getFluidName(fluid, grayIfEmpty));
             return list;
         }
         return ClientProxy.getFluidTooltip(fluid);

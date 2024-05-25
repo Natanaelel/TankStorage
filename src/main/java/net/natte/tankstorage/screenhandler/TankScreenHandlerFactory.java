@@ -18,12 +18,15 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
 
     private @Nullable TankFluidStorageState tank;
     private ItemStack tankItem;
+    // which hotbarslot tank is in, or -1
+    private int slot;
     private ScreenHandlerContext screenHandlerContext;
 
-    public TankScreenHandlerFactory(TankFluidStorageState tank, ItemStack tankItem,
+    public TankScreenHandlerFactory(TankFluidStorageState tank, ItemStack tankItem, int slot,
             ScreenHandlerContext screenHandlerContext) {
         this.tank = tank;
         this.tankItem = tankItem;
+        this.slot = slot;
         this.screenHandlerContext = screenHandlerContext;
     }
 
@@ -39,6 +42,7 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
                 this.tank,
                 this.tank.type,
                 this.tankItem,
+                this.slot,
                 this.screenHandlerContext);
     }
 
@@ -46,6 +50,7 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
     public void writeScreenOpeningData(ServerPlayerEntity player, PacketByteBuf buf) {
         buf.writeString(this.tank.type.getName());
         buf.writeItemStack(this.tankItem);
+        buf.writeInt(this.slot);
         buf.writeNbt(TankFluidStorageState.writeNbt(this.tank));
 
     }
@@ -59,12 +64,14 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
 
         TankType tankType = TankType.fromName(buf.readString());
         ItemStack tankItem = buf.readItemStack();
+        int slot = buf.readInt();
         TankFluidStorageState tank = TankFluidStorageState.readNbt(buf.readNbt());
-
+        
         TankScreenHandler screenHandler = new TankScreenHandler(syncId, playerInventory,
                 tank,
                 tankType,
                 tankItem,
+                slot,
                 ScreenHandlerContext.EMPTY);
 
         return screenHandler;

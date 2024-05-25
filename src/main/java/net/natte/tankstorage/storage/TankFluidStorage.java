@@ -3,10 +3,14 @@ package net.natte.tankstorage.storage;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class TankFluidStorage implements Storage<FluidVariant> {
 
@@ -23,6 +27,7 @@ public class TankFluidStorage implements Storage<FluidVariant> {
 
     public void setMarkDirtyListener(Runnable listener) {
         this.onMarkDirty = listener;
+        this.parts.forEach(part -> part.setMarkDirtyListener(this::markDirty));
     }
 
     @Override
@@ -51,8 +56,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
                 insertedAmount = maxAmount;
                 break;
         }
-        if (insertedAmount > 0)
-            markDirty();
+        // if (insertedAmount > 0)
+        // markDirty();
 
         return insertedAmount;
 
@@ -110,6 +115,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
                 break;
             extractedAmount += part.extract(resource, maxAmount - extractedAmount, transaction);
         }
+        // if(extractedAmount > 0)
+        // markDirty();
         return extractedAmount;
     }
 
@@ -123,9 +130,73 @@ public class TankFluidStorage implements Storage<FluidVariant> {
     }
 
     private void markDirty() {
+        System.out.println("tankfluidstorage mark dirty " + FabricLoader.getInstance().getEnvironmentType());
         this.isDirty = true;
         if (this.onMarkDirty != null)
             this.onMarkDirty.run();
     }
 
+    // returns inserted fluidvariant, or null if none inserted
+    public @Nullable FluidVariant quickInsert(@Nullable Storage<FluidVariant> itemFluidStorage) {
+
+        if (itemFluidStorage == null)
+            return null;
+
+        if (!itemFluidStorage.supportsExtraction())
+            return null;
+
+        try (Transaction transaction = Transaction.openOuter()) {
+            for (StorageView<FluidVariant> fluidView : itemFluidStorage.nonEmptyViews()) {
+                FluidVariant fluidVariant = fluidView.getResource();
+                long maxAmount = fluidView.getAmount();
+
+                long inserted = this.quickInsert(fluidVariant, maxAmount, transaction);
+                long extracted = fluidView.extract(fluidVariant, inserted, transaction);
+
+                if (inserted > 0) {
+                    // *should* always be true
+                    if (extracted == inserted) {
+                        transaction.commit();
+                        return fluidVariant;
+                    } else {
+                        transaction.abort();
+                    }
+                    break;
+                }
+
+            }
+        }
+        return null;
+    }
+
+    // insert into max 1 slot, first try locked, then nonempty, then any.
+    private long quickInsert(FluidVariant fluidVariant, long maxAmount, TransactionContext transaction) {
+
+        // first try to insert insert into locked slot
+        for (TankSingleFluidStorage part : parts) {
+            if (!part.isLocked())
+                continue;
+            long inserted = part.insert(fluidVariant, maxAmount, transaction);
+            if (inserted > 0)
+                return inserted;
+        }
+
+        // then into slots already containing fluids
+        for (TankSingleFluidStorage part : parts) {
+            if (part.getAmount() == 0)
+                continue;
+            long inserted = part.insert(fluidVariant, maxAmount, transaction);
+            if (inserted > 0)
+                return inserted;
+        }
+
+        // then any slot
+        for (TankSingleFluidStorage part : parts) {
+            long inserted = part.insert(fluidVariant, maxAmount, transaction);
+            if (inserted > 0)
+                return inserted;
+        }
+
+        return 0;
+    }
 }

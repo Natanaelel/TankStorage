@@ -11,7 +11,7 @@ public class TankSerializer {
 
     public static void readNbt(Map<UUID, TankFluidStorageState> tankMap, NbtCompound nbtCompound) {
 
-        NbtList tanks = nbtCompound.getList("tanks", NbtCompound.LIST_TYPE);
+        NbtList tanks = nbtCompound.getList("tanks", NbtElement.COMPOUND_TYPE);
         for (NbtElement nbtElement : tanks) {
             TankFluidStorageState tankFluidStorageState = TankFluidStorageState.readNbt((NbtCompound) nbtElement);
             tankMap.put(tankFluidStorageState.uuid, tankFluidStorageState);

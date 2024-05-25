@@ -1,7 +1,6 @@
 package net.natte.tankstorage.state;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,7 +28,8 @@ public class TankPersistentState extends PersistentState {
 
         TankStorage.LOGGER.debug("Loading tanks from nbt");
 
-        TankSerializer.readNbt(state.TANK_MAP, nbtCompound);
+        NbtCompound tankNbt = nbtCompound.getCompound(TANK_DATA_KEY);
+        TankSerializer.readNbt(state.TANK_MAP, tankNbt);
 
         TankStorage.LOGGER.debug("Loading done");
 
@@ -41,8 +41,8 @@ public class TankPersistentState extends PersistentState {
 
         TankStorage.LOGGER.debug("Saving tanks to nbt");
 
-        NbtCompound bankNbt = TankSerializer.writeNbt(TANK_MAP);
-        nbtCompound.put(TANK_DATA_KEY, bankNbt);
+        NbtCompound tankNbt = TankSerializer.writeNbt(TANK_MAP);
+        nbtCompound.put(TANK_DATA_KEY, tankNbt);
 
         TankStorage.LOGGER.debug("Saving done");
 
@@ -68,11 +68,7 @@ public class TankPersistentState extends PersistentState {
         return tank;
     }
 
-    public void set(UUID uuid, TankFluidStorageState bankItemStorage) {
-        this.TANK_MAP.put(uuid, bankItemStorage);
-    }
-
-    public List<TankFluidStorageState> getBankItemStorages() {
-        return List.copyOf(TANK_MAP.values());
+    public void set(UUID uuid, TankFluidStorageState tank) {
+        this.TANK_MAP.put(uuid, tank);
     }
 }

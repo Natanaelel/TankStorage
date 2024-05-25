@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -21,13 +22,25 @@ public class TankFluidStorageState {
 
     private List<TankSingleFluidStorage> fluidStorageParts;
 
+    private short revision = 0; // start different from client (0) to update client cache
+
     private TankFluidStorageState(TankType type, UUID uuid) {
         this.type = type;
         this.uuid = uuid;
     }
 
+    // called only serverside
     public TankFluidStorage getFluidStorage(InsertMode insertMode) {
-        return new TankFluidStorage(fluidStorageParts, insertMode);
+        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
+        fluidStorage.setMarkDirtyListener(this::markDirty);
+        return fluidStorage;
+    }
+
+    // called only clientside
+    public TankFluidStorage getFluidStorageClient(InsertMode insertMode) {
+        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
+        fluidStorage.setMarkDirtyListener(this::markDirtyClient);
+        return fluidStorage;
     }
 
     public TankFluidStorageState asType(TankType type) {
@@ -42,7 +55,7 @@ public class TankFluidStorageState {
 
     public TankFluidStorageState changeType(TankType type) {
         TankStorage.LOGGER
-                .info("Upgrading bank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
+                .info("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
 
         TankFluidStorageState tank = new TankFluidStorageState(type, this.uuid);
 
@@ -60,6 +73,7 @@ public class TankFluidStorageState {
 
         UUID uuid = nbt.getUuid("uuid");
         TankType type = TankType.fromName(nbt.getString("type"));
+        short revision = nbt.getShort("revision");
 
         List<TankSingleFluidStorage> parts = new ArrayList<>();
         NbtList fluids = nbt.getList("fluids", NbtElement.COMPOUND_TYPE);
@@ -78,6 +92,7 @@ public class TankFluidStorageState {
 
         TankFluidStorageState state = new TankFluidStorageState(type, uuid);
         state.fluidStorageParts = parts;
+        state.revision = revision;
         return state;
     }
 
@@ -87,6 +102,7 @@ public class TankFluidStorageState {
 
         nbt.putUuid("uuid", tank.uuid);
         nbt.putString("type", tank.type.getName());
+        nbt.putShort("revision", tank.getRevision());
 
         NbtList fluids = new NbtList();
 
@@ -111,5 +127,24 @@ public class TankFluidStorageState {
         }
         tank.fluidStorageParts = fluidStorageParts;
         return tank;
+    }
+
+    public short getRevision() {
+        return this.revision;
+    }
+
+    private void updateRevision() {
+        this.revision = (short) ((this.revision + 1) & Short.MAX_VALUE);
+    }
+
+    // called only serverside
+    public void markDirty(){
+        this.updateRevision();
+        System.out.println("state mark dirty " + getRevision() + " " + FabricLoader.getInstance().getEnvironmentType());
+    }
+
+    // called only clientside
+    public void markDirtyClient(){
+        System.out.println("state mark dirty client " + getRevision() );
     }
 }

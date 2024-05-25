@@ -31,6 +31,7 @@ public class TankItem extends Item {
 
         TankFluidStorageState tank = Util.getOrCreateFluidStorage(stack, world);
         NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(tank, stack,
+                player.getInventory().selectedSlot,
                 ScreenHandlerContext.EMPTY);
         player.openHandledScreen(screenHandlerFactory);
 

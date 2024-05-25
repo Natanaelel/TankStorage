@@ -49,9 +49,9 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
             // swap hand and dock
             if (Util.isTankLike(stackInHand)) {
                 player.setStackInHand(hand, ItemStack.EMPTY);
-                ItemStack bankInDock = tankDock.pickUpTank();
-                bankInDock.setBobbingAnimationTime(5);
-                player.setStackInHand(hand, bankInDock);
+                ItemStack tankInDock = tankDock.pickUpTank();
+                tankInDock.setBobbingAnimationTime(5);
+                player.setStackInHand(hand, tankInDock);
                 world.playSound(null, pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f,
                         SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 0.2f, 0.0f, 0);
                 world.playSoundFromEntity(null, player, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 0.2f,
@@ -61,11 +61,12 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
                 return ActionResult.SUCCESS;
             }
 
-            // open bank screen
+            // open tank screen
             if (!world.isClient) {
                 NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
                         Util.getOrCreateFluidStorage(tankDock.getTank(), world),
                         tankDock.getTank(),
+                        -1,
                         ScreenHandlerContext.create(world, pos));
                 player.openHandledScreen(screenHandlerFactory);
             }
@@ -99,8 +100,8 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
             return;
         }
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity instanceof TankDockBlockEntity bankDockBlockEntity) {
-            ItemScatterer.spawn(world, pos.getX(), pos.getY(), pos.getZ(), bankDockBlockEntity.getTank());
+        if (blockEntity instanceof TankDockBlockEntity tankDockBlockEntity) {
+            ItemScatterer.spawn(world, pos.getX(), pos.getY(), pos.getZ(), tankDockBlockEntity.getTank());
         }
         super.onStateReplaced(state, world, pos, newState, moved);
     }

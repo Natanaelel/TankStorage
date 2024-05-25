@@ -11,7 +11,8 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
     private long amount;
     private FluidVariant fluidVariant;
     private boolean isLocked;
-    private boolean isDirty = false;
+
+    private Runnable onMarkDirty;
 
     public TankSingleFluidStorage(long capacity, long amount, FluidVariant fluidVariant, boolean isLocked) {
         this.capacity = capacity;
@@ -22,6 +23,10 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
 
     public TankSingleFluidStorage(long capacity) {
         this(capacity, 0, FluidVariant.blank(), false);
+    }
+
+    public void setMarkDirtyListener(Runnable listener){
+        this.onMarkDirty = listener;
     }
 
     public TankSingleFluidStorage update(long amount, FluidVariant fluidVariant, boolean isLocked) {
@@ -106,24 +111,28 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
 
     @Override
     protected FluidSlotData createSnapshot() {
-        return new FluidSlotData(fluidVariant, capacity, amount, isLocked);
+        return new FluidSlotData(fluidVariant, amount);
     }
 
     @Override
     protected void readSnapshot(FluidSlotData snapshot) {
         this.fluidVariant = snapshot.fluidVariant();
-        this.capacity = snapshot.capacity();
         this.amount = snapshot.amount();
-        this.isLocked = snapshot.isLocked();
     }
 
     @Override
     protected void onFinalCommit() {
+        System.out.println("onfinalcommit " + this.fluidVariant + ": " + this.amount);
         markDirty();
     }
 
     private void markDirty() {
-        this.isDirty = true;
+        if(this.onMarkDirty != null){
+            this.onMarkDirty.run();
+        }
     }
 
+}
+// what can change during a transaction
+record FluidSlotData(FluidVariant fluidVariant, long amount) {
 }

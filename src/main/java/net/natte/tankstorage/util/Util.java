@@ -28,6 +28,7 @@ public class Util {
         return new Identifier(TankStorage.MOD_ID, id);
     }
 
+    // called serverside only
     public static TankFluidStorageState getOrCreateFluidStorage(ItemStack tankItem, World world) {
         if (!hasUUID(tankItem))
             setUUID(tankItem, UUID.randomUUID());
