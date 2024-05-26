@@ -1,9 +1,6 @@
 package net.natte.tankstorage.rendering;
 
 import com.google.common.math.LongMath;
-// import net.minecraft.core.registries.BuiltInRegistries;
-// import net.minecraft.world.level.material.Fluid;
-
 import net.minecraft.fluid.Fluid;
 import net.minecraft.registry.Registries;
 
@@ -72,6 +69,4 @@ public class FluidTextHelper {
     private static final char[] SUBSCRIPT = new char[] { '\u2080', '\u2081', '\u2082', '\u2083', '\u2084', '\u2085', '\u2086', '\u2087', '\u2088',
             '\u2089' };
 
-    private FluidTextHelper() {
-    }
 }

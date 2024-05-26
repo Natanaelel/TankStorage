@@ -3,8 +3,6 @@ package net.natte.tankstorage.screen;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.gui.DrawContext;
@@ -48,9 +46,9 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context);
+        this.renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
-        drawMouseoverTooltip(context, mouseX, mouseY);
+        this.drawMouseoverTooltip(context, mouseX, mouseY);
     }
 
     @Override
@@ -73,10 +71,10 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
         FluidVariant fluidVariant = fluidSlot.getFluidVariant();
         if (!fluidVariant.isBlank()) {
             FluidRenderer.drawFluidInGui(context, fluidVariant, slot.x, slot.y);
-            RenderSystem.enableDepthTest();
+            // draw fluid count
         }
         if (fluidSlot.isLocked()) {
-            // locked dither outlike
+            // locked dither outline
             context.drawTexture(WIDGETS_TEXTURE, fluidSlot.x, fluidSlot.y, 0, 46, 16, 16);
         }
 
@@ -91,8 +89,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
             FluidVariant fluidVariant = fluidSlot.getFluidVariant();
             List<Text> tooltip = new ArrayList<>(
-                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity(),
-                            false));
+                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity()));
 
             tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
                     .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));

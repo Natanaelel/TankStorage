@@ -4,7 +4,6 @@ import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 
-
 public class TextHelper {
     public static final Style GRAY_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0xa9a9a9)).withItalic(true);
     public static final Style NUMBER_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0xffde7d)).withItalic(false);
@@ -22,15 +21,12 @@ public class TextHelper {
     public record Amount(String digit, String unit) {
     }
 
-    ;
-
     public record MaxedAmount(String digit, String maxDigit, String unit) {
     }
 
-    ;
-
     public static final String[] units = new String[] { "k", "M", "G", "T", "P", "E" };
-    public static final long[] nums = new long[] { 1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L, 1000_000_000_000_000L,
+    public static final long[] nums = new long[] { 1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L,
+            1000_000_000_000_000L,
             1000_000_000_000_000_000L };
 
     public static String getAmount(double amount, long num) {
@@ -91,7 +87,8 @@ public class TextHelper {
         } else if (amount instanceof Float f && max instanceof Float m) {
             return getMaxedAmount(f, m);
         }
-        throw new IllegalArgumentException("Number " + amount + " or " + max + " is neither long, int, double or float");
+        throw new IllegalArgumentException(
+                "Number " + amount + " or " + max + " is neither long, int, double or float");
     }
 
     public static Amount getAmount(long amount) {
@@ -117,42 +114,4 @@ public class TextHelper {
             return new MaxedAmount(getAmount(amount, nums[i]), getAmount(max, nums[i]), units[i]);
         }
     }
-
-    // public static Text getEuTextMaxed(Number eu, Number max) {
-    //     var amount = getMaxedAmountGeneric(eu, max);
-    //     return MIText.EuMaxed.text(amount.digit(), amount.maxDigit(), amount.unit());
-    // }
-
-    // public static Text getEuText(double eu) {
-    //     var amount = getAmount(eu);
-    //     return MIText.Eu.text(amount.digit(),
-    //             amount.unit());
-    // }
-
-    // public static Text getEuTextTick(double eu) {
-    //     var amount = getAmount(eu);
-    //     return MIText.EuT.text(amount.digit(),
-    //             amount.unit());
-    // }
-
-    // public static Text getEuText(long eu) {
-    //     var amount = getAmount(eu);
-    //     return MIText.Eu.text(amount.digit(),
-    //             amount.unit());
-    // }
-
-    // public static Text getEuTextTick(long eu) {
-    //     var amount = getAmount(eu);
-    //     return MIText.EuT.text(amount.digit(),
-    //             amount.unit());
-    // }
-
-    // public static Component getEuTextTick(double eu, boolean style) {
-    //     Text text = getEuTextTick(eu);
-    //     if (style) {
-    //         text.setStyle(TextHelper.NUMBER_TEXT);
-    //     }
-    //     return text;
-    // }
-
 }
