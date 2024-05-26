@@ -1,3 +1,9 @@
+/*
+ * Code taken from Modern Industrialization
+ * https://github.com/AztechMC/Modern-Industrialization/blob/1.20.1/src/client/java/aztech/modern_industrialization/util/RenderHelper.java
+ * Thanks!
+ */
+
 package net.natte.tankstorage.rendering;
 
 import org.joml.Matrix4f;

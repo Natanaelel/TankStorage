@@ -1,20 +1,21 @@
+/*
+ * Code taken from Modern Industrialization
+ * https://github.com/AztechMC/Modern-Industrialization/blob/1.20.1/src/main/java/aztech/modern_industrialization/util/FluidTextHelper.java
+ * Thanks!
+ */
+
 package net.natte.tankstorage.rendering;
 
 import com.google.common.math.LongMath;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.registry.Registries;
 
-/**
- * A few helpers to display fluids.
- */
 public class FluidTextHelper {
     public static String toString(Fluid fluid) {
         return Registries.FLUID.getKey(fluid).toString();
     }
 
-    /**
-     * Return a unicode string representing a fraction, like ¹⁄₈₁.
-     */
+    // Return a unicode string representing a fraction, like ¹⁄₈₁
     public static String getUnicodeFraction(long numerator, long denominator, boolean simplify) {
         if (numerator < 0 || denominator < 0)
             throw new IllegalArgumentException("Numerator and denominator must be non negative.");
@@ -63,10 +64,10 @@ public class FluidTextHelper {
         return result;
     }
 
-    private static final char[] SUPERSCRIPT = new char[] { '\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074', '\u2075', '\u2076', '\u2077', '\u2078',
-            '\u2079' };
+    private static final char[] SUPERSCRIPT = new char[] {
+            '\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074', '\u2075', '\u2076', '\u2077', '\u2078', '\u2079' };
     private static final char FRACTION_BAR = '\u2044';
-    private static final char[] SUBSCRIPT = new char[] { '\u2080', '\u2081', '\u2082', '\u2083', '\u2084', '\u2085', '\u2086', '\u2087', '\u2088',
-            '\u2089' };
+    private static final char[] SUBSCRIPT = new char[] {
+            '\u2080', '\u2081', '\u2082', '\u2083', '\u2084', '\u2085', '\u2086', '\u2087', '\u2088', '\u2089' };
 
 }

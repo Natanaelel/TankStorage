@@ -1,4 +1,11 @@
+/*
+ * Code taken from Modern Industrialization
+ * https://github.com/AztechMC/Modern-Industrialization/blob/1.20.1/src/main/java/aztech/modern_industrialization/util/FluidHelper.java
+ * Thanks!
+ */
+
 package net.natte.tankstorage.rendering;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,5 +44,4 @@ public class FluidHelper {
         return tooltip;
     }
 
-    
 }

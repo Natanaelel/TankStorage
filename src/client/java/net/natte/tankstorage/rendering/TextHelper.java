@@ -1,3 +1,9 @@
+/*
+ * Code taken from Modern Industrialization
+ * https://github.com/AztechMC/Modern-Industrialization/blob/1.20.1/src/main/java/aztech/modern_industrialization/util/TextHelper.java
+ * Thanks!
+ */
+
 package net.natte.tankstorage.rendering;
 
 import net.minecraft.text.Style;
@@ -25,9 +31,8 @@ public class TextHelper {
     }
 
     public static final String[] units = new String[] { "k", "M", "G", "T", "P", "E" };
-    public static final long[] nums = new long[] { 1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L,
-            1000_000_000_000_000L,
-            1000_000_000_000_000_000L };
+    public static final long[] nums = new long[] {
+            1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L, 1000_000_000_000_000L, 1000_000_000_000_000_000L };
 
     public static String getAmount(double amount, long num) {
         double fract = amount / num;
