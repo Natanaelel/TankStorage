@@ -73,7 +73,6 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
                 tankItem,
                 slot,
                 ScreenHandlerContext.EMPTY);
-
         return screenHandler;
     }
 

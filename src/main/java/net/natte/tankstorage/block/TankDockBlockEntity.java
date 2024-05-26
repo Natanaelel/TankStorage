@@ -38,7 +38,7 @@ public class TankDockBlockEntity extends BlockEntity {
     }
 
     public void putTank(ItemStack stack) {
-        this.tankItem = stack;// TODO: test if copy needed
+        this.tankItem = stack;
         markDirty();
     }
 

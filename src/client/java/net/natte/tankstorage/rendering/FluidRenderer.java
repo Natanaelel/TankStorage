@@ -34,7 +34,7 @@ public class FluidRenderer {
         float r = ((color >> 16) & 255) / 256f;
         float g = ((color >> 8) & 255) / 256f;
         float b = (color & 255) / 256f;
-        // RenderSystem.disableDepthTest();
+        RenderSystem.disableDepthTest();
 
         RenderSystem.setShader(GameRenderer::getPositionColorTexProgram);
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
@@ -56,7 +56,7 @@ public class FluidRenderer {
         bufferBuilder.vertex(model, x0, y0, z).color(r, g, b, 1).texture(u0, v0).next();
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
 
-        // RenderSystem.enableDepthTest();
+        RenderSystem.enableDepthTest();
 
         // SodiumCompat.markSpriteActive(sprite);
     }

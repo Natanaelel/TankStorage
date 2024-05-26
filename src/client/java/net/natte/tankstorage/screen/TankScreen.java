@@ -3,6 +3,9 @@ package net.natte.tankstorage.screen;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -12,8 +15,10 @@ import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.natte.tankstorage.TankStorageClient;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
+import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.rendering.FluidHelper;
 import net.natte.tankstorage.rendering.FluidRenderer;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
@@ -65,38 +70,23 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
             return;
         }
 
-        // fluid slot background. add in gui background texture?
-        // context.drawTexture(WIDGETS_TEXTURE, fluidSlot.x-1, fluidSlot.y-1, 1, 149,
-        // 18, 18);
-
+        FluidVariant fluidVariant = fluidSlot.getFluidVariant();
+        if (!fluidVariant.isBlank()) {
+            FluidRenderer.drawFluidInGui(context, fluidVariant, slot.x, slot.y);
+            RenderSystem.enableDepthTest();
+        }
         if (fluidSlot.isLocked()) {
             // locked dither outlike
             context.drawTexture(WIDGETS_TEXTURE, fluidSlot.x, fluidSlot.y, 0, 46, 16, 16);
         }
-        FluidVariant fluidVariant = fluidSlot.getFluidVariant();
-        // System.out.println(fluidVariant);
-        if (!fluidVariant.isBlank()) {
-            // System.out.println("drawfluid");
-            FluidRenderer.drawFluidInGui(context, fluidVariant, slot.x, slot.y);
-        } else {
-            // FluidRenderer.drawFluidInGui(context, FluidVariant.of(Fluids.LAVA), slot.x,
-            // slot.y);
-        }
-
-        // ishovering...?
 
     }
 
     @Override
     protected void drawMouseoverTooltip(DrawContext context, int x, int y) {
         if (this.focusedSlot instanceof FluidSlot fluidSlot) {
-            // long capacity = fluidSlot.getCapacity();
-            // long amount = fluidSlot.getAmount();
-            // Text text = Text.of((amount * 1000 / FluidConstants.BUCKET) + "/" + (capacity
-            // * 1000/ FluidConstants.BUCKET) + "mB");
-            // context.drawTooltip(textRenderer, List.of(text), x, y);
-            // return;
-            if (fluidSlot.getAmount() == 0)
+
+            if (fluidSlot.getAmount() == 0 && !fluidSlot.isLocked())
                 return;
 
             FluidVariant fluidVariant = fluidSlot.getFluidVariant();
@@ -104,7 +94,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
                     FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity(),
                             false));
 
-            tooltip.add(Text.translatable("tooltip.tankstorage.uh_insert_maebe")
+            tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
                     .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
             context.drawTooltip(textRenderer, tooltip, x, y);
             return;
@@ -112,5 +102,35 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
         super.drawMouseoverTooltip(context, x, y);
 
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && TankStorageClient.lockSlotKeyBinding.isPressed()) {
+            Slot slot = getSlotAt(mouseX, mouseY);
+            if (slot != null) {
+                int slotIndex = slot.id;
+                if (slot instanceof FluidSlot) {
+                    ClientPlayNetworking.send(new LockSlotPacketC2S(this.getScreenHandler().syncId, slotIndex));
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (TankStorageClient.lockSlotKeyBinding.matchesKey(keyCode, scanCode))
+            TankStorageClient.lockSlotKeyBinding.setPressed(true);
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (TankStorageClient.lockSlotKeyBinding.matchesKey(keyCode, scanCode))
+            TankStorageClient.lockSlotKeyBinding.setPressed(false);
+
+        return super.keyReleased(keyCode, scanCode, modifiers);
     }
 }

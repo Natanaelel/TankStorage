@@ -5,7 +5,8 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 
-public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> implements SingleSlotStorage<FluidVariant> {
+public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
+        implements SingleSlotStorage<FluidVariant> {
 
     private long capacity;
     private long amount;
@@ -13,6 +14,7 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
     private boolean isLocked;
 
     private Runnable onMarkDirty;
+    private Runnable changeListener;
 
     public TankSingleFluidStorage(long capacity, long amount, FluidVariant fluidVariant, boolean isLocked) {
         this.capacity = capacity;
@@ -25,8 +27,12 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
         this(capacity, 0, FluidVariant.blank(), false);
     }
 
-    public void setMarkDirtyListener(Runnable listener){
+    public void setMarkDirtyListener(Runnable listener) {
         this.onMarkDirty = listener;
+    }
+
+    public void setListener(Runnable listener) {
+        this.changeListener = listener;
     }
 
     public TankSingleFluidStorage update(long amount, FluidVariant fluidVariant, boolean isLocked) {
@@ -122,17 +128,34 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData> i
 
     @Override
     protected void onFinalCommit() {
-        System.out.println("onfinalcommit " + this.fluidVariant + ": " + this.amount);
         markDirty();
     }
 
     private void markDirty() {
-        if(this.onMarkDirty != null){
+        if (this.onMarkDirty != null) {
             this.onMarkDirty.run();
+        }
+        if (this.changeListener != null)
+            this.changeListener.run();
+    }
+
+    public void lock(FluidVariant newFluidVariant, boolean shouldLock) {
+        if (shouldLock) {
+            if (this.amount == 0) {
+                this.fluidVariant = newFluidVariant;
+                this.isLocked = true;
+            } else if (this.fluidVariant.equals(newFluidVariant)) {
+                this.isLocked = true;
+            }
+        } else {
+            this.isLocked = false;
+            if (this.amount == 0)
+                this.fluidVariant = FluidVariant.blank();
         }
     }
 
 }
+
 // what can change during a transaction
 record FluidSlotData(FluidVariant fluidVariant, long amount) {
 }

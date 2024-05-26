@@ -3,9 +3,7 @@ package net.natte.tankstorage.state;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -23,23 +21,26 @@ public class TankFluidStorageState {
     private List<TankSingleFluidStorage> fluidStorageParts;
 
     private short revision = 0; // start different from client (0) to update client cache
+    private List<Runnable> listeners = new ArrayList<>();
 
     private TankFluidStorageState(TankType type, UUID uuid) {
         this.type = type;
         this.uuid = uuid;
     }
 
+    public void addOnChangeListener(Runnable listener) {
+        this.listeners.add(listener);
+    }
+
+    public void removeOnChangeListener(Runnable listener) {
+        this.listeners.remove(listener);
+    }
+
     // called only serverside
     public TankFluidStorage getFluidStorage(InsertMode insertMode) {
         TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
         fluidStorage.setMarkDirtyListener(this::markDirty);
-        return fluidStorage;
-    }
-
-    // called only clientside
-    public TankFluidStorage getFluidStorageClient(InsertMode insertMode) {
-        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
-        fluidStorage.setMarkDirtyListener(this::markDirtyClient);
+        // fluidStorage.
         return fluidStorage;
     }
 
@@ -138,13 +139,9 @@ public class TankFluidStorageState {
     }
 
     // called only serverside
-    public void markDirty(){
+    public void markDirty() {
         this.updateRevision();
-        System.out.println("state mark dirty " + getRevision() + " " + FabricLoader.getInstance().getEnvironmentType());
-    }
-
-    // called only clientside
-    public void markDirtyClient(){
-        System.out.println("state mark dirty client " + getRevision() );
+        for (Runnable listener : this.listeners)
+            listener.run();
     }
 }

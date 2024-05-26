@@ -2,7 +2,7 @@ package net.natte.tankstorage.rendering;
 import java.util.ArrayList;
 import java.util.List;
 
-
+import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
@@ -73,7 +73,7 @@ public class FluidHelper {
             // list.add(getFluidName(fluid, grayIfEmpty));
             return list;
         }
-        return ClientProxy.getFluidTooltip(fluid);
+        return FluidVariantRendering.getTooltip(fluid);
     }
 
     public static List<Text> getTooltipForFluidStorage(FluidVariant fluid, long amount, long capacity, boolean grayIfEmpty) {

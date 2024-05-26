@@ -1,11 +1,17 @@
 package net.natte.tankstorage.util;
 
 import java.util.UUID;
+import java.util.function.IntConsumer;
 
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Supplier;
 
+import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
@@ -91,9 +97,26 @@ public class Util {
         return null;
     }
 
-    public static boolean isTankLike(ItemStack stack){
+    public static boolean isTankLike(ItemStack stack) {
         return stack.getItem() instanceof TankItem || stack.getItem() instanceof TankLinkItem;
     }
-    
+
+    public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
+
+        Storage<FluidVariant> fluidStorage = ContainerItemContext.withConstant(itemStack).find(FluidStorage.ITEM);
+
+        if (fluidStorage == null)
+            return FluidVariant.blank();
+
+        for (StorageView<FluidVariant> fluidView : fluidStorage) {
+            return fluidView.getResource();
+        }
+
+        return FluidVariant.blank();
+    }
+
+    public static Runnable callConsumerWith(int value, IntConsumer consumer){
+        return () -> consumer.accept(value);
+    }
 
 }
