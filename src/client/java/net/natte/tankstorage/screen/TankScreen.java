@@ -72,6 +72,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
         if (!fluidVariant.isBlank()) {
             FluidRenderer.drawFluidInGui(context, fluidVariant, slot.x, slot.y);
             // draw fluid count
+            FluidRenderer.drawFluidCount(textRenderer, context, fluidSlot.getAmount(), slot.x, slot.y);
         }
         if (fluidSlot.isLocked()) {
             // locked dither outline

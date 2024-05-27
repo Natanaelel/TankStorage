@@ -147,6 +147,14 @@ public class TankScreenHandler extends ScreenHandler {
 
         Slot slot = slotIndex >= 0 ? this.slots.get(slotIndex) : null;
 
+        // cannot move opened TankItem with numbers
+        if (actionType == SlotActionType.SWAP) {
+            if (!this.slots.get(slotIndex).canTakeItems(player) ||
+                    (button == player.getInventory().selectedSlot
+                            && !this.slots.get(this.slots.size() - 9 + button).canTakeItems(player)))
+                return;
+        }
+
         if (!(slot instanceof FluidSlot)) {
             super.onSlotClick(slotIndex, button, actionType, player);
             return;

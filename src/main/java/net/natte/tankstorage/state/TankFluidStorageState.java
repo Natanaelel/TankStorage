@@ -12,6 +12,7 @@ import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
+import net.natte.tankstorage.util.FluidSlotData;
 
 public class TankFluidStorageState {
 
@@ -128,6 +129,15 @@ public class TankFluidStorageState {
         }
         tank.fluidStorageParts = fluidStorageParts;
         return tank;
+    }
+
+    public List<FluidSlotData> getFluidSlotDatas() {
+        List<FluidSlotData> fluids = new ArrayList<>();
+        for (TankSingleFluidStorage part : fluidStorageParts) {
+            if (part.getAmount() > 0)
+                fluids.add(new FluidSlotData(part.getResource(), part.getAmount(), part.isLocked()));
+        }
+        return fluids;
     }
 
     public short getRevision() {

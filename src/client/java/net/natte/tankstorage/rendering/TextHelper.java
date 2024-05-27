@@ -6,23 +6,7 @@
 
 package net.natte.tankstorage.rendering;
 
-import net.minecraft.text.Style;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-
 public class TextHelper {
-    public static final Style GRAY_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0xa9a9a9)).withItalic(true);
-    public static final Style NUMBER_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0xffde7d)).withItalic(false);
-    public static final Style WATER_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0x3264ff));
-    public static final Style WARNING_TEXT = Style.EMPTY.withColor(Formatting.RED);
-    public static final Style MAX_TEMP_TEXT = Style.EMPTY.withColor(TextColor.fromRgb(0xd94a1e));
-    public static final Style HEAT_CONDUCTION = Style.EMPTY.withColor(TextColor.fromRgb(0x0073ba));
-    public static final Style NEUTRONS = Style.EMPTY.withColor(TextColor.fromRgb(0x29a329));
-    public static final Style YELLOW_BOLD = Style.EMPTY.withColor(Formatting.YELLOW).withBold(true);
-    public static final Style YELLOW = Style.EMPTY.withColor(Formatting.YELLOW);
-
-    public static final Style RED = Style.EMPTY.withColor(Formatting.RED);
-    public static final Style GREEN = Style.EMPTY.withColor(Formatting.GREEN);
 
     public record Amount(String digit, String unit) {
     }
@@ -45,31 +29,6 @@ public class TextHelper {
         }
     }
 
-    public static Amount getAmountGeneric(Number number) {
-        if (number instanceof Long l) {
-            return getAmount(l);
-        } else if (number instanceof Integer i) {
-            return getAmount(i);
-        } else if (number instanceof Double d) {
-            return getAmount(d);
-        } else if (number instanceof Float f) {
-            return getAmount(f);
-        }
-        throw new IllegalArgumentException("Number " + number + " is neither long, int, double or float");
-    }
-
-    public static Amount getAmount(double amount) {
-        if (amount < 100000) {
-            return new Amount(getAmount(amount, 1), "");
-        } else {
-            int i = 0;
-            while (amount / nums[i] >= 1000) {
-                i++;
-            }
-            return new Amount(getAmount(amount, nums[i]), units[i]);
-        }
-    }
-
     public static MaxedAmount getMaxedAmount(double amount, double max) {
         if (max < 100000) {
             return new MaxedAmount(getAmount(amount, 1), getAmount(max, 1), "");
@@ -82,41 +41,4 @@ public class TextHelper {
         }
     }
 
-    public static MaxedAmount getMaxedAmountGeneric(Number amount, Number max) {
-        if (amount instanceof Long l && max instanceof Long m) {
-            return getMaxedAmount(l, m);
-        } else if (amount instanceof Integer i && max instanceof Integer m) {
-            return getMaxedAmount(i, m);
-        } else if (amount instanceof Double d && max instanceof Double m) {
-            return getMaxedAmount(d, m);
-        } else if (amount instanceof Float f && max instanceof Float m) {
-            return getMaxedAmount(f, m);
-        }
-        throw new IllegalArgumentException(
-                "Number " + amount + " or " + max + " is neither long, int, double or float");
-    }
-
-    public static Amount getAmount(long amount) {
-        if (amount < 100000) {
-            return new Amount(String.valueOf(amount), "");
-        } else {
-            int i = 0;
-            while (amount / nums[i] >= 1000) {
-                i++;
-            }
-            return new Amount(getAmount(amount, nums[i]), units[i]);
-        }
-    }
-
-    public static MaxedAmount getMaxedAmount(long amount, long max) {
-        if (max < 100000) {
-            return new MaxedAmount(String.valueOf(amount), String.valueOf(max), "");
-        } else {
-            int i = 0;
-            while (max / nums[i] >= 1000) {
-                i++;
-            }
-            return new MaxedAmount(getAmount(amount, nums[i]), getAmount(max, nums[i]), units[i]);
-        }
-    }
 }

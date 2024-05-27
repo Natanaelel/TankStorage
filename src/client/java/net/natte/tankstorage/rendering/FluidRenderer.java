@@ -12,6 +12,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
@@ -21,6 +22,8 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.text.Text;
+import net.minecraft.util.Colors;
 
 public class FluidRenderer {
 
@@ -65,6 +68,13 @@ public class FluidRenderer {
         RenderSystem.enableDepthTest();
 
         // SodiumCompat.markSpriteActive(sprite);
+    }
+
+    public static void drawFluidCount(TextRenderer textRenderer, DrawContext context, long amount, int x, int y) {
+        // TODO
+        // count format (1M, 1.1M 1000B) or whatever format I decide
+        // scale
+        context.drawText(textRenderer, Text.of(""+amount), x, y, Colors.WHITE, true);
     }
 
 }

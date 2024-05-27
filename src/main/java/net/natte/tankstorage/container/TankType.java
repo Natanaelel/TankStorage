@@ -29,7 +29,7 @@ public class TankType {
 
     public void register() {
 
-        this.item = new TankItem(new Item.Settings(), this);
+        this.item = new TankItem(new Item.Settings().maxCount(1), this);
         Registry.register(Registries.ITEM, Util.ID(this.name), this.item);
 
         this.screenHandlerType = new ExtendedScreenHandlerType<TankScreenHandler>(TankScreenHandlerFactory::createClientScreenHandler);

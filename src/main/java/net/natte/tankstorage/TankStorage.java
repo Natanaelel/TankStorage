@@ -21,6 +21,7 @@ import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankLinkItem;
 import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
+import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.util.Util;
 
 import org.slf4j.Logger;
@@ -42,7 +43,7 @@ public class TankStorage implements ModInitializer {
 
 	public static final TankType[] TANK_TYPES = { TANK_1, TANK_2, TANK_3, TANK_4, TANK_5, TANK_6, TANK_7 };
 
-	private static final Item TANK_LINK_ITEM = new TankLinkItem(new Item.Settings());
+	private static final Item TANK_LINK_ITEM = new TankLinkItem(new Item.Settings().maxCount(1));
 
 	private static final Block TANK_DOCK_BLOCK = new TankDockBlock(
 			FabricBlockSettings.create()
@@ -96,5 +97,6 @@ public class TankStorage implements ModInitializer {
 
 	private void registerNetworkListeners() {
 		ServerPlayNetworking.registerGlobalReceiver(LockSlotPacketC2S.PACKET_TYPE, LockSlotPacketC2S::receive);
+		ServerPlayNetworking.registerGlobalReceiver(RequestTankPacketC2S.PACKET_TYPE, RequestTankPacketC2S::receive);
 	}
 }
