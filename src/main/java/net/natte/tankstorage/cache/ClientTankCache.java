@@ -26,28 +26,32 @@ public class ClientTankCache {
 
     public static @Nullable CachedFluidStorageState getOrQueueUpdate(UUID uuid) {
         CachedFluidStorageState state = get(uuid);
-        if (state == null){
+        if (state == null) {
             requestQueue.add(uuid);
         }
         return state;
     }
 
-    public static @Nullable CachedFluidStorageState getOrQueueThrottledUpdate(UUID uuid, int ticks) {
-        CachedFluidStorageState state = get(uuid);
-        if (state == null) {
-            throddledQueue.putIfAbsent(uuid, ticks);
-        }
-        return state;
-    }
+    // public static @Nullable CachedFluidStorageState
+    // getOrQueueThrottledUpdate(UUID uuid, int ticks) {
+    // CachedFluidStorageState state = get(uuid);
+    // if (state == null) {
+    // throddledQueue.putIfAbsent(uuid, ticks);
+    // }
+    // return state;
+    // }
 
     public static @Nullable CachedFluidStorageState getAndQueueThrottledUpdate(UUID uuid, int ticks) {
-        if (throddledQueue.containsKey(uuid)) {
-            return get(uuid);
-        } else {
-            throddledQueue.put(uuid, ticks);
-            requestQueue.add(uuid);
-            return get(uuid);
-        }
+        // TODO: check if sync is needed
+        // synchronized (throddledQueue) {
+            if (throddledQueue.containsKey(uuid)) {
+                return get(uuid);
+            } else {
+                throddledQueue.put(uuid, ticks);
+                requestQueue.add(uuid);
+                return get(uuid);
+            }
+        // }
     }
 
     public static Set<UUID> getQueue() {
@@ -60,13 +64,9 @@ public class ClientTankCache {
     }
 
     public static void advanceThrottledQueue() {
-        for (UUID uuid : throddledQueue.keySet()) {
-            int ticksLeft = throddledQueue.get(uuid);
-            if (ticksLeft <= 0) {
-                throddledQueue.remove(uuid);
-            } else {
-                throddledQueue.put(uuid, ticksLeft - 1);
-            }
-        }
+        // synchronized (throddledQueue) {
+            throddledQueue.entrySet().removeIf(entity -> entity.getValue() <= 0);
+            throddledQueue.replaceAll((uuid, ticksLeft) -> ticksLeft - 1);
+        // }
     }
 }

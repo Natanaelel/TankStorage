@@ -2,7 +2,6 @@ package net.natte.tankstorage.screenhandler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -12,6 +11,7 @@ import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -21,6 +21,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
@@ -116,13 +117,22 @@ public class TankScreenHandler extends ScreenHandler {
         ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerSlot(playerEntity,
                 PlayerInventoryStorage.of(playerEntity).getSlot(slot.getIndex()));
 
-        Storage<FluidVariant> stackFluidStorage = containerItemContext.find(FluidStorage.ITEM);
+        if (playerEntity instanceof ClientPlayerEntity)
+            return ItemStack.EMPTY;
+
+        slot.getStack().setHolder(playerEntity);
+
+        Storage<FluidVariant> stackFluidStorage = FluidStorage.ITEM.find(slot.getStack(), containerItemContext);
 
         FluidVariant insertedFluidVariant = this.fluidStorage.quickInsert(stackFluidStorage);
 
-        if (insertedFluidVariant != null)
+        if (insertedFluidVariant != null) {
             playerEntity.playSound(FluidVariantAttributes.getEmptySound(insertedFluidVariant), SoundCategory.BLOCKS, 1,
                     1);
+            // update client cache for tooltip contents if other is another tank
+            this.tank.sync((ServerPlayerEntity) player);
+            Util.trySync(slot.getStack(), player);
+        }
 
         return ItemStack.EMPTY;
 
@@ -165,10 +175,20 @@ public class TankScreenHandler extends ScreenHandler {
         if (actionType != SlotActionType.PICKUP)
             return;
 
+        if (player instanceof ClientPlayerEntity) {
+            // ClientTankCache.getAndQueueThrottledUpdate(this.tank.uuid, 1);
+            return;
+        }
+
         // this assumes fluidslots come first
         TankSingleFluidStorage slotFluidStorage = this.fluidStorage.getSingleFluidStorage(slotIndex);
         ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerCursor(player, this);
-        Storage<FluidVariant> cursorFluidStorage = containerItemContext.find(FluidStorage.ITEM);
+        // Storage<FluidVariant> cursorFluidStorage =
+        // TODO: server cache for this (lame)
+        player.sendMessage(Text.of("cursor stack holder: " + getCursorStack().getHolder()));
+        getCursorStack().setHolder(player);
+        player.sendMessage(Text.of("cursor stack holder now: " + getCursorStack().getHolder()));
+        Storage<FluidVariant> cursorFluidStorage = FluidStorage.ITEM.find(getCursorStack(), containerItemContext);
 
         if (cursorFluidStorage == null)
             return;
@@ -193,6 +213,8 @@ public class TankScreenHandler extends ScreenHandler {
                             transaction.commit();
                             player.playSound(
                                     FluidVariantAttributes.getEmptySound(fluidVariant), SoundCategory.BLOCKS, 1, 1);
+                            this.tank.sync((ServerPlayerEntity) player);
+                            Util.trySync(getCursorStack(), (ServerPlayerEntity) player);
                         } else {
                             transaction.abort();
                         }
@@ -223,6 +245,8 @@ public class TankScreenHandler extends ScreenHandler {
                         transaction.commit();
                         player.playSound(
                                 FluidVariantAttributes.getFillSound(fluidVariant), SoundCategory.BLOCKS, 1, 1);
+                        this.tank.sync((ServerPlayerEntity) player);
+                        Util.trySync(getCursorStack(), (ServerPlayerEntity) player);
                     } else {
                         transaction.abort();
                     }
@@ -244,10 +268,6 @@ public class TankScreenHandler extends ScreenHandler {
 
     private void unlockSlot(int slot) {
         lockSlot(slot, null, false);
-    }
-
-    public void setLockedSlots(Map<Integer, FluidVariant> lockedSlots) {
-        fluidStorage.setLockedSlots(lockedSlots);
     }
 
     public void lockSlotClick(int slotIndex) {

@@ -3,12 +3,16 @@ package net.natte.tankstorage.state;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
+import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
@@ -153,5 +157,10 @@ public class TankFluidStorageState {
         this.updateRevision();
         for (Runnable listener : this.listeners)
             listener.run();
+    }
+
+    // called only serverside
+    public void sync(ServerPlayerEntity player) {
+        ServerPlayNetworking.send(player, new TankPacketS2C(uuid, getRevision(), getFluidSlotDatas()));
     }
 }

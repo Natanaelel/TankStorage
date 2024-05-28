@@ -11,7 +11,9 @@ import org.joml.Matrix4f;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.BufferBuilder;
@@ -21,6 +23,7 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.texture.Sprite;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
@@ -74,7 +77,25 @@ public class FluidRenderer {
         // TODO
         // count format (1M, 1.1M 1000B) or whatever format I decide
         // scale
-        context.drawText(textRenderer, Text.of(""+amount), x, y, Colors.WHITE, true);
+        
+        Text countText = getFormattedFluidCount(amount);
+        int textWidth = textRenderer.getWidth(countText);
+        int xOffset = x + 18 - 2;
+        int yOffset = y + 18 - 2;
+        MinecraftClient client = MinecraftClient.getInstance();
+        int guiScale = (int) client.getWindow().getScaleFactor();
+        float scale = guiScale == 1 ? 0.5f : (guiScale - 1) / (float) guiScale;
+        MatrixStack matrices = context.getMatrices();
+        matrices.push();
+        matrices.translate(xOffset, yOffset, 0);
+        matrices.scale(scale, scale, 1);
+        matrices.translate(-xOffset, -yOffset, 0);
+        context.drawText(textRenderer, countText, x + 18 - 1 - textWidth - 1, y + 9 - 1, Colors.WHITE, true);
+        matrices.pop();
+    }
+
+    private static Text getFormattedFluidCount(long amount){
+        return Text.of("" + (double)amount / FluidConstants.BUCKET + "B");
     }
 
 }

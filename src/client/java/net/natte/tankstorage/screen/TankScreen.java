@@ -110,6 +110,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
                 int slotIndex = slot.id;
                 if (slot instanceof FluidSlot) {
                     ClientPlayNetworking.send(new LockSlotPacketC2S(this.getScreenHandler().syncId, slotIndex));
+                    this.cancelNextRelease = true;
                     return true;
                 }
             }

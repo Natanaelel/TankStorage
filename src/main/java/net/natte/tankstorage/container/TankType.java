@@ -1,7 +1,10 @@
 package net.natte.tankstorage.container;
 
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemConvertible;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.screen.ScreenHandlerType;
@@ -9,6 +12,7 @@ import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.item.TankItem;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
+import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.util.Util;
 
 public class TankType {
@@ -32,8 +36,18 @@ public class TankType {
         this.item = new TankItem(new Item.Settings().maxCount(1), this);
         Registry.register(Registries.ITEM, Util.ID(this.name), this.item);
 
-        this.screenHandlerType = new ExtendedScreenHandlerType<TankScreenHandler>(TankScreenHandlerFactory::createClientScreenHandler);
+        this.screenHandlerType = new ExtendedScreenHandlerType<TankScreenHandler>(
+                TankScreenHandlerFactory::createClientScreenHandler);
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
+
+        FluidStorage.ITEM.registerForItems((itemStack, context) -> {
+            if (!(itemStack.getHolder() instanceof Entity entity))
+                return null;
+            if (!Util.hasUUID(itemStack))
+                return null;
+            // TODO: single slot fluidstorage of selectedslot?
+            return Util.getFluidStorage(itemStack, entity.getWorld()).getFluidStorage(InsertMode.ALL);
+        }, new ItemConvertible[] { this.item });
 
     }
 

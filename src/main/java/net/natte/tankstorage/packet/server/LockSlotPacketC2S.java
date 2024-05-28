@@ -1,16 +1,10 @@
 package net.natte.tankstorage.packet.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.natte.tankstorage.gui.FluidSlot;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.util.Util;
 
@@ -39,14 +33,6 @@ public record LockSlotPacketC2S(int syncId, int slot)
         if (packet.syncId == player.currentScreenHandler.syncId
                 && player.currentScreenHandler instanceof TankScreenHandler tankScreenHandler) {
             tankScreenHandler.lockSlotClick(packet.slot);
-            Map<Integer, FluidVariant> lockedSlots = new HashMap<>();
-            for (int i = 0; i < tankScreenHandler.slots.size(); ++i) {
-                Slot slot = tankScreenHandler.getSlot(i);
-                if (!(slot instanceof FluidSlot fluidSlot))
-                    break;
-                if (fluidSlot.isLocked())
-                    lockedSlots.put(i, fluidSlot.getFluidVariant());
-            }
         }
     }
 

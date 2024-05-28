@@ -79,7 +79,7 @@ public class TankTooltipComponent implements TooltipComponent {
         // fluid
         FluidRenderer.drawFluidInGui(context, fluid.fluidVariant(), x + 1, y + 1);
         // fluid count
-        FluidRenderer.drawFluidCount(textRenderer, context, fluid.amount(), x, y);
+        FluidRenderer.drawFluidCount(textRenderer, context, fluid.amount(), x + 1, y + 1);
     }
 
 }

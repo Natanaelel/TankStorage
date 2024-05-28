@@ -2,9 +2,6 @@ package net.natte.tankstorage.storage;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.function.IntConsumer;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -12,7 +9,6 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.natte.tankstorage.util.Util;
 
 public class TankFluidStorage implements Storage<FluidVariant> {
 
@@ -30,12 +26,6 @@ public class TankFluidStorage implements Storage<FluidVariant> {
     public void setMarkDirtyListener(Runnable listener) {
         this.onMarkDirty = listener;
         this.parts.forEach(part -> part.setMarkDirtyListener(this::markDirty));
-    }
-
-    public void setChangedListener(IntConsumer listener) {
-        for (int i = 0; i < this.parts.size(); ++i) {
-            this.parts.get(i).setListener(Util.callConsumerWith(i, listener));
-        }
     }
 
     @Override
@@ -205,15 +195,5 @@ public class TankFluidStorage implements Storage<FluidVariant> {
         }
 
         return 0;
-    }
-
-    public void setLockedSlots(Map<Integer, FluidVariant> lockedSlots) {
-        for (int i = 0; i < parts.size(); ++i) {
-            if (lockedSlots.containsKey(i)) {
-                this.getSingleFluidStorage(i).lock(lockedSlots.get(i), true);
-            } else {
-                this.getSingleFluidStorage(i).lock(null, false);
-            }
-        }
     }
 }

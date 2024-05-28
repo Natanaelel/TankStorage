@@ -1,8 +1,6 @@
 package net.natte.tankstorage.util;
 
 import java.util.UUID;
-import java.util.function.IntConsumer;
-
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Supplier;
@@ -14,6 +12,7 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import net.natte.tankstorage.TankStorage;
@@ -103,7 +102,8 @@ public class Util {
 
     public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
 
-        Storage<FluidVariant> fluidStorage = ContainerItemContext.withConstant(itemStack).find(FluidStorage.ITEM);
+        Storage<FluidVariant> fluidStorage = FluidStorage.ITEM.find(itemStack,
+                ContainerItemContext.withConstant(itemStack));
 
         if (fluidStorage == null)
             return FluidVariant.blank();
@@ -115,8 +115,16 @@ public class Util {
         return FluidVariant.blank();
     }
 
-    public static Runnable callConsumerWith(int value, IntConsumer consumer){
-        return () -> consumer.accept(value);
+    // called only serverside
+    public static void trySync(ItemStack stack, ServerPlayerEntity player) {
+        if (!Util.isTankLike(stack))
+            return;
+        if (!Util.hasUUID(stack))
+            return;
+        TankFluidStorageState tank = getFluidStorage(stack, player.getWorld());
+        if (tank == null)
+            return;
+        tank.sync(player);
     }
 
 }

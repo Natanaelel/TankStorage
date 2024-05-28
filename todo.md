@@ -2,8 +2,9 @@
 - recipes
 - bucket mode
   - scroll to choose fluid or empty bucket
-- tooltip contents
-- works as fluid container item
+- [/] number format
+- [x] works as fluid container item
+- [x] tooltip contents
 
 - [x] locking
 - [x] sync in screen
