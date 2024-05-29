@@ -14,7 +14,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankItem;
@@ -33,28 +32,30 @@ public class Util {
         return new Identifier(TankStorage.MOD_ID, id);
     }
 
-    // called serverside only
-    public static TankFluidStorageState getOrCreateFluidStorage(ItemStack tankItem, World world) {
+    // call serverside only
+    public static TankFluidStorageState getOrCreateFluidStorage(ItemStack tankItem) {
         if (!hasUUID(tankItem))
             setUUID(tankItem, UUID.randomUUID());
         UUID uuid = getUUID(tankItem);
-        TankFluidStorageState tank = getFluidStorage(uuid, world);
+        TankFluidStorageState tank = getFluidStorage(uuid);
         if (tank == null) {
             tank = TankFluidStorageState.create(getType(tankItem), uuid);
-            TankStateManager.getState(world.getServer()).set(uuid, tank);
+            TankStateManager.getState().set(uuid, tank);
         }
         return tank;
     }
 
     // assumes stack has uuid
+    // call serverside only
     @Nullable
-    public static TankFluidStorageState getFluidStorage(ItemStack tankItem, World world) {
-        return getFluidStorage(getUUID(tankItem), world);
+    public static TankFluidStorageState getFluidStorage(ItemStack tankItem) {
+        return getFluidStorage(getUUID(tankItem));
     }
 
+    // call serverside only
     @Nullable
-    public static TankFluidStorageState getFluidStorage(UUID uuid, World world) {
-        TankPersistentState state = TankStateManager.getState(world.getServer());
+    public static TankFluidStorageState getFluidStorage(UUID uuid) {
+        TankPersistentState state = TankStateManager.getState();
         return state.get(uuid);
     }
 
@@ -102,8 +103,7 @@ public class Util {
 
     public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
 
-        Storage<FluidVariant> fluidStorage = FluidStorage.ITEM.find(itemStack,
-                ContainerItemContext.withConstant(itemStack));
+        Storage<FluidVariant> fluidStorage = ContainerItemContext.withConstant(itemStack).find(FluidStorage.ITEM);
 
         if (fluidStorage == null)
             return FluidVariant.blank();
@@ -121,7 +121,7 @@ public class Util {
             return;
         if (!Util.hasUUID(stack))
             return;
-        TankFluidStorageState tank = getFluidStorage(stack, player.getWorld());
+        TankFluidStorageState tank = getFluidStorage(stack);
         if (tank == null)
             return;
         tank.sync(player);

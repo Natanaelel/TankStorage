@@ -64,7 +64,7 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
             // open tank screen
             if (!world.isClient) {
                 NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
-                        Util.getOrCreateFluidStorage(tankDock.getTank(), world),
+                        Util.getOrCreateFluidStorage(tankDock.getTank()),
                         tankDock.getTank(),
                         -1,
                         ScreenHandlerContext.create(world, pos));

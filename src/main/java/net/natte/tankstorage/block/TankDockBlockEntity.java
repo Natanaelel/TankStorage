@@ -55,7 +55,7 @@ public class TankDockBlockEntity extends BlockEntity {
         if (!Util.hasUUID(tankItem))
             return Storage.empty();
 
-        fluidStorage = Util.getOrCreateFluidStorage(tankItem, world).getFluidStorage(Util.getInsertMode(tankItem));
+        fluidStorage = Util.getOrCreateFluidStorage(tankItem).getFluidStorage(Util.getInsertMode(tankItem));
 
         return fluidStorage;
     }

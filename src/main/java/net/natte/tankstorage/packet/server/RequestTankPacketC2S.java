@@ -32,7 +32,7 @@ public record RequestTankPacketC2S(UUID uuid, int revision) implements FabricPac
     }
 
     public static void receive(RequestTankPacketC2S packet, ServerPlayerEntity player, PacketSender responseSender) {
-        TankFluidStorageState tank = Util.getFluidStorage(packet.uuid, player.getWorld());
+        TankFluidStorageState tank = Util.getFluidStorage(packet.uuid);
         if (tank.getRevision() != packet.revision) {
             responseSender.sendPacket(new TankPacketS2C(tank.uuid, tank.getRevision(), tank.getFluidSlotDatas()));
         }

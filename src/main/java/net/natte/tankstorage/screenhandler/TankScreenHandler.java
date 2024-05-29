@@ -11,7 +11,6 @@ import net.fabricmc.fabric.api.transfer.v1.item.PlayerInventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -21,7 +20,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
+import net.minecraft.world.World;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
@@ -117,12 +116,11 @@ public class TankScreenHandler extends ScreenHandler {
         ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerSlot(playerEntity,
                 PlayerInventoryStorage.of(playerEntity).getSlot(slot.getIndex()));
 
-        if (playerEntity instanceof ClientPlayerEntity)
+        World world = playerEntity.getWorld();
+        if (world.isClient)
             return ItemStack.EMPTY;
 
-        slot.getStack().setHolder(playerEntity);
-
-        Storage<FluidVariant> stackFluidStorage = FluidStorage.ITEM.find(slot.getStack(), containerItemContext);
+        Storage<FluidVariant> stackFluidStorage = containerItemContext.find(FluidStorage.ITEM);
 
         FluidVariant insertedFluidVariant = this.fluidStorage.quickInsert(stackFluidStorage);
 
@@ -130,7 +128,7 @@ public class TankScreenHandler extends ScreenHandler {
             playerEntity.playSound(FluidVariantAttributes.getEmptySound(insertedFluidVariant), SoundCategory.BLOCKS, 1,
                     1);
             // update client cache for tooltip contents if other is another tank
-            this.tank.sync((ServerPlayerEntity) player);
+            this.tank.sync(player);
             Util.trySync(slot.getStack(), player);
         }
 
@@ -150,7 +148,7 @@ public class TankScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
+    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity playerEntity) {
 
         // if (slotIndex < 0)
         // return;
@@ -159,14 +157,14 @@ public class TankScreenHandler extends ScreenHandler {
 
         // cannot move opened TankItem with numbers
         if (actionType == SlotActionType.SWAP) {
-            if (!this.slots.get(slotIndex).canTakeItems(player) ||
-                    (button == player.getInventory().selectedSlot
-                            && !this.slots.get(this.slots.size() - 9 + button).canTakeItems(player)))
+            if (!this.slots.get(slotIndex).canTakeItems(playerEntity) ||
+                    (button == playerEntity.getInventory().selectedSlot
+                            && !this.slots.get(this.slots.size() - 9 + button).canTakeItems(playerEntity)))
                 return;
         }
 
         if (!(slot instanceof FluidSlot)) {
-            super.onSlotClick(slotIndex, button, actionType, player);
+            super.onSlotClick(slotIndex, button, actionType, playerEntity);
             return;
         }
         if (slotIndex < 0)
@@ -175,20 +173,17 @@ public class TankScreenHandler extends ScreenHandler {
         if (actionType != SlotActionType.PICKUP)
             return;
 
-        if (player instanceof ClientPlayerEntity) {
+        World world = playerEntity.getWorld();
+        if (world.isClient) {
             // ClientTankCache.getAndQueueThrottledUpdate(this.tank.uuid, 1);
             return;
         }
 
         // this assumes fluidslots come first
         TankSingleFluidStorage slotFluidStorage = this.fluidStorage.getSingleFluidStorage(slotIndex);
-        ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerCursor(player, this);
-        // Storage<FluidVariant> cursorFluidStorage =
-        // TODO: server cache for this (lame)
-        player.sendMessage(Text.of("cursor stack holder: " + getCursorStack().getHolder()));
-        getCursorStack().setHolder(player);
-        player.sendMessage(Text.of("cursor stack holder now: " + getCursorStack().getHolder()));
-        Storage<FluidVariant> cursorFluidStorage = FluidStorage.ITEM.find(getCursorStack(), containerItemContext);
+        ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerCursor(playerEntity, this);
+
+        Storage<FluidVariant> cursorFluidStorage = containerItemContext.find(FluidStorage.ITEM);
 
         if (cursorFluidStorage == null)
             return;
@@ -211,10 +206,10 @@ public class TankScreenHandler extends ScreenHandler {
                         // *should* always be true
                         if (extracted == inserted) {
                             transaction.commit();
-                            player.playSound(
+                            playerEntity.playSound(
                                     FluidVariantAttributes.getEmptySound(fluidVariant), SoundCategory.BLOCKS, 1, 1);
-                            this.tank.sync((ServerPlayerEntity) player);
-                            Util.trySync(getCursorStack(), (ServerPlayerEntity) player);
+                            this.tank.sync(player);
+                            Util.trySync(getCursorStack(), player);
                         } else {
                             transaction.abort();
                         }

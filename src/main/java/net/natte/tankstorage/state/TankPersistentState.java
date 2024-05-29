@@ -16,9 +16,17 @@ public class TankPersistentState extends PersistentState {
     private static final String TANK_DATA_KEY = "tank_data";
     private final Map<UUID, TankFluidStorageState> TANK_MAP;
 
+    private static TankPersistentState INSTANCE;
+
     public TankPersistentState() {
         TANK_MAP = new HashMap<>();
     }
+
+    public static @Nullable TankPersistentState getInstance(){
+        return INSTANCE;
+    }
+
+
 
     public static TankPersistentState createFromNbt(NbtCompound nbtCompound) {
 

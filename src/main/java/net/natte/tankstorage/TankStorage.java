@@ -1,6 +1,7 @@
 package net.natte.tankstorage;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
@@ -22,6 +23,7 @@ import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankLinkItem;
 import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
+import net.natte.tankstorage.state.TankStateManager;
 import net.natte.tankstorage.util.Util;
 
 import org.slf4j.Logger;
@@ -63,7 +65,7 @@ public class TankStorage implements ModInitializer {
 		registerDock();
 
 		registerNetworkListeners();
-
+		registerEventListeners();
 	}
 
 	private void registerTanks() {
@@ -98,5 +100,9 @@ public class TankStorage implements ModInitializer {
 	private void registerNetworkListeners() {
 		ServerPlayNetworking.registerGlobalReceiver(LockSlotPacketC2S.PACKET_TYPE, LockSlotPacketC2S::receive);
 		ServerPlayNetworking.registerGlobalReceiver(RequestTankPacketC2S.PACKET_TYPE, RequestTankPacketC2S::receive);
+	}
+
+	private void registerEventListeners() {
+		ServerLifecycleEvents.SERVER_STARTED.register(TankStateManager::initialize);
 	}
 }
