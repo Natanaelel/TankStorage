@@ -1,8 +1,9 @@
 {
 	"required": true,
-	"package": "net.natte.tankstorage.mixin.client",
+	"package": "net.natte.tankstorage.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
+		"MouseMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

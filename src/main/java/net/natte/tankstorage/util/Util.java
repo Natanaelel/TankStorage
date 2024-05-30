@@ -28,6 +28,10 @@ public class Util {
 
     public static Supplier<Boolean> isShiftDown = () -> false;
 
+    private static final String UUID_KEY = "tankstorage:uuid";
+    private static final String OPTIONS_KEY = "tankstorage:options";
+    private static final String TYPE_KEY = "tankstorage:type";
+
     public static Identifier ID(String id) {
         return new Identifier(TankStorage.MOD_ID, id);
     }
@@ -62,23 +66,37 @@ public class Util {
     public static boolean hasUUID(ItemStack tankItem) {
         if (!tankItem.hasNbt())
             return false;
-        if (!tankItem.getNbt().containsUuid("tankstorage:uuid"))
+        if (!tankItem.getNbt().containsUuid(UUID_KEY))
             return false;
         return true;
     }
 
     public static UUID getUUID(ItemStack tankItem) {
-        return tankItem.getNbt().getUuid("tankstorage:uuid");
+        return tankItem.getNbt().getUuid(UUID_KEY);
     }
 
     public static void setUUID(ItemStack tankItem, UUID uuid) {
-        tankItem.getOrCreateNbt().putUuid("tankstorage:uuid", uuid);
+        tankItem.getOrCreateNbt().putUuid(UUID_KEY, uuid);
     }
 
     public static TankOptions getOrCreateOptions(ItemStack tankItem) {
-        if (!tankItem.getOrCreateNbt().contains("tankstorage:options"))
-            tankItem.getNbt().put("tankstorage:options", new TankOptions().asNbt());
-        return TankOptions.fromNbt(tankItem.getNbt().getCompound("tankstorage:options"));
+        if (!tankItem.getOrCreateNbt().contains(OPTIONS_KEY))
+            tankItem.getNbt().put(OPTIONS_KEY, new TankOptions().asNbt());
+        return TankOptions.fromNbt(tankItem.getNbt().getCompound(OPTIONS_KEY));
+    }
+
+    public static TankOptions getOptionsOrDefault(ItemStack tankItem) {
+        if (!tankItem.hasNbt())
+            return new TankOptions();
+
+        if (!tankItem.getNbt().contains(OPTIONS_KEY))
+            return new TankOptions();
+
+        return TankOptions.fromNbt(tankItem.getNbt().getCompound(OPTIONS_KEY));
+    }
+
+    public static void setOptions(ItemStack stack, TankOptions options) {
+        stack.getOrCreateNbt().put(OPTIONS_KEY, options.asNbt());
     }
 
     public static InsertMode getInsertMode(ItemStack tankItem) {
@@ -92,7 +110,7 @@ public class Util {
             return tankItem.type;
 
         if (item instanceof TankLinkItem)
-            return TankType.fromName(stack.getNbt().getString("tankstorage:type"));
+            return TankType.fromName(stack.getNbt().getString(TYPE_KEY));
 
         return null;
     }

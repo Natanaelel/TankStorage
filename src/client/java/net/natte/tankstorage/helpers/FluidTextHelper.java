@@ -4,7 +4,7 @@
  * Thanks!
  */
 
-package net.natte.tankstorage.rendering;
+package net.natte.tankstorage.helpers;
 
 import com.google.common.math.LongMath;
 import net.minecraft.fluid.Fluid;

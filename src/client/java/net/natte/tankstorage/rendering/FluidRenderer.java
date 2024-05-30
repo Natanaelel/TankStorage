@@ -47,6 +47,7 @@ public class FluidRenderer {
         float g = ((color >> 8) & 255) / 256f;
         float b = (color & 255) / 256f;
         RenderSystem.disableDepthTest();
+        RenderSystem.disableBlend();
 
         RenderSystem.setShader(GameRenderer::getPositionColorTexProgram);
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();

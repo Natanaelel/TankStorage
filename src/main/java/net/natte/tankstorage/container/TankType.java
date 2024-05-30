@@ -2,6 +2,7 @@ package net.natte.tankstorage.container;
 
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.registry.Registries;
@@ -40,11 +41,15 @@ public class TankType {
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
 
         FluidStorage.ITEM.registerForItems((itemStack, context) -> {
+            System.out.println("ITEM lookup for " + itemStack);
+            System.out.println(FabricLoader.getInstance().getEnvironmentType());
+            System.out.println(Thread.currentThread().getName());
+            
             if (!Util.hasUUID(itemStack))
                 return null;
             // TODO: single slot fluidstorage of selectedslot?
-            return Util.getFluidStorage(itemStack).getFluidStorage(InsertMode.ALL);
-        }, new ItemConvertible[] { this.item });
+            return Util.getFluidStorage(itemStack).getFluidStorage(Util.getInsertMode(itemStack));
+        }, this.item);
 
     }
 

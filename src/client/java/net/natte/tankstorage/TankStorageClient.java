@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
@@ -24,6 +25,7 @@ import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.packetreceivers.SyncFluidPacketReceiver;
 import net.natte.tankstorage.packetreceivers.TankPacketReceiver;
+import net.natte.tankstorage.rendering.HudRenderer;
 import net.natte.tankstorage.rendering.TankDockBlockEntityRenderer;
 import net.natte.tankstorage.screen.TankScreen;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
@@ -34,6 +36,8 @@ public class TankStorageClient implements ClientModInitializer {
 
 	public static final KeyBinding lockSlotKeyBinding = new KeyBinding("key.tankstorage.lockslot",
 			GLFW.GLFW_KEY_LEFT_ALT, "category.tankstorage");
+
+	private static final HudRenderer tankHudRenderer = new HudRenderer();
 
 	static {
 		Util.isShiftDown = () -> Screen.hasShiftDown();
@@ -63,6 +67,8 @@ public class TankStorageClient implements ClientModInitializer {
 
 	private void registerRenderers() {
 		BlockEntityRendererFactories.register(TankStorage.TANK_DOCK_BLOCK_ENTITY, TankDockBlockEntityRenderer::new);
+
+		HudRenderCallback.EVENT.register(tankHudRenderer::render);
 	}
 
 	private void registerNetworkListeners() {
@@ -84,18 +90,18 @@ public class TankStorageClient implements ClientModInitializer {
 
 	private void registerTickEvents() {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			tankHudRenderer.tick(client);
 			ClientTankCache.advanceThrottledQueue();
 			sendQueuedRequests();
 		});
 	}
 
-	
 	private void registerEvents() {
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			ClientTankCache.clear();
+			tankHudRenderer.reset();
 		});
 	}
-
 
 	private void sendQueuedRequests() {
 		Set<UUID> requestQueue = ClientTankCache.getQueue();

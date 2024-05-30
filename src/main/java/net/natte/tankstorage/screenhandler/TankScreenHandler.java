@@ -104,8 +104,13 @@ public class TankScreenHandler extends ScreenHandler {
         }
     }
 
+    public ScreenHandlerContext getContext(){
+        return context;
+    }
+
     // when shift clicking on an item containing fluids, try to insert that fluid
     // into max 1 fluid slot
+    // TODO: if fluid empty: move between hotbar and player inventory
     @Override
     public ItemStack quickMove(PlayerEntity playerEntity, int slotIndex) {
 
