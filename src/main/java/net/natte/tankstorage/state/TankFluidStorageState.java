@@ -139,7 +139,7 @@ public class TankFluidStorageState {
         List<FluidSlotData> fluids = new ArrayList<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
             if (part.getAmount() > 0)
-                fluids.add(new FluidSlotData(part.getResource(), part.getAmount(), part.isLocked()));
+                fluids.add(new FluidSlotData(part.getResource(), this.type.getCapacity(), part.getAmount(), part.isLocked()));
         }
         return fluids;
     }

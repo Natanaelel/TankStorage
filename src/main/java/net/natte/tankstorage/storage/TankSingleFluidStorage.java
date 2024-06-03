@@ -6,8 +6,9 @@ import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.fabricmc.loader.api.FabricLoader;
+import net.natte.tankstorage.util.FluidSlotData;
 
-public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
+public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlotData>
         implements SingleSlotStorage<FluidVariant> {
 
     private long capacity;
@@ -16,7 +17,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
     private boolean isLocked;
 
     private Runnable onMarkDirty;
-    private Runnable changeListener;
 
     public TankSingleFluidStorage(long capacity, long amount, FluidVariant fluidVariant, boolean isLocked) {
         this.capacity = capacity;
@@ -33,10 +33,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
         this.onMarkDirty = listener;
     }
 
-    public void setListener(Runnable listener) {
-        this.changeListener = listener;
-    }
-
     public TankSingleFluidStorage update(long amount, FluidVariant fluidVariant, boolean isLocked) {
         this.amount = amount;
         this.fluidVariant = fluidVariant;
@@ -46,7 +42,8 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
 
     @Override
     public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankSingleFluidStorage insert " + FabricLoader.getInstance().getEnvironmentType() + " " + insertedVariant + " " + maxAmount / FluidConstants.BUCKET);
+        System.out.println("TankSingleFluidStorage insert " + FabricLoader.getInstance().getEnvironmentType() + " "
+                + insertedVariant + " " + maxAmount / FluidConstants.BUCKET);
         if (!canInsert(insertedVariant))
             return 0;
 
@@ -65,7 +62,8 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
 
     @Override
     public long extract(FluidVariant extractedVariant, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankSingleFluidStorage extract " + FabricLoader.getInstance().getEnvironmentType() + " " + extractedVariant + " " + maxAmount / FluidConstants.BUCKET);
+        System.out.println("TankSingleFluidStorage extract " + FabricLoader.getInstance().getEnvironmentType() + " "
+                + extractedVariant + " " + maxAmount / FluidConstants.BUCKET);
 
         if (!canExtract(extractedVariant))
             return 0;
@@ -121,12 +119,12 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
     }
 
     @Override
-    protected FluidSlotData createSnapshot() {
-        return new FluidSlotData(fluidVariant, amount);
+    protected VariableFluidSlotData createSnapshot() {
+        return new VariableFluidSlotData(fluidVariant, amount);
     }
 
     @Override
-    protected void readSnapshot(FluidSlotData snapshot) {
+    protected void readSnapshot(VariableFluidSlotData snapshot) {
         this.fluidVariant = snapshot.fluidVariant();
         this.amount = snapshot.amount();
     }
@@ -140,8 +138,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
         if (this.onMarkDirty != null) {
             this.onMarkDirty.run();
         }
-        if (this.changeListener != null)
-            this.changeListener.run();
     }
 
     public void lock(FluidVariant newFluidVariant, boolean shouldLock) {
@@ -159,8 +155,12 @@ public class TankSingleFluidStorage extends SnapshotParticipant<FluidSlotData>
         }
     }
 
+    public static TankSingleFluidStorage from(FluidSlotData fluidSlotData) {
+        return new TankSingleFluidStorage(fluidSlotData.capacity(), fluidSlotData.amount(),
+                fluidSlotData.fluidVariant(), fluidSlotData.isLocked());
+    }
 }
 
 // what can change during a transaction
-record FluidSlotData(FluidVariant fluidVariant, long amount) {
+record VariableFluidSlotData(FluidVariant fluidVariant, long amount) {
 }

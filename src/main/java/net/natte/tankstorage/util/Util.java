@@ -15,6 +15,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.natte.tankstorage.TankStorage;
+import net.natte.tankstorage.cache.CachedFluidStorageState;
+import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankItem;
 import net.natte.tankstorage.item.TankLinkItem;
@@ -143,6 +145,27 @@ public class Util {
         if (tank == null)
             return;
         tank.sync(player);
+    }
+
+    @Nullable
+    public static Storage<FluidVariant> getFluidStorageFromItemContext(ItemStack itemStack,
+            ContainerItemContext containerItemContext) {
+
+        if (!Util.hasUUID(itemStack))
+            return null;
+
+        InsertMode insertMode = Util.getInsertMode(itemStack);
+
+        boolean isClient = Thread.currentThread().getName().equals("Render thread");
+
+        if (isClient) {
+            CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
+            if (cached == null)
+                return null;
+            return cached.getFluidStorage(insertMode);
+        } else {
+            return getFluidStorage(itemStack).getFluidStorage(insertMode);
+        }
     }
 
 }

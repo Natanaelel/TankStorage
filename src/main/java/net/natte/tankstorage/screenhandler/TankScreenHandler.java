@@ -20,6 +20,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
@@ -63,8 +64,7 @@ public class TankScreenHandler extends ScreenHandler {
             this.trackedFluids = new ArrayList<>(this.tankType.size());
             for (int i = 0; i < this.tankType.size(); ++i) {
                 TankSingleFluidStorage tankSingleFluidStorage = this.fluidStorage.getSingleFluidStorage(i);
-                this.trackedFluids.add(new FluidSlotData(tankSingleFluidStorage.getResource(),
-                        tankSingleFluidStorage.getAmount(), tankSingleFluidStorage.isLocked()));
+                this.trackedFluids.add(FluidSlotData.from(tankSingleFluidStorage));
             }
         }
 
@@ -104,7 +104,7 @@ public class TankScreenHandler extends ScreenHandler {
         }
     }
 
-    public ScreenHandlerContext getContext(){
+    public ScreenHandlerContext getContext() {
         return context;
     }
 
@@ -157,7 +157,7 @@ public class TankScreenHandler extends ScreenHandler {
 
         // if (slotIndex < 0)
         // return;
-
+        playerEntity.sendMessage(Text.of("click " + actionType));
         Slot slot = slotIndex >= 0 ? this.slots.get(slotIndex) : null;
 
         // cannot move opened TankItem with numbers
@@ -175,7 +175,7 @@ public class TankScreenHandler extends ScreenHandler {
         if (slotIndex < 0)
             return;
 
-        if (actionType != SlotActionType.PICKUP)
+        if (actionType != SlotActionType.PICKUP && actionType != SlotActionType.PICKUP_ALL)
             return;
 
         World world = playerEntity.getWorld();
@@ -195,6 +195,7 @@ public class TankScreenHandler extends ScreenHandler {
 
         if (button == 1) {
             // insert into tank from cursor
+            playerEntity.sendMessage(Text.of("right click"));
             if (!cursorFluidStorage.supportsExtraction())
                 return;
 
@@ -225,8 +226,10 @@ public class TankScreenHandler extends ScreenHandler {
             }
         } else {
             // extract from tank into cursor
+            playerEntity.sendMessage(Text.of("left click"));
             if (!cursorFluidStorage.supportsInsertion())
                 return;
+
 
             try (Transaction transaction = Transaction.openOuter()) {
                 // for (StorageView<FluidVariant> cursorFluidView : cursorFluidStorage) {
@@ -235,7 +238,8 @@ public class TankScreenHandler extends ScreenHandler {
                     return;
 
                 long maxAmount = slotFluidStorage.getAmount();
-
+                if (cursorFluidStorage instanceof TankFluidStorage tankFluidStorage)
+                    maxAmount = Math.min(maxAmount, tankFluidStorage.getSingleFluidStorage(0).getCapacity());
                 long inserted = cursorFluidStorage.insert(fluidVariant, maxAmount, transaction);
                 long extracted = slotFluidStorage.extract(fluidVariant, inserted, transaction);
 
@@ -339,11 +343,9 @@ public class TankScreenHandler extends ScreenHandler {
     // called only on server
     private void syncFluidState(int slot, ServerPlayerEntity player) {
         TankSingleFluidStorage singleFluidStorage = this.fluidStorage.getSingleFluidStorage(slot);
-        this.trackedFluids.set(slot, new FluidSlotData(singleFluidStorage.getResource(), singleFluidStorage.getAmount(),
-                singleFluidStorage.isLocked()));
+        this.trackedFluids.set(slot, FluidSlotData.from(singleFluidStorage));
         ServerPlayNetworking.send(player,
-                new SyncFluidPacketS2C(this.syncId, slot, new FluidSlotData(singleFluidStorage.getResource(),
-                        singleFluidStorage.getAmount(), singleFluidStorage.isLocked())));
+                new SyncFluidPacketS2C(this.syncId, slot, FluidSlotData.from(singleFluidStorage)));
 
     }
 

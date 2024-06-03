@@ -5,12 +5,9 @@ import java.util.Optional;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidDrainable;
 import net.minecraft.client.item.TooltipData;
@@ -18,19 +15,19 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.item.BucketItem;
+import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsage;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerContext;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
+import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
@@ -44,15 +41,11 @@ import net.minecraft.world.RaycastContext.FluidHandling;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
-import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
 import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
-import net.natte.tankstorage.state.TankStateManager;
-import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
-import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
 
@@ -102,7 +95,7 @@ public class TankFunctionality extends Item {
         if (!Util.hasUUID(stack))
             return Optional.empty();
 
-        CachedFluidStorageState tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 2 * 20);
+        CachedFluidStorageState tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 1 * 20);
 
         if (tank == null)
             return Optional.empty();
@@ -223,5 +216,21 @@ player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" 
         }
 
         return false;
+    }
+
+    @Override
+    public boolean onClicked(ItemStack stack, ItemStack otherStack, Slot slot, ClickType clickType, PlayerEntity player,
+            StackReference cursorStackReference) {
+        // TODO Auto-generated method stub
+        player.getWorld().addParticle(ParticleTypes.HAPPY_VILLAGER, player.getX() + 2, player.getY() + 2, player.getZ(), 0.0, 0.0, 0.0);
+        player.sendMessage(Text.of("onclicked " + player));
+        return super.onClicked(stack, otherStack, slot, clickType, player, cursorStackReference);
+    }
+
+    @Override
+    public boolean onStackClicked(ItemStack stack, Slot slot, ClickType clickType, PlayerEntity player) {
+        // TODO Auto-generated method stub
+        player.sendMessage(Text.of("onstackclicked " + player));
+        return super.onStackClicked(stack, slot, clickType, player);
     }
 }

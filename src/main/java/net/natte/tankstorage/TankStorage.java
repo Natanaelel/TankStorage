@@ -101,7 +101,8 @@ public class TankStorage implements ModInitializer {
 	private void registerNetworkListeners() {
 		ServerPlayNetworking.registerGlobalReceiver(LockSlotPacketC2S.PACKET_TYPE, LockSlotPacketC2S::receive);
 		ServerPlayNetworking.registerGlobalReceiver(RequestTankPacketC2S.PACKET_TYPE, RequestTankPacketC2S::receive);
-		ServerPlayNetworking.registerGlobalReceiver(UpdateTankOptionsPacketC2S.PACKET_TYPE, UpdateTankOptionsPacketC2S::receive);
+		ServerPlayNetworking.registerGlobalReceiver(UpdateTankOptionsPacketC2S.PACKET_TYPE,
+				UpdateTankOptionsPacketC2S::receive);
 	}
 
 	private void registerEventListeners() {
