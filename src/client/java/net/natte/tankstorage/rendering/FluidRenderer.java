@@ -85,7 +85,8 @@ public class FluidRenderer {
         int yOffset = y + 18 - 2;
         MinecraftClient client = MinecraftClient.getInstance();
         int guiScale = (int) client.getWindow().getScaleFactor();
-        float scale = guiScale == 1 ? 0.5f : (guiScale - 1) / (float) guiScale;
+        // float scale = guiScale == 1 ? 0.5f : (guiScale - 1) / (float) guiScale;
+        float scale = guiScale == 1 ? 0.5f : (int) (guiScale * 0.7f) / (float) guiScale;
         MatrixStack matrices = context.getMatrices();
         matrices.push();
         matrices.translate(xOffset, yOffset, 0);

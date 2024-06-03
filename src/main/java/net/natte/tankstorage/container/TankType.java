@@ -37,7 +37,7 @@ public class TankType {
                 TankScreenHandlerFactory::createClientScreenHandler);
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
 
-        // TODO: single slot fluidstorage of selectedslot?
+        // TODO: single slot fluidstorage of selectedslot? nah
         FluidStorage.ITEM.registerForItems(Util::getFluidStorageFromItemContext, this.item);
 
     }

@@ -11,13 +11,14 @@ public class SyncFluidPacketReceiver implements PlayPacketHandler<SyncFluidPacke
 
     @Override
     public void receive(SyncFluidPacketS2C packet, ClientPlayerEntity player, PacketSender responseSender) {
+        System.out.println("update slot start " + packet.slot());
 
         ScreenHandler screenHandler = player.currentScreenHandler;
         if (packet.syncId() != screenHandler.syncId)
             return;
         if (!(screenHandler instanceof TankScreenHandler tankScreenHandler))
             return;
-
+        System.out.println("update slot " + packet.slot());
         tankScreenHandler.updateFluidSlot(packet.slot(), packet.fluidSlotData());
     }
 

@@ -121,10 +121,6 @@ public class TankScreenHandler extends ScreenHandler {
         ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerSlot(playerEntity,
                 PlayerInventoryStorage.of(playerEntity).getSlot(slot.getIndex()));
 
-        World world = playerEntity.getWorld();
-        if (world.isClient)
-            return ItemStack.EMPTY;
-
         Storage<FluidVariant> stackFluidStorage = containerItemContext.find(FluidStorage.ITEM);
 
         FluidVariant insertedFluidVariant = this.fluidStorage.quickInsert(stackFluidStorage);
@@ -133,11 +129,42 @@ public class TankScreenHandler extends ScreenHandler {
             playerEntity.playSound(FluidVariantAttributes.getEmptySound(insertedFluidVariant), SoundCategory.BLOCKS, 1,
                     1);
             // update client cache for tooltip contents if other is another tank
-            this.tank.sync(player);
-            Util.trySync(slot.getStack(), player);
-        }
+            if (!playerEntity.getWorld().isClient()) {
+                System.out.println("1 try sync");
+                this.tank.sync(player);
+                Util.trySync(slot.getStack(), player);
+                // force sync all fluid slots
+                for (int i = 0; i < this.trackedFluids.size(); ++i)
+                    syncFluidState(i, this.player);
 
-        return ItemStack.EMPTY;
+            }
+            return ItemStack.EMPTY;
+        } else {
+            // if no fluids moved, normal quickMove
+            ItemStack newStack = ItemStack.EMPTY;
+            if (slot != null && slot.hasStack()) {
+                ItemStack originalStack = slot.getStack();
+                newStack = originalStack.copy();
+                if (slotIndex < this.tankType.size())
+                    return ItemStack.EMPTY;
+                if (slotIndex < this.slots.size() - 9) {
+                    if (!this.insertItem(originalStack, this.slots.size() - 9, this.slots.size(), false)) {
+                        return ItemStack.EMPTY;
+                    }
+                } else if (!this.insertItem(originalStack, this.tankType.size(), this.slots.size() - 9, false)) {
+                    return ItemStack.EMPTY;
+                }
+
+                if (originalStack.isEmpty()) {
+                    slot.setStack(ItemStack.EMPTY);
+                } else {
+                    slot.markDirty();
+                }
+            }
+
+            return newStack;
+            // return super.quickMove(playerEntity, slotIndex);
+        }
 
     }
 
@@ -229,7 +256,6 @@ public class TankScreenHandler extends ScreenHandler {
             playerEntity.sendMessage(Text.of("left click"));
             if (!cursorFluidStorage.supportsInsertion())
                 return;
-
 
             try (Transaction transaction = Transaction.openOuter()) {
                 // for (StorageView<FluidVariant> cursorFluidView : cursorFluidStorage) {
@@ -366,11 +392,15 @@ public class TankScreenHandler extends ScreenHandler {
     @Override
     public void sendContentUpdates() {
         super.sendContentUpdates();
-
         for (int i = 0; i < this.trackedFluids.size(); ++i) {
             FluidSlotData trackedFluidSlot = this.trackedFluids.get(i);
+            // System.out.println(trackedFluidSlot.fluidVariant().getFluid().getBucketItem().getName());
             if (!trackedFluidSlot.equalsOther(this.fluidStorage.getSingleFluidStorage(i))) {
+
+                System.out.println("update?");
                 syncFluidState(i, this.player);
+            } else {
+                // System.out.print("e");
             }
         }
 

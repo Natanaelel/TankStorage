@@ -27,6 +27,7 @@ public class HudRenderer {
 
     private MinecraftClient client;
 
+    @SuppressWarnings("unused")
     private UUID uuid;
     private CachedFluidStorageState tank;
     private TankOptions options;

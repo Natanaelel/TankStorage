@@ -65,6 +65,7 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
         TankType tankType = TankType.fromName(buf.readString());
         ItemStack tankItem = buf.readItemStack();
         int slot = buf.readInt();
+        // TODO: use cachedfluidstoragestate, maybe create interface
         TankFluidStorageState tank = TankFluidStorageState.readNbt(buf.readNbt());
         
         TankScreenHandler screenHandler = new TankScreenHandler(syncId, playerInventory,
