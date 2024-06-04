@@ -168,4 +168,19 @@ public class Util {
         }
     }
 
+    // assumes storage exists
+    public static Storage<FluidVariant> getFluidStorageServer(ItemStack itemStack) {
+        return getFluidStorage(itemStack).getFluidStorage(getInsertMode(itemStack));
+    }
+
+    public static Storage<FluidVariant> getFluidStorageClient(ItemStack itemStack) {
+        CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
+        if (cached == null)
+            return Storage.empty();
+        return cached.getFluidStorage(getInsertMode(itemStack));
+    }
+
+    public static Storage<FluidVariant> getFluidStorage(ItemStack itemStack, boolean isClient) {
+        return isClient ? getFluidStorageClient(itemStack) : getFluidStorageServer(itemStack);
+    }
 }

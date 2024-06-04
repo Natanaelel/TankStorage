@@ -1,7 +1,7 @@
 - textures
 - recipes
 - bucket mode
-  - scroll to choose fluid or empty bucket
+  - [x] scroll to choose fluid or empty bucket
 - [/] number format
 - [x] [x] works as fluid container item
 - [x] tooltip contents

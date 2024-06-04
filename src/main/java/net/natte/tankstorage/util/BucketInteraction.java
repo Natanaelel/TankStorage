@@ -14,8 +14,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
@@ -27,72 +25,62 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.RaycastContext.FluidHandling;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
-import net.natte.tankstorage.TankStorage;
+import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.item.TankFunctionality;
-import net.natte.tankstorage.item.TankItem;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankOptions;
 
 public class BucketInteraction {
 
-     public static boolean interactFluid(World world, PlayerEntity player, ItemStack stack) {
+    public static boolean interactFluid(World world, PlayerEntity player, ItemStack stack) {
         if (!Util.hasUUID(stack))
             return false;
 
-        TankFluidStorageState tankState;
+        TankFluidStorageState tankState = null;
+        CachedFluidStorageState clientTankState = null;
+        List<FluidSlotData> fluids;
         if (world.isClient) {
-            var cached = ClientTankCache.get(Util.getUUID(stack));
-            if (cached == null){
-                tankState = TankFluidStorageState.create(TankStorage.TANK_TYPES[6], Util.getUUID(stack));
-            }else{
-                var nbt = new NbtCompound();
-
-        nbt.putUuid("uuid", Util.getUUID(stack));
-        nbt.putString("type", ((TankItem)stack.getItem()).type.getName());
-        nbt.putShort("revision", (short)0);
-
-        NbtList fluids = new NbtList();
-                
-        for (var f : cached.getFluids()) {
-            NbtCompound fluidNbt = new NbtCompound();
-            fluidNbt.put("variant", f.fluidVariant().toNbt());
-            fluidNbt.putLong("amount", f.amount());
-            fluidNbt.putBoolean("locked", f.isLocked());
-            fluids.add(fluidNbt);
-        }
-
-        nbt.put("fluids", fluids);
-
-                tankState = TankFluidStorageState.readNbt(nbt);
-            }
+            clientTankState = ClientTankCache.get(Util.getUUID(stack));
+            fluids = clientTankState == null ? List.of() : clientTankState.getFluids();
         } else {
             tankState = Util.getFluidStorage(stack);
+            fluids = tankState.getFluidSlotDatas();
         }
 
         TankOptions options = Util.getOptionsOrDefault(stack);
 
-        List<FluidSlotData> fluids = tankState.getFluidSlotDatas();
         options.selectedSlot = MathHelper.clamp(options.selectedSlot, -1, fluids.size() - 1);
         Util.setOptions(stack, options);
 
+        Storage<FluidVariant> fluidStorage = world.isClient ? clientTankState.getFluidStorage(Util.getInsertMode(stack))
+                : tankState.getFluidStorage(Util.getInsertMode(stack));
+
         if (options.selectedSlot == -1) {
-            return BucketInteraction.pickUpFluid(tankState, world, player, stack);
+            boolean result = BucketInteraction.pickUpFluid(fluidStorage, world, player, stack);
+            if (!world.isClient)
+                tankState.sync((ServerPlayerEntity) player);
+            return result;
         } else {
-            return BucketInteraction.placeFluid(fluids.get(options.selectedSlot).fluidVariant(), tankState, world, player, stack);
+            if (options.selectedSlot >= fluids.size())
+                return false;
+            FluidVariant selectedFluidVariant = fluids.get(options.selectedSlot).fluidVariant();
+            return BucketInteraction.placeFluid(selectedFluidVariant, fluidStorage, world,
+                    player, stack);
         }
-        
+
     }
-    
-    public static boolean placeFluid(FluidVariant fluidVariant, TankFluidStorageState tankState, World world,
+
+    public static boolean placeFluid(FluidVariant fluidVariant, Storage<FluidVariant> fluidStorage, World world,
             PlayerEntity player, ItemStack stack) {
         return false;
     }
 
-    public static boolean pickUpFluid(TankFluidStorageState tankState, World world, PlayerEntity player,
+    public static boolean pickUpFluid(Storage<FluidVariant> fluidStorage, World world, PlayerEntity player,
             ItemStack stack) {
         player.sendMessage(Text.of("try to pick up fluid"));
-        Storage<FluidVariant> fluidStorage = tankState.getFluidStorage(Util.getInsertMode(stack));
+        // Storage<FluidVariant> fluidStorage =
+        // tankState.getFluidStorage(Util.getInsertMode(stack));
 
         BlockHitResult hit = TankFunctionality.raycast(world, player, FluidHandling.SOURCE_ONLY);
 
@@ -138,8 +126,6 @@ public class BucketInteraction {
                 fluidStorage.insert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction);
                 transaction.commit();
             }
-            if (!world.isClient)
-                tankState.sync((ServerPlayerEntity) player);
 
             return true;
         }

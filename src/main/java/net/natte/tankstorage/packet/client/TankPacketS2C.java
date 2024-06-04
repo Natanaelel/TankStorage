@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.networking.v1.FabricPacket;
 import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.network.PacketByteBuf;
 import net.natte.tankstorage.util.FluidSlotData;
-// import net.natte.tankstorage.util.Util;
 import net.natte.tankstorage.util.Util;
 
 public record TankPacketS2C(UUID uuid, int revision, List<FluidSlotData> fluids) implements FabricPacket {
