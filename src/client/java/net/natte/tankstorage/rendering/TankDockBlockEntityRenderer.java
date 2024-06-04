@@ -21,7 +21,9 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
 
         matrixStack.push();
         matrixStack.translate(0.5f, 0.5f, 0.5f);
-        matrixStack.scale(2f, 2f, 2f);
+        // prevent z-fighting
+        float scale = 1f - 0.0001f;
+        matrixStack.scale(scale, scale, scale);
 
         itemRenderer.renderItem(tankDock.getTank(), ModelTransformationMode.FIXED,
                 light, overlay, matrixStack, vertexConsumers, null, 0);

@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.minecraft.block.Block;
 import net.minecraft.block.MapColor;
+import net.minecraft.block.cauldron.CauldronBehavior;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -46,7 +47,7 @@ public class TankStorage implements ModInitializer {
 
 	public static final TankType[] TANK_TYPES = { TANK_1, TANK_2, TANK_3, TANK_4, TANK_5, TANK_6, TANK_7 };
 
-	private static final Item TANK_LINK_ITEM = new TankLinkItem(new Item.Settings().maxCount(1));
+	public static final Item TANK_LINK_ITEM = new TankLinkItem(new Item.Settings().maxCount(1));
 
 	private static final Block TANK_DOCK_BLOCK = new TankDockBlock(
 			FabricBlockSettings.create()
@@ -85,6 +86,7 @@ public class TankStorage implements ModInitializer {
 
 	private void registerLink() {
 		Registry.register(Registries.ITEM, Util.ID("tank_link"), TANK_LINK_ITEM);
+		CauldronBehavior.WATER_CAULDRON_BEHAVIOR.put(TANK_LINK_ITEM, CauldronBehavior.CLEAN_DYEABLE_ITEM);
 	}
 
 	private void registerDock() {

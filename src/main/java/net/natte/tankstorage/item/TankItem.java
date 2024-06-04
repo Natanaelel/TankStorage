@@ -1,8 +1,9 @@
 package net.natte.tankstorage.item;
 
+import net.minecraft.item.DyeableItem;
 import net.natte.tankstorage.container.TankType;
 
-public class TankItem extends TankFunctionality {
+public class TankItem extends TankFunctionality implements DyeableItem {
 
     public final TankType type;
 
