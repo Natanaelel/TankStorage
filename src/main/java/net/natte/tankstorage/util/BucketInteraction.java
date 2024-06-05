@@ -1,7 +1,5 @@
 package net.natte.tankstorage.util;
 
-import java.util.List;
-
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
@@ -9,10 +7,12 @@ import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidDrainable;
+import net.minecraft.block.FluidFillable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
@@ -21,15 +21,13 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult.Type;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.RaycastContext.FluidHandling;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
-import net.natte.tankstorage.cache.CachedFluidStorageState;
-import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.item.TankFunctionality;
 import net.natte.tankstorage.state.TankFluidStorageState;
-import net.natte.tankstorage.storage.TankOptions;
+import net.natte.tankstorage.storage.TankInteractionMode;
 
 public class BucketInteraction {
 
@@ -37,43 +35,95 @@ public class BucketInteraction {
         if (!Util.hasUUID(stack))
             return false;
 
+        assert Util.getOptionsOrDefault(stack).interactionMode == TankInteractionMode.BUCKET
+                : "cannot interact with fluids in world if not in bucket mode";
+
         TankFluidStorageState tankState = null;
-        CachedFluidStorageState clientTankState = null;
-        List<FluidSlotData> fluids;
-        if (world.isClient) {
-            clientTankState = ClientTankCache.get(Util.getUUID(stack));
-            fluids = clientTankState == null ? List.of() : clientTankState.getFluids();
-        } else {
+        if (!world.isClient)
             tankState = Util.getFluidStorage(stack);
-            fluids = tankState.getFluidSlotDatas();
-        }
 
-        TankOptions options = Util.getOptionsOrDefault(stack);
+        Storage<FluidVariant> fluidStorage = Util.getFluidStorageFromItem(stack);
 
-        options.selectedSlot = MathHelper.clamp(options.selectedSlot, -1, fluids.size() - 1);
-        Util.setOptions(stack, options);
+        FluidVariant selectedFluid = Util.getSelectedFluid(stack);
 
-        Storage<FluidVariant> fluidStorage = world.isClient ? clientTankState.getFluidStorage(Util.getInsertMode(stack))
-                : tankState.getFluidStorage(Util.getInsertMode(stack));
+        if (selectedFluid == null) {
 
-        if (options.selectedSlot == -1) {
+            if (world.isClient)
+                player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
+
             boolean result = BucketInteraction.pickUpFluid(fluidStorage, world, player, stack);
-            if (!world.isClient)
+            if (result && !world.isClient) {
                 tankState.sync((ServerPlayerEntity) player);
+                Util.clampSelectedSlotServer(stack);
+            }
             return result;
         } else {
-            if (options.selectedSlot >= fluids.size())
-                return false;
-            FluidVariant selectedFluidVariant = fluids.get(options.selectedSlot).fluidVariant();
-            return BucketInteraction.placeFluid(selectedFluidVariant, fluidStorage, world,
+            if (world.isClient)
+                player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
+            boolean result = BucketInteraction.placeFluid(selectedFluid, fluidStorage, world,
                     player, stack);
+            if (result && !world.isClient) {
+                tankState.sync((ServerPlayerEntity) player);
+                Util.clampSelectedSlotServer(stack);
+            }
+            return result;
         }
 
     }
 
     public static boolean placeFluid(FluidVariant fluidVariant, Storage<FluidVariant> fluidStorage, World world,
             PlayerEntity player, ItemStack stack) {
-        return false;
+        player.sendMessage(Text.of("try to place fluid"));
+
+        assert !fluidVariant.isBlank() : "cannot place blank fluid";
+
+        Fluid fluid = fluidVariant.getFluid();
+        BlockHitResult hit = TankFunctionality.raycast(world, player, RaycastContext.FluidHandling.NONE);
+
+        if (hit.getType() == Type.MISS) {
+            player.sendMessage(Text.of("miss"));
+            return false;
+        }
+
+        if (hit.getType() != Type.BLOCK) {
+            player.sendMessage(Text.of("not block"));
+            return false;
+        }
+        /* BucketItem */
+
+        BlockPos blockPos = hit.getBlockPos();
+
+        Direction direction = hit.getSide();
+        BlockPos blockPos2 = blockPos.offset(direction);
+
+        BlockState blockState = world.getBlockState(blockPos);
+
+        long extractedSimulated = StorageUtil.simulateExtract(fluidStorage, FluidVariant.of(fluid),
+                FluidConstants.BUCKET, null);
+        player.sendMessage(Text.of("" + extractedSimulated));
+        boolean canInsertFluid = extractedSimulated == FluidConstants.BUCKET;
+        if (!canInsertFluid) {
+            player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
+            return false;
+        }
+
+        BlockPos blockPos3 = blockState.getBlock() instanceof FluidFillable && fluid == Fluids.WATER ? blockPos
+                : blockPos2;
+
+        if (!(fluidVariant.getFluid().getBucketItem() instanceof BucketItem bucketItem))
+            return false;
+
+        boolean didPlaceFluid = bucketItem.placeFluid(player, world, blockPos3, hit);
+
+        if (didPlaceFluid) {
+            try (Transaction transaction = Transaction.openOuter()) {
+                fluidStorage.extract(fluidVariant, FluidConstants.BUCKET, transaction);
+                transaction.commit();
+            }
+        }
+
+        return didPlaceFluid;
+
     }
 
     public static boolean pickUpFluid(Storage<FluidVariant> fluidStorage, World world, PlayerEntity player,
@@ -92,8 +142,8 @@ public class BucketInteraction {
         if (hit.getType() != Type.BLOCK) {
             player.sendMessage(Text.of("not block"));
             return false;
-
         }
+
         BlockPos blockPos = hit.getBlockPos();
         Direction direction = hit.getSide();
         BlockPos blockPos2 = blockPos.offset(direction);
@@ -109,7 +159,8 @@ public class BucketInteraction {
         }
         long insertedSimulated = StorageUtil.simulateInsert(fluidStorage, FluidVariant.of(fluid), FluidConstants.BUCKET,
                 null);
-        player.sendMessage(Text.of("" + insertedSimulated));
+        // player.sendMessage(Text.of("" + insertedSimulated));
+        player.sendMessage(Text.of(fluid + " " + insertedSimulated));
         boolean canInsertFluid = insertedSimulated == FluidConstants.BUCKET;
         if (!canInsertFluid) {
             player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
@@ -119,13 +170,14 @@ public class BucketInteraction {
         BlockState blockState = world.getBlockState(blockPos);
         if (blockState.getBlock() instanceof FluidDrainable fluidDrainable
                 && !fluidDrainable.tryDrainFluid(world, blockPos, blockState).isEmpty()) {
-            fluidDrainable.getBucketFillSound().ifPresent(sound -> player.playSound((SoundEvent) sound, 1.0f, 1.0f));
-            // TODO: proper sound? maybe world.playsound or something
-            world.emitGameEvent((Entity) player, GameEvent.FLUID_PICKUP, blockPos);
+
             try (Transaction transaction = Transaction.openOuter()) {
                 fluidStorage.insert(FluidVariant.of(fluid), FluidConstants.BUCKET, transaction);
                 transaction.commit();
             }
+
+            fluidDrainable.getBucketFillSound().ifPresent(sound -> player.playSound((SoundEvent) sound, 1.0f, 1.0f));
+            world.emitGameEvent((Entity) player, GameEvent.FLUID_PICKUP, blockPos);
 
             return true;
         }

@@ -39,8 +39,6 @@ public class TankType {
                 TankScreenHandlerFactory::createClientScreenHandler);
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
 
-        // TODO: single slot fluidstorage of selectedslot? nah
-        // depends if bucket mode
         FluidStorage.ITEM.registerForItems(Util::getFluidStorageFromItemContext, this.item);
 
     }

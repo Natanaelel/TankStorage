@@ -1,5 +1,6 @@
 package net.natte.tankstorage.util;
 
+import java.util.List;
 import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -24,6 +26,7 @@ import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.state.TankPersistentState;
 import net.natte.tankstorage.state.TankStateManager;
 import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
 
 public class Util {
@@ -105,6 +108,17 @@ public class Util {
         return getOrCreateOptions(tankItem).insertMode;
     }
 
+    public static int getSelectedSlot(ItemStack itemStack) {
+        return getOptionsOrDefault(itemStack).selectedSlot;
+    }
+
+    public static int clampSelectedSlot(ItemStack itemStack, int max) {
+        TankOptions options = getOrCreateOptions(itemStack);
+        options.selectedSlot = Math.min(options.selectedSlot, max);
+        setOptions(itemStack, options);
+        return options.selectedSlot;
+    }
+
     private static TankType getType(ItemStack stack) {
         Item item = stack.getItem();
 
@@ -147,6 +161,7 @@ public class Util {
         tank.sync(player);
     }
 
+    // if in bucketmode: only allow extraction of selected fluid
     @Nullable
     public static Storage<FluidVariant> getFluidStorageFromItemContext(ItemStack itemStack,
             ContainerItemContext containerItemContext) {
@@ -154,7 +169,10 @@ public class Util {
         if (!Util.hasUUID(itemStack))
             return null;
 
-        InsertMode insertMode = Util.getInsertMode(itemStack);
+        TankOptions options = Util.getOrCreateOptions(itemStack);
+        InsertMode insertMode = options.insertMode;
+        int selectedslot = options.selectedSlot;
+        TankInteractionMode interactionMode = options.interactionMode;
 
         boolean isClient = Thread.currentThread().getName().equals("Render thread");
 
@@ -162,9 +180,69 @@ public class Util {
             CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
             if (cached == null)
                 return null;
+
+            if (interactionMode == TankInteractionMode.BUCKET) {
+                if (selectedslot == -1) {
+                    return FilteringStorage.insertOnlyOf(cached.getFluidStorage(insertMode));
+                } else {
+                    selectedslot = Math.min(selectedslot, cached.getNonEmptyFluids().size() - 1);
+                    FluidVariant selectedFluid = selectedslot == -1 ? FluidVariant.blank()
+                            : cached.getNonEmptyFluids().get(selectedslot).fluidVariant();
+                    return FluidStorageUtil.filteredExtraction(cached.getFluidStorage(insertMode), selectedFluid);
+                }
+            }
+
             return cached.getFluidStorage(insertMode);
         } else {
-            return getFluidStorage(itemStack).getFluidStorage(insertMode);
+            TankFluidStorageState tank = getFluidStorage(itemStack);
+
+            if (interactionMode == TankInteractionMode.BUCKET) {
+                if (selectedslot == -1) {
+                    return FilteringStorage.insertOnlyOf(tank.getFluidStorage(insertMode));
+                } else {
+                    List<FluidSlotData> fluids = tank.getNonEmptyFluids();
+                    selectedslot = clampSelectedSlot(itemStack, fluids.size() - 1);
+                    FluidVariant selectedFluid = selectedslot == -1 ? FluidVariant.blank()
+                            : fluids.get(selectedslot).fluidVariant();
+                    return FluidStorageUtil.filteredExtraction(tank.getFluidStorage(insertMode), selectedFluid);
+                }
+            }
+            return tank.getFluidStorage(insertMode);
+        }
+    }
+
+    @Nullable
+    public static Storage<FluidVariant> getFluidStorageFromItem(ItemStack itemStack) {
+        return getFluidStorageFromItemContext(itemStack, ContainerItemContext.withConstant(itemStack));
+
+    }
+
+    @Nullable
+    public static FluidVariant getSelectedFluid(ItemStack itemStack) {
+
+        if (!Util.hasUUID(itemStack))
+            return null;
+
+        TankOptions options = Util.getOrCreateOptions(itemStack);
+        int selectedslot = options.selectedSlot;
+        boolean isClient = Thread.currentThread().getName().equals("Render thread");
+
+        if (isClient) {
+            CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
+            if (cached == null)
+                return null;
+
+            selectedslot = Math.min(selectedslot, cached.getNonEmptyFluids().size() - 1);
+            return selectedslot == -1 ? null
+                    : cached.getNonEmptyFluids().get(selectedslot).fluidVariant();
+
+        } else {
+            TankFluidStorageState tank = getFluidStorage(itemStack);
+
+            List<FluidSlotData> fluids = tank.getNonEmptyFluids();
+            selectedslot = clampSelectedSlot(itemStack, fluids.size() - 1);
+            return selectedslot == -1 ? null
+                    : fluids.get(selectedslot).fluidVariant();
         }
     }
 
@@ -182,5 +260,10 @@ public class Util {
 
     public static Storage<FluidVariant> getFluidStorage(ItemStack itemStack, boolean isClient) {
         return isClient ? getFluidStorageClient(itemStack) : getFluidStorageServer(itemStack);
+    }
+
+    public static void clampSelectedSlotServer(ItemStack stack) {
+        int max = getFluidStorage(stack).getNonEmptyFluidsSize() - 1;
+        clampSelectedSlot(stack, max);
     }
 }

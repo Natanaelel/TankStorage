@@ -1,5 +1,6 @@
 package net.natte.tankstorage.cache;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ public class CachedFluidStorageState {
     private UUID uuid;
     private int revision;
     private List<FluidSlotData> fluids;
+    private List<FluidSlotData> nonEmptyFluids;
 
     private List<TankSingleFluidStorage> parts;
 
@@ -40,5 +42,16 @@ public class CachedFluidStorageState {
         // don't set mark dirty listener because client should never change contents
         // without the server knowing and doing it too
         return new TankFluidStorage(parts, insertMode);
+    }
+
+    public List<FluidSlotData> getNonEmptyFluids() {
+        if (nonEmptyFluids == null) {
+            nonEmptyFluids = new ArrayList<>();
+            for (FluidSlotData fluidSlotData : fluids)
+                if (fluidSlotData.amount() > 0)
+                    nonEmptyFluids.add(fluidSlotData);
+        }
+
+        return nonEmptyFluids;
     }
 }

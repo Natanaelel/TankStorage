@@ -17,9 +17,11 @@ public class TankTooltipComponent implements TooltipComponent {
     public static final Identifier TEXTURE = Util.ID("/textures/gui/widgets.png");
 
     private final List<FluidSlotData> fluids;
+    private final int selectedSlot;
 
     public TankTooltipComponent(TankTooltipData tooltipData) {
         this.fluids = tooltipData.fluids();
+        this.selectedSlot = tooltipData.selectedSlot();
     }
 
     @Override
@@ -44,6 +46,8 @@ public class TankTooltipComponent implements TooltipComponent {
     public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
         drawBackground(x, y, context);
         drawFluids(textRenderer, x, y, context);
+        if (selectedSlot != -1)
+            drawSlotHighlight(x, y, context);
     }
 
     private void drawBackground(int x, int y, DrawContext context) {
@@ -80,6 +84,14 @@ public class TankTooltipComponent implements TooltipComponent {
         FluidRenderer.drawFluidInGui(context, fluid.fluidVariant(), x + 1, y + 1);
         // fluid count
         FluidRenderer.drawFluidCount(textRenderer, context, fluid.amount(), x + 1, y + 1);
+    }
+
+    private void drawSlotHighlight(int x, int y, DrawContext context) {
+        // System.out.print("d");
+        int xOffset = x + 18 * (selectedSlot % 9) - 1;
+        int yOffset = y + 18 * (selectedSlot / 9) - 1;
+
+        context.drawTexture(TEXTURE, xOffset, yOffset, 25, 23, 22, 22);
     }
 
 }

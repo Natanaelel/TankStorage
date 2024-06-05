@@ -1,6 +1,7 @@
-- textures
+- test
+- [/] textures
 - recipes
-- bucket mode
+- [x] bucket mode
   - [x] scroll to choose fluid or empty bucket
 - [/] number format
 - [x] [x] works as fluid container item

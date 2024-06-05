@@ -78,10 +78,10 @@ public class TankFunctionality extends Item {
         if (tank == null)
             return Optional.empty();
 
-        if (tank.getFluids().isEmpty())
+        if (tank.getNonEmptyFluids().isEmpty())
             return Optional.empty();
 
-        return Optional.of(new TankTooltipData(tank.getFluids()));
+        return Optional.of(new TankTooltipData(tank.getNonEmptyFluids(), Util.getSelectedSlot(stack)));
     }
 
     public static BlockHitResult raycast(World world, PlayerEntity player, RaycastContext.FluidHandling fluidHandling) {

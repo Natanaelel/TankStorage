@@ -79,7 +79,7 @@ public class HudRenderer {
         if (!shouldRender())
             return;
 
-        List<FluidSlotData> fluids = tank.getFluids();
+        List<FluidSlotData> fluids = tank.getNonEmptyFluids();
 
         int scaledHeight = context.getScaledWindowHeight();
         int scaledWidth = context.getScaledWindowWidth();
