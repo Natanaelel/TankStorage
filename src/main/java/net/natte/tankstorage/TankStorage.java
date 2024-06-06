@@ -27,6 +27,8 @@ import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.packet.server.UpdateTankOptionsPacketC2S;
+import net.natte.tankstorage.recipe.TankLinkRecipe;
+import net.natte.tankstorage.recipe.TankRecipe;
 import net.natte.tankstorage.state.TankStateManager;
 import net.natte.tankstorage.util.Util;
 
@@ -68,6 +70,8 @@ public class TankStorage implements ModInitializer {
 		registerLink();
 		registerDock();
 
+		registerRecipes();
+
 		registerNetworkListeners();
 		registerEventListeners();
 	}
@@ -100,6 +104,13 @@ public class TankStorage implements ModInitializer {
 		FluidStorage.SIDED.registerForBlockEntity(
 				(tankDockBlockEntity, direction) -> tankDockBlockEntity.getFluidStorage(), TANK_DOCK_BLOCK_ENTITY);
 
+	}
+
+	private void registerRecipes() {
+		Registry.register(Registries.RECIPE_SERIALIZER, Util.ID("tank_upgrade"),
+				new TankRecipe.Serializer());
+		Registry.register(Registries.RECIPE_SERIALIZER, Util.ID("tank_link"),
+				new TankLinkRecipe.Serializer());
 	}
 
 	private void registerNetworkListeners() {

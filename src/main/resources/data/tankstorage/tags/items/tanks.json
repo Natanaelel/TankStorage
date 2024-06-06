@@ -1,0 +1,13 @@
+{
+  "replace": true,
+  "values": [
+    "tankstorage:tank_1",
+    "tankstorage:tank_2",
+    "tankstorage:tank_3",
+    "tankstorage:tank_4",
+    "tankstorage:tank_5",
+    "tankstorage:tank_6",
+    "tankstorage:tank_7",
+    "tankstorage:tank_link"
+  ]
+}

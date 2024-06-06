@@ -37,7 +37,7 @@ public class Util {
 
     private static final String UUID_KEY = "tankstorage:uuid";
     private static final String OPTIONS_KEY = "tankstorage:options";
-    private static final String TYPE_KEY = "tankstorage:type";
+    public static final String TYPE_KEY = "tankstorage:type";
 
     public static Identifier ID(String id) {
         return new Identifier(TankStorage.MOD_ID, id);
@@ -121,7 +121,7 @@ public class Util {
         return options.selectedSlot;
     }
 
-    private static TankType getType(ItemStack stack) {
+    public static TankType getType(ItemStack stack) {
         Item item = stack.getItem();
 
         if (item instanceof TankItem tankItem)
@@ -130,11 +130,20 @@ public class Util {
         if (item instanceof TankLinkItem)
             return TankType.fromName(stack.getNbt().getString(TYPE_KEY));
 
+        assert false : "getType called on non-tanklike item";
         return null;
+    }
+
+    public static void setType(ItemStack stack, TankType type){
+        stack.getOrCreateNbt().putString(TYPE_KEY, type.getName());
     }
 
     public static boolean isTankLike(ItemStack stack) {
         return stack.getItem() instanceof TankItem || stack.getItem() instanceof TankLinkItem;
+    }
+
+    public static boolean isTank(ItemStack stack) {
+        return stack.getItem() instanceof TankItem;
     }
 
     public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
