@@ -17,9 +17,12 @@ import net.natte.tankstorage.TankStorageClient;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
 import net.natte.tankstorage.helpers.FluidHelper;
+import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.rendering.FluidRenderer;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
 
 public class TankScreen extends HandledScreen<TankScreenHandler> {
@@ -41,6 +44,13 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
     @Override
     protected void init() {
         super.init();
+        TankOptions options = Util.getOrCreateOptions(this.handler.getTankItem());
+        InsertModeOption initialInsertMode = InsertModeOption.from(options.insertMode);
+        // TODO: remove abstraction
+        this.addDrawableChild(
+                new TexturedCyclingButtonWidget<InsertModeOption>(initialInsertMode,
+                        x + titleX + this.backgroundWidth - 31, y + titleY - 4, 14,
+                        14, 14, WIDGETS_TEXTURE, this::onInsertModeButtonPress));
 
     }
 
@@ -49,6 +59,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
         this.renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         this.drawMouseoverTooltip(context, mouseX, mouseY);
+        this.setFocused(null);
     }
 
     @Override
@@ -90,7 +101,8 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
             FluidVariant fluidVariant = fluidSlot.getFluidVariant();
             List<Text> tooltip = new ArrayList<>(
-                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(), fluidSlot.getCapacity()));
+                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(),
+                            fluidSlot.getCapacity()));
 
             tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
                     .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
@@ -132,4 +144,70 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
 
         return super.keyReleased(keyCode, scanCode, modifiers);
     }
+
+    private void onInsertModeButtonPress(TexturedCyclingButtonWidget<InsertModeOption> button) {
+        button.state = switch (button.state) {
+            case ALL -> InsertModeOption.FILTERED;
+            case FILTERED -> InsertModeOption.VOID_OVERFLOW;
+            case VOID_OVERFLOW -> InsertModeOption.ALL;
+        };
+        button.refreshTooltip();
+        ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
+    }
+}
+
+enum InsertModeOption implements CycleableOption {
+    ALL("all", 14, 70),
+    FILTERED("filtered", 28, 70),
+    VOID_OVERFLOW("void_overflow", 42, 70);
+
+    private Text name;
+    private Text info;
+
+    private int uOffset;
+    private int vOffset;
+
+    private InsertModeOption(String name, int uOffset, int vOffset) {
+        this.name = Text.translatable("title.tankstorage.insertmode." + name);
+        this.info = Text.translatable("tooltip.tankstorage.insertmode." + name);
+        this.uOffset = uOffset;
+        this.vOffset = vOffset;
+    }
+
+    public static InsertModeOption from(InsertMode insertMode) {
+        return switch (insertMode) {
+            case ALL -> ALL;
+            case FILTERED -> FILTERED;
+            case VOID_OVERFLOW -> VOID_OVERFLOW;
+        };
+    }
+
+    public InsertMode toInsertMode() {
+        return switch (this) {
+            case ALL -> InsertMode.ALL;
+            case FILTERED -> InsertMode.FILTERED;
+            case VOID_OVERFLOW -> InsertMode.VOID_OVERFLOW;
+        };
+    }
+
+    @Override
+    public Text getName() {
+        return this.name;
+    }
+
+    @Override
+    public Text getInfo() {
+        return this.info;
+    }
+
+    @Override
+    public int uOffset() {
+        return this.uOffset;
+    }
+
+    @Override
+    public int vOffset() {
+        return this.vOffset;
+    }
+
 }

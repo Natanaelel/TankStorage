@@ -1,6 +1,8 @@
 - test
 - [/] textures
+- [x] buttons
 - [x] keybind
+- [ ] link
 - recipes
 - [x] bucket mode
   - [x] scroll to choose fluid or empty bucket
