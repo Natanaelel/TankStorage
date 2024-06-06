@@ -15,6 +15,8 @@
   "popup.tankstorage.interactionmode.bucket": "Bucket Mode",
   "popup.tankstorage.interactionmode.open_screen": "Tank Mode",
 
+  "popup.tankstorage.unlinked": "This Tank Link not linked to a Tank. Craft one to link it instead.",
+
   "popup.tankstorage.insertmode.all": "Insert All",
   "popup.tankstorage.insertmode.filtered": "Insert Filtered",
   "popup.tankstorage.insertmode.void_overflow": "Void Overflow",
@@ -25,6 +27,9 @@
   "tooltip.tankstorage.insertmode.filtered": "Only Fluids already contained can be inserted",
   "title.tankstorage.insertmode.void_overflow": "Void Overflow",
   "tooltip.tankstorage.insertmode.void_overflow": "Overflowing fluids will get voided",
+
+  "tooptip.tankstorage.slotsize": "§7Slot size: %s",
+  "tooptip.tankstorage.numslots": "§7Number of slots: %s",
 
   "category.tankstorage": "Tank Storage",
   "key.tankstorage.lockslot": "Filter Slot",

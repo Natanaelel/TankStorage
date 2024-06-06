@@ -93,6 +93,7 @@ public class TankStorage implements ModInitializer {
 	private void registerLink() {
 		Registry.register(Registries.ITEM, Util.ID("tank_link"), TANK_LINK_ITEM);
 		CauldronBehavior.WATER_CAULDRON_BEHAVIOR.put(TANK_LINK_ITEM, CauldronBehavior.CLEAN_DYEABLE_ITEM);
+		FluidStorage.ITEM.registerForItems(Util::getFluidStorageFromItemContext, TANK_LINK_ITEM);
 	}
 
 	private void registerDock() {

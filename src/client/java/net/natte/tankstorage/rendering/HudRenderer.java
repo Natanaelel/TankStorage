@@ -27,7 +27,6 @@ public class HudRenderer {
 
     private MinecraftClient client;
 
-    @SuppressWarnings("unused")
     private UUID uuid;
     private CachedFluidStorageState tank;
     private TankOptions options;
@@ -45,6 +44,7 @@ public class HudRenderer {
         if (client.player == null)
             return;
 
+        uuid = null;
         tank = null;
         options = null;
 
@@ -53,15 +53,16 @@ public class HudRenderer {
         if (Util.isTankLike(stack = client.player.getMainHandStack()) && Util.hasUUID(stack)) {
             arm = client.player.getMainArm();
             uuid = Util.getUUID(stack);
-            options = Util.getOptionsOrDefault(stack);
         } else if (Util.isTankLike(stack = client.player.getOffHandStack()) && Util.hasUUID(stack)) {
             arm = client.player.getMainArm().getOpposite();
             uuid = Util.getUUID(stack);
-            options = Util.getOptionsOrDefault(stack);
         }
 
-        if (options != null && options.interactionMode == TankInteractionMode.BUCKET)
+        if (uuid != null && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET) {
             tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 2 * 20);
+            Util.clampSelectedSlot(stack, tank.getNonEmptyFluids().size() - 1);
+            options = Util.getOptionsOrDefault(stack);
+        }
 
     }
 

@@ -272,8 +272,9 @@ public class TankScreenHandler extends ScreenHandler {
                     return;
 
                 long maxAmount = slotFluidStorage.getAmount();
-                if (cursorFluidStorage instanceof TankFluidStorage tankFluidStorage)
-                    maxAmount = Math.min(maxAmount, tankFluidStorage.getSingleFluidStorage(0).getCapacity());
+                if (Util.isTankLike(this.getCursorStack()))
+                    maxAmount = Math.min(maxAmount, Util.getType(this.getCursorStack()).getCapacity());
+
                 long inserted = cursorFluidStorage.insert(fluidVariant, maxAmount, transaction);
                 long extracted = slotFluidStorage.extract(fluidVariant, inserted, transaction);
 

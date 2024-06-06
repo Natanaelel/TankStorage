@@ -64,6 +64,10 @@ public class TankFunctionality extends Item {
             return TypedActionResult.success(stack);
 
         TankFluidStorageState tank = Util.getOrCreateFluidStorage(stack);
+        if (tank == null) {
+            player.sendMessage(Text.translatable("popup.tankstorage.unlinked"), true);
+            return TypedActionResult.fail(stack);
+        }
         NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(tank, stack,
                 player.getInventory().selectedSlot,
                 ScreenHandlerContext.EMPTY);
@@ -85,8 +89,10 @@ public class TankFunctionality extends Item {
 
         if (tank.getNonEmptyFluids().isEmpty())
             return Optional.empty();
+        TankInteractionMode interactionMode = Util.getInteractionMode(stack);
 
-        return Optional.of(new TankTooltipData(tank.getNonEmptyFluids(), Util.getSelectedSlot(stack)));
+        int selectedSlot = interactionMode == TankInteractionMode.BUCKET ? Util.getSelectedSlot(stack) : -1;
+        return Optional.of(new TankTooltipData(tank.getNonEmptyFluids(), selectedSlot));
     }
 
     public static BlockHitResult raycast(World world, PlayerEntity player, RaycastContext.FluidHandling fluidHandling) {
@@ -100,11 +106,12 @@ public class TankFunctionality extends Item {
                 tooltip.add(Text.literal(Util.getUUID(stack).toString()).formatted(Formatting.DARK_AQUA));
         }
 
-        TankType type = Util.isTank(stack) ? ((TankItem) stack.getItem()).type : Util.getType(stack);
-
-        Text formattedSlotSize = Text.literal(NUMBER_FORMAT.format(type.getCapacity() / FluidConstants.BUCKET));
-        tooltip.add(Text.translatable("tooptip.tankstorage.slotsize", formattedSlotSize));
-        tooltip.add(Text.translatable("tooptip.tankstorage.numslots", Text.literal(String.valueOf(type.size()))));
+        TankType type = Util.getType(stack);
+        if (type != null) {
+            Text formattedSlotSize = Text.literal(NUMBER_FORMAT.format(type.getCapacity() / FluidConstants.BUCKET));
+            tooltip.add(Text.translatable("tooptip.tankstorage.slotsize", formattedSlotSize));
+            tooltip.add(Text.translatable("tooptip.tankstorage.numslots", Text.literal(String.valueOf(type.size()))));
+        }
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

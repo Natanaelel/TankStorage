@@ -71,6 +71,6 @@ public class MouseEvents {
     }
 
     private static boolean isBucketMode(ItemStack itemStack) {
-        return Util.getOptionsOrDefault(itemStack).interactionMode == TankInteractionMode.BUCKET;
+        return Util.getInteractionMode(itemStack) == TankInteractionMode.BUCKET;
     }
 }

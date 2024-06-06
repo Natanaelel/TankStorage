@@ -2,8 +2,8 @@
 - [/] textures
 - [x] buttons
 - [x] keybind
-- [ ] link
-- recipes
+- [x] link
+- [x] recipes
 - [x] bucket mode
   - [x] scroll to choose fluid or empty bucket
 - [/] number format

@@ -43,8 +43,10 @@ public class Util {
         return new Identifier(TankStorage.MOD_ID, id);
     }
 
-    // call serverside only
+    // call serverside only. returns null if unlinked linkitem
     public static TankFluidStorageState getOrCreateFluidStorage(ItemStack tankItem) {
+        if (isLink(tankItem) && !hasUUID(tankItem))
+            return null;
         if (!hasUUID(tankItem))
             setUUID(tankItem, UUID.randomUUID());
         UUID uuid = getUUID(tankItem);
@@ -127,14 +129,19 @@ public class Util {
         if (item instanceof TankItem tankItem)
             return tankItem.type;
 
-        if (item instanceof TankLinkItem)
+        if (item instanceof TankLinkItem) {
+            if (!stack.hasNbt())
+                return null;
+            if (!stack.getNbt().contains(TYPE_KEY))
+                return null;
             return TankType.fromName(stack.getNbt().getString(TYPE_KEY));
+        }
 
         assert false : "getType called on non-tanklike item";
         return null;
     }
 
-    public static void setType(ItemStack stack, TankType type){
+    public static void setType(ItemStack stack, TankType type) {
         stack.getOrCreateNbt().putString(TYPE_KEY, type.getName());
     }
 
@@ -144,6 +151,10 @@ public class Util {
 
     public static boolean isTank(ItemStack stack) {
         return stack.getItem() instanceof TankItem;
+    }
+
+    public static boolean isLink(ItemStack stack) {
+        return stack.getItem() instanceof TankLinkItem;
     }
 
     public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
@@ -297,5 +308,9 @@ public class Util {
             return player.getOffHandStack();
 
         return null;
+    }
+
+    public static TankInteractionMode getInteractionMode(ItemStack stack) {
+        return getOptionsOrDefault(stack).interactionMode;
     }
 }

@@ -10,6 +10,7 @@ import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
@@ -17,6 +18,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
+import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.util.Util;
 
 public class TankDockBlock extends Block implements BlockEntityProvider {
@@ -63,8 +65,13 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
 
             // open tank screen
             if (!world.isClient) {
+                TankFluidStorageState tank = Util.getOrCreateFluidStorage(tankDock.getTank());
+                if (tank == null) {
+                    player.sendMessage(Text.translatable("popup.tankstorage.unlinked"), true);
+                    return ActionResult.FAIL;
+                }
                 NamedScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
-                        Util.getOrCreateFluidStorage(tankDock.getTank()),
+                        tank,
                         tankDock.getTank(),
                         -1,
                         ScreenHandlerContext.create(world, pos));

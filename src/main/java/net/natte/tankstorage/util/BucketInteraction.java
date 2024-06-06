@@ -35,7 +35,7 @@ public class BucketInteraction {
         if (!Util.hasUUID(stack))
             return false;
 
-        assert Util.getOptionsOrDefault(stack).interactionMode == TankInteractionMode.BUCKET
+        assert Util.getInteractionMode(stack) == TankInteractionMode.BUCKET
                 : "cannot interact with fluids in world if not in bucket mode";
 
         TankFluidStorageState tankState = null;

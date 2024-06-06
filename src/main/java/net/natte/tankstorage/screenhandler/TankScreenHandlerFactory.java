@@ -18,7 +18,7 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
 
     private @Nullable TankFluidStorageState tank;
     private ItemStack tankItem;
-    // which hotbarslot tank is in, or -1
+    // which inventoryslot tank is in, or -1
     private int slot;
     private ScreenHandlerContext screenHandlerContext;
 
