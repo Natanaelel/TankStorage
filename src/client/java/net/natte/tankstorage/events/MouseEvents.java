@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
@@ -52,18 +53,22 @@ public class MouseEvents {
 
     }
 
-    // TODO: add keybind for toggle interaction mode
-    // public static void onToggleBuildMode(PlayerEntity player) {
+    public static void onToggleInteractionMode(PlayerEntity player, ItemStack tankItem) {
 
-    //     // BankOptions options = Util.getOrCreateOptions(stack);
-    //     BankOptions options = BankStorageClient.buildModePreviewRenderer.options;
-    //     options.buildMode = options.buildMode.next();
-    //     ClientPlayNetworking.send(new UpdateBankOptionsPacketC2S(options));
-    //     // Util.setOptions(stack, options);
-    //     player.sendMessage(Text.translatable("popup.bankstorage.buildmode."
-    //             + options.buildMode.toString().toLowerCase()), true);
+        if (tankItem == null)
+            tankItem = Util.getHeldTank(player);
+        if (tankItem == null)
+            return;
 
-    // }
+        TankOptions options = Util.getOrCreateOptions(tankItem);
+        options.interactionMode = options.interactionMode.next();
+
+        ClientPlayNetworking.send(new UpdateTankOptionsPacketC2S(options));
+
+        player.sendMessage(Text.translatable("popup.tankstorage.interactionmode."
+                + options.interactionMode.toString().toLowerCase()), true);
+
+    }
 
     private static boolean isBucketMode(ItemStack itemStack) {
         return Util.getOptionsOrDefault(itemStack).interactionMode == TankInteractionMode.BUCKET;

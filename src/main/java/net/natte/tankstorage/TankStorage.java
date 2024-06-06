@@ -22,7 +22,9 @@ import net.natte.tankstorage.block.TankDockBlock;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankLinkItem;
+import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
+import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.packet.server.UpdateTankOptionsPacketC2S;
 import net.natte.tankstorage.state.TankStateManager;
@@ -105,6 +107,10 @@ public class TankStorage implements ModInitializer {
 		ServerPlayNetworking.registerGlobalReceiver(RequestTankPacketC2S.PACKET_TYPE, RequestTankPacketC2S::receive);
 		ServerPlayNetworking.registerGlobalReceiver(UpdateTankOptionsPacketC2S.PACKET_TYPE,
 				UpdateTankOptionsPacketC2S::receive);
+		ServerPlayNetworking.registerGlobalReceiver(ToggleInsertModePacketC2S.PACKET_TYPE,
+				ToggleInsertModePacketC2S::receive);
+		ServerPlayNetworking.registerGlobalReceiver(OpenTankFromKeyBindPacketC2S.PACKET_TYPE,
+				OpenTankFromKeyBindPacketC2S::receive);
 	}
 
 	private void registerEventListeners() {

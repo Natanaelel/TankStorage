@@ -8,7 +8,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
@@ -39,12 +38,8 @@ public class TankFunctionality extends Item {
         // return TypedActionResult.pass(stack);
 
         if (player.isSneaking()) {
-            TankOptions options = Util.getOptionsOrDefault(stack);
-            options.interactionMode = options.interactionMode == TankInteractionMode.BUCKET
-                    ? TankInteractionMode.OPEN_SCREEN
-                    : TankInteractionMode.BUCKET;
-            Util.setOptions(stack, options);
-            player.sendMessage(Text.of("mode is now " + options.interactionMode));
+            if (!world.isClient)
+                Util.onToggleInteractionMode(player, stack);
             return TypedActionResult.success(stack);
         }
 

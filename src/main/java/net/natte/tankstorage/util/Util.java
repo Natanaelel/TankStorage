@@ -12,9 +12,11 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.FilteringStorage;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
@@ -265,5 +267,26 @@ public class Util {
     public static void clampSelectedSlotServer(ItemStack stack) {
         int max = getFluidStorage(stack).getNonEmptyFluidsSize() - 1;
         clampSelectedSlot(stack, max);
+    }
+
+    public static void onToggleInteractionMode(PlayerEntity player, ItemStack stack) {
+
+        TankOptions options = getOptionsOrDefault(stack);
+        options.interactionMode = options.interactionMode.next();
+        setOptions(stack, options);
+        player.sendMessage(Text.translatable("popup.tankstorage.interactionmode."
+                + options.interactionMode.toString().toLowerCase()), true);
+    }
+
+    @Nullable
+    public static ItemStack getHeldTank(PlayerEntity player) {
+
+        if (isTankLike(player.getMainHandStack()))
+            return player.getMainHandStack();
+
+        if (isTankLike(player.getOffHandStack()))
+            return player.getOffHandStack();
+
+        return null;
     }
 }

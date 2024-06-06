@@ -24,9 +24,12 @@ import net.minecraft.util.Identifier;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
+import net.natte.tankstorage.events.MouseEvents;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
+import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
+import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.packetreceivers.SyncFluidPacketReceiver;
 import net.natte.tankstorage.packetreceivers.TankPacketReceiver;
@@ -39,8 +42,10 @@ import net.natte.tankstorage.util.Util;
 
 public class TankStorageClient implements ClientModInitializer {
 
-	public static final KeyBinding lockSlotKeyBinding = new KeyBinding("key.tankstorage.lockslot",
-			GLFW.GLFW_KEY_LEFT_ALT, "category.tankstorage");
+	public static final KeyBinding lockSlotKeyBinding = ClientUtil.keyBind("lockslot", GLFW.GLFW_KEY_LEFT_ALT);
+	public static final KeyBinding toggleInsertModeKeyBinding = ClientUtil.keyBind("toggleinsertmode");
+	public static final KeyBinding toggleInteractionModeKeyBinding = ClientUtil.keyBind("toggleinteractionmode");
+	public static final KeyBinding openTankFromKeyBinding = ClientUtil.keyBind("opentankfromkeybind");
 
 	private static final HudRenderer tankHudRenderer = new HudRenderer();
 
@@ -57,6 +62,7 @@ public class TankStorageClient implements ClientModInitializer {
 		registerModelPredicates();
 		registerNetworkListeners();
 		registerKeyBinds();
+		registerKeyBindListeners();
 		registerTooltipComponents();
 		registerTickEvents();
 		registerEvents();
@@ -111,6 +117,24 @@ public class TankStorageClient implements ClientModInitializer {
 
 	private void registerKeyBinds() {
 		KeyBindingHelper.registerKeyBinding(lockSlotKeyBinding);
+		KeyBindingHelper.registerKeyBinding(toggleInsertModeKeyBinding);
+		KeyBindingHelper.registerKeyBinding(toggleInteractionModeKeyBinding);
+		KeyBindingHelper.registerKeyBinding(openTankFromKeyBinding);
+
+	}
+
+	private void registerKeyBindListeners() {
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			while (toggleInsertModeKeyBinding.wasPressed())
+				ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
+
+			while (toggleInteractionModeKeyBinding.wasPressed()){
+				MouseEvents.onToggleInteractionMode(client.player, null);
+			}
+
+			while (openTankFromKeyBinding.wasPressed())
+				ClientPlayNetworking.send(new OpenTankFromKeyBindPacketC2S());
+		});
 	}
 
 	private void registerTooltipComponents() {
