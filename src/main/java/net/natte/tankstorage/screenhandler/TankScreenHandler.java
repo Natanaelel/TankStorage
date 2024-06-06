@@ -2,6 +2,7 @@ package net.natte.tankstorage.screenhandler;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -25,6 +26,7 @@ import net.minecraft.world.World;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
+import net.natte.tankstorage.gui.LockedSlot;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankFluidStorage;
@@ -35,9 +37,12 @@ import net.natte.tankstorage.util.Util;
 public class TankScreenHandler extends ScreenHandler {
 
     private ScreenHandlerContext context;
+
+    private ItemStack tankItem;
     private TankType tankType;
     private TankFluidStorageState tank;
     private TankFluidStorage fluidStorage;
+
     private Runnable onChangeListener;
 
     private ServerPlayerEntity player;
@@ -49,6 +54,7 @@ public class TankScreenHandler extends ScreenHandler {
 
         super(tankType.getScreenhandlerType(), syncId);
 
+        this.tankItem = tankItem;
         this.tank = tank;
         this.tankType = tankType;
         this.context = screenHandlerContext;
@@ -85,20 +91,19 @@ public class TankScreenHandler extends ScreenHandler {
         int inventoryY = 32 + rows * 18;
         for (int y = 0; y < 3; ++y) {
             for (int x = 0; x < 9; ++x) {
-                this.addSlot(new Slot(playerInventory, x + y * 9 + 9, 8 + x * 18, inventoryY + y * 18));
+                // cannot move opened tank
+                if (slot == x + y * 9 + 9)
+                    this.addSlot(new LockedSlot(playerInventory, x + y * 9 + 9, 8 + x * 18, inventoryY + y * 18));
+                else
+                    this.addSlot(new Slot(playerInventory, x + y * 9 + 9, 8 + x * 18, inventoryY + y * 18));
             }
         }
 
         // hotbar
         for (int x = 0; x < 9; ++x) {
             // cannot move opened tank
-            if (slot != -1 && slot == x)
-                this.addSlot(new Slot(playerInventory, x, 8 + x * 18, inventoryY + 58) {
-                    @Override
-                    public boolean canTakeItems(PlayerEntity playerEntity) {
-                        return false;
-                    }
-                });
+            if (slot == x)
+                this.addSlot(new LockedSlot(playerInventory, x, 8 + x * 18, inventoryY + 58));
             else
                 this.addSlot(new Slot(playerInventory, x, 8 + x * 18, inventoryY + 58));
         }
@@ -106,6 +111,10 @@ public class TankScreenHandler extends ScreenHandler {
 
     public ScreenHandlerContext getContext() {
         return context;
+    }
+
+    public ItemStack getTankItem() {
+        return tankItem;
     }
 
     // when shift clicking on an item containing fluids, try to insert that fluid

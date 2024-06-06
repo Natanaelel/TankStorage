@@ -58,6 +58,7 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
     public static void readScreenOpeningData(TankScreenHandler screenHandler, PacketByteBuf buf) {
 
     }
+
     // called client side only
     public static TankScreenHandler createClientScreenHandler(int syncId, PlayerInventory playerInventory,
             PacketByteBuf buf) {
@@ -65,9 +66,9 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
         TankType tankType = TankType.fromName(buf.readString());
         ItemStack tankItem = buf.readItemStack();
         int slot = buf.readInt();
-        // TODO: use cachedfluidstoragestate, maybe create interface
+
         TankFluidStorageState tank = TankFluidStorageState.readNbt(buf.readNbt());
-        
+
         TankScreenHandler screenHandler = new TankScreenHandler(syncId, playerInventory,
                 tank,
                 tankType,
