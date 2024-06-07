@@ -91,17 +91,21 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
     @Override
     protected void drawMouseoverTooltip(DrawContext context, int x, int y) {
         if (this.focusedSlot instanceof FluidSlot fluidSlot) {
-
-            if (fluidSlot.getAmount() == 0 && !fluidSlot.isLocked())
+            boolean hasCursorStack = !this.getScreenHandler().getCursorStack().isEmpty();
+            boolean shouldAddFluidSlotInfo = fluidSlot.getAmount() > 0 || fluidSlot.isLocked();
+            if (!shouldAddFluidSlotInfo && !hasCursorStack)
                 return;
 
             FluidVariant fluidVariant = fluidSlot.getFluidVariant();
-            List<Text> tooltip = new ArrayList<>(
-                    FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(),
-                            fluidSlot.getCapacity()));
+            List<Text> tooltip = new ArrayList<>();
+            if (shouldAddFluidSlotInfo)
+                tooltip.addAll(FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(),
+                        fluidSlot.getCapacity()));
 
-            tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
-                    .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
+            if (hasCursorStack)
+                tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
+                        .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
+
             context.drawTooltip(textRenderer, tooltip, x, y);
             return;
         }
