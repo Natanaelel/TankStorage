@@ -207,9 +207,9 @@ public class Util {
                 if (selectedslot == -1) {
                     return FilteringStorage.insertOnlyOf(cached.getFluidStorage(insertMode));
                 } else {
-                    selectedslot = Math.min(selectedslot, cached.getNonEmptyFluids().size() - 1);
+                    selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
                     FluidVariant selectedFluid = selectedslot == -1 ? FluidVariant.blank()
-                            : cached.getNonEmptyFluids().get(selectedslot).fluidVariant();
+                            : cached.getUniqueFluids().get(selectedslot).fluidVariant();
                     return FluidStorageUtil.filteredExtraction(cached.getFluidStorage(insertMode), selectedFluid);
                 }
             }
@@ -254,14 +254,14 @@ public class Util {
             if (cached == null)
                 return null;
 
-            selectedslot = Math.min(selectedslot, cached.getNonEmptyFluids().size() - 1);
+            selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
             return selectedslot == -1 ? null
-                    : cached.getNonEmptyFluids().get(selectedslot).fluidVariant();
+                    : cached.getUniqueFluids().get(selectedslot).fluidVariant();
 
         } else {
             TankFluidStorageState tank = getFluidStorage(itemStack);
 
-            List<FluidSlotData> fluids = tank.getNonEmptyFluids();
+            List<FluidSlotData> fluids = tank.getUniqueFluids();
             selectedslot = clampSelectedSlot(itemStack, fluids.size() - 1);
             return selectedslot == -1 ? null
                     : fluids.get(selectedslot).fluidVariant();

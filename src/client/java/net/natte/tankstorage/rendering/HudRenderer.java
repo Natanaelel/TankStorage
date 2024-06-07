@@ -61,7 +61,7 @@ public class HudRenderer {
         if (uuid != null && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET) {
             tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 2 * 20);
             if (tank != null)
-                Util.clampSelectedSlot(stack, tank.getNonEmptyFluids().size() - 1);
+                Util.clampSelectedSlot(stack, tank.getUniqueFluids().size() - 1);
             options = Util.getOptionsOrDefault(stack);
         }
 
@@ -81,7 +81,7 @@ public class HudRenderer {
         if (!shouldRender())
             return;
 
-        List<FluidSlotData> fluids = tank.getNonEmptyFluids();
+        List<FluidSlotData> fluids = tank.getUniqueFluids();
 
         int scaledHeight = context.getScaledWindowHeight();
         int scaledWidth = context.getScaledWindowWidth();

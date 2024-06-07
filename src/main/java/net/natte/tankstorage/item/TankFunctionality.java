@@ -107,12 +107,12 @@ public class TankFunctionality extends Item {
         if (tank == null)
             return Optional.empty();
 
-        if (tank.getNonEmptyFluids().isEmpty())
+        if (tank.getUniqueFluids().isEmpty())
             return Optional.empty();
         TankInteractionMode interactionMode = Util.getInteractionMode(stack);
 
         int selectedSlot = interactionMode == TankInteractionMode.BUCKET ? Util.getSelectedSlot(stack) : -1;
-        return Optional.of(new TankTooltipData(tank.getNonEmptyFluids(), selectedSlot));
+        return Optional.of(new TankTooltipData(tank.getUniqueFluids(), selectedSlot));
     }
 
     public static BlockHitResult raycast(World world, PlayerEntity player, RaycastContext.FluidHandling fluidHandling) {

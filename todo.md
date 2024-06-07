@@ -1,12 +1,12 @@
 - test
-- [/] textures
+- [x] textures
 - [x] buttons
 - [x] keybind
 - [x] link
 - [x] recipes
 - [x] bucket mode
   - [x] scroll to choose fluid or empty bucket
-- [/] number format
+- [x] number format
 - [x] [x] works as fluid container item
 - [x] tooltip contents
 

@@ -1,7 +1,9 @@
 package net.natte.tankstorage.cache;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
@@ -17,7 +19,7 @@ public class CachedFluidStorageState {
     private UUID uuid;
     private int revision;
     private List<FluidSlotData> fluids;
-    private List<FluidSlotData> nonEmptyFluids;
+    private List<FluidSlotData> uniqueFluids;
 
     private List<TankSingleFluidStorage> parts;
 
@@ -44,14 +46,22 @@ public class CachedFluidStorageState {
         return new TankFluidStorage(parts, insertMode);
     }
 
-    public List<FluidSlotData> getNonEmptyFluids() {
-        if (nonEmptyFluids == null) {
-            nonEmptyFluids = new ArrayList<>();
-            for (FluidSlotData fluidSlotData : fluids)
-                if (fluidSlotData.amount() > 0)
-                    nonEmptyFluids.add(fluidSlotData);
+    public List<FluidSlotData> getUniqueFluids() {
+        if (uniqueFluids == null) {
+            Map<FluidVariant, Long> counts = new HashMap<>();
+            for (FluidSlotData fluidSlotData : fluids) {
+                long count = counts.getOrDefault(fluidSlotData.fluidVariant(), 0L);
+                count += fluidSlotData.amount();
+                counts.put(fluidSlotData.fluidVariant(), count);
+            }
+            uniqueFluids = new ArrayList<>();
+            counts.forEach((fluidVariant, count) -> {
+                if (count > 0)
+                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+            });
+
         }
 
-        return nonEmptyFluids;
+        return uniqueFluids;
     }
 }

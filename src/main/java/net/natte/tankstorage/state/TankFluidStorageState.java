@@ -1,7 +1,9 @@
 package net.natte.tankstorage.state;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -161,6 +163,22 @@ public class TankFluidStorageState {
                 count++;
         }
         return count;
+    }
+
+    public List<FluidSlotData> getUniqueFluids() {
+        Map<FluidVariant, Long> counts = new HashMap<>();
+        for (TankSingleFluidStorage part : fluidStorageParts) {
+            long count = counts.getOrDefault(part.getResource(), 0L);
+            count += part.getAmount();
+            counts.put(part.getResource(), count);
+        }
+        List<FluidSlotData> uniqueFluids = new ArrayList<>();
+        counts.forEach((fluidVariant, count) -> {
+            if (count > 0)
+                uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+        });
+
+        return uniqueFluids;
     }
 
     public short getRevision() {

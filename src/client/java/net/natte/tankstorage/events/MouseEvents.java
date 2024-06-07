@@ -45,7 +45,7 @@ public class MouseEvents {
 
         int selectedSlot = options.selectedSlot;
         selectedSlot -= (int) Math.signum(scroll);
-        selectedSlot = MathHelper.clamp(selectedSlot, -1, state.getNonEmptyFluids().size() - 1);
+        selectedSlot = MathHelper.clamp(selectedSlot, -1, state.getUniqueFluids().size() - 1);
         options.selectedSlot = selectedSlot;
         ClientPlayNetworking.send(new UpdateTankOptionsPacketC2S(options));
 
