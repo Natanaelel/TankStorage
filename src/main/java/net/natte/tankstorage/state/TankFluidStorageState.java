@@ -63,7 +63,7 @@ public class TankFluidStorageState {
 
     public TankFluidStorageState changeType(TankType type) {
         TankStorage.LOGGER
-                .info("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
+                .debug("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
 
         TankFluidStorageState tank = new TankFluidStorageState(type, this.uuid);
 

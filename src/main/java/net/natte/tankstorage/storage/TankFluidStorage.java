@@ -51,7 +51,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
             case VOID_OVERFLOW:
                 insertedAmount += insertIntoLockedSlots(insertedVariant, maxAmount - insertedAmount, transaction);
                 insertedAmount += insertIntoNonEmptySlots(insertedVariant, maxAmount - insertedAmount, transaction);
-                insertedAmount = maxAmount;
+                if (hasSlotWithVariant(insertedVariant))
+                    insertedAmount = maxAmount;
                 break;
         }
 

@@ -21,7 +21,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
@@ -189,9 +188,6 @@ public class TankScreenHandler extends ScreenHandler {
     @Override
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity playerEntity) {
 
-        // if (slotIndex < 0)
-        // return;
-        playerEntity.sendMessage(Text.of("click " + actionType));
         Slot slot = slotIndex >= 0 ? this.slots.get(slotIndex) : null;
 
         // cannot move opened TankItem with numbers
@@ -227,7 +223,6 @@ public class TankScreenHandler extends ScreenHandler {
 
         if (button == 1) {
             // insert into tank from cursor
-            playerEntity.sendMessage(Text.of("right click"));
             if (!cursorFluidStorage.supportsExtraction())
                 return;
 
@@ -257,7 +252,6 @@ public class TankScreenHandler extends ScreenHandler {
             }
         } else {
             // extract from tank into cursor
-            playerEntity.sendMessage(Text.of("left click"));
             if (!cursorFluidStorage.supportsInsertion())
                 return;
 

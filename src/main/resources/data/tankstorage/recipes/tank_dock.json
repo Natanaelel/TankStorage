@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["ICI", "I I", "ICI"],
+
+  "key": {
+    "C": {
+      "item": "minecraft:cauldron"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "tankstorage:tank_dock",
+    "count": 1
+  }
+}
