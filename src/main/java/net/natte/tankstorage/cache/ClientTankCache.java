@@ -20,11 +20,13 @@ public class ClientTankCache {
         CACHE.put(uuid, state);
     }
 
-    public static @Nullable CachedFluidStorageState get(UUID uuid) {
+    @Nullable
+    public static CachedFluidStorageState get(UUID uuid) {
         return CACHE.get(uuid);
     }
 
-    public static @Nullable CachedFluidStorageState getOrQueueUpdate(UUID uuid) {
+    @Nullable
+    public static CachedFluidStorageState getOrQueueUpdate(UUID uuid) {
         CachedFluidStorageState state = get(uuid);
         if (state == null) {
             requestQueue.add(uuid);
@@ -32,7 +34,8 @@ public class ClientTankCache {
         return state;
     }
 
-    public static @Nullable CachedFluidStorageState getAndQueueThrottledUpdate(UUID uuid, int ticks) {
+    @Nullable
+    public static CachedFluidStorageState getAndQueueThrottledUpdate(UUID uuid, int ticks) {
         if (throddledQueue.containsKey(uuid)) {
             return get(uuid);
         } else {

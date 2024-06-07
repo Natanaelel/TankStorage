@@ -87,11 +87,9 @@ public class TankTooltipComponent implements TooltipComponent {
     }
 
     private void drawSlotHighlight(int x, int y, DrawContext context) {
-        // System.out.print("d");
         int xOffset = x + 18 * (selectedSlot % 9) - 1;
         int yOffset = y + 18 * (selectedSlot / 9) - 1;
 
         context.drawTexture(TEXTURE, xOffset, yOffset, 25, 23, 22, 22);
     }
-
 }

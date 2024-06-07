@@ -59,8 +59,6 @@ public class TankLinkRecipe extends ShapedRecipe {
         @Override
         public TankLinkRecipe read(Identifier id, PacketByteBuf buf) {
             return new TankLinkRecipe(super.read(id, buf));
-
         }
     }
-
 }

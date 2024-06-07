@@ -10,7 +10,6 @@ public class TankStateManager {
     private static TankPersistentState INSTANCE;
 
     public static TankPersistentState getState() {
-        System.out.println("TankPersistentState.getState() called");
         INSTANCE.markDirty();
         return INSTANCE;
     }

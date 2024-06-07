@@ -138,7 +138,6 @@ public class TankScreenHandler extends ScreenHandler {
                     1);
             // update client cache for tooltip contents if other is another tank
             if (!playerEntity.getWorld().isClient()) {
-                System.out.println("1 try sync");
                 this.tank.sync(player);
                 Util.trySync(slot.getStack(), player);
                 // force sync all fluid slots
@@ -214,10 +213,8 @@ public class TankScreenHandler extends ScreenHandler {
             return;
 
         World world = playerEntity.getWorld();
-        if (world.isClient) {
-            // ClientTankCache.getAndQueueThrottledUpdate(this.tank.uuid, 1);
+        if (world.isClient)
             return;
-        }
 
         // this assumes fluidslots come first
         TankSingleFluidStorage slotFluidStorage = this.fluidStorage.getSingleFluidStorage(slotIndex);
@@ -255,7 +252,6 @@ public class TankScreenHandler extends ScreenHandler {
                             transaction.abort();
                         }
                         break;
-
                     }
                 }
             }
@@ -266,7 +262,6 @@ public class TankScreenHandler extends ScreenHandler {
                 return;
 
             try (Transaction transaction = Transaction.openOuter()) {
-                // for (StorageView<FluidVariant> cursorFluidView : cursorFluidStorage) {
                 FluidVariant fluidVariant = slotFluidStorage.getResource();
                 if (fluidVariant.isBlank())
                     return;
@@ -289,7 +284,6 @@ public class TankScreenHandler extends ScreenHandler {
                     } else {
                         transaction.abort();
                     }
-
                 }
             }
         }
@@ -372,7 +366,6 @@ public class TankScreenHandler extends ScreenHandler {
                 this.lockSlot(slotIndex, slotFluidVariant);
             }
         }
-
     }
 
     // called only on server
@@ -381,7 +374,6 @@ public class TankScreenHandler extends ScreenHandler {
         this.trackedFluids.set(slot, FluidSlotData.from(singleFluidStorage));
         ServerPlayNetworking.send(player,
                 new SyncFluidPacketS2C(this.syncId, slot, FluidSlotData.from(singleFluidStorage)));
-
     }
 
     @Override
@@ -403,16 +395,8 @@ public class TankScreenHandler extends ScreenHandler {
         super.sendContentUpdates();
         for (int i = 0; i < this.trackedFluids.size(); ++i) {
             FluidSlotData trackedFluidSlot = this.trackedFluids.get(i);
-            // System.out.println(trackedFluidSlot.fluidVariant().getFluid().getBucketItem().getName());
-            if (!trackedFluidSlot.equalsOther(this.fluidStorage.getSingleFluidStorage(i))) {
-
-                System.out.println("update?");
+            if (!trackedFluidSlot.equalsOther(this.fluidStorage.getSingleFluidStorage(i)))
                 syncFluidState(i, this.player);
-            } else {
-                // System.out.print("e");
-            }
         }
-
     }
-
 }

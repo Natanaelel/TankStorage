@@ -92,7 +92,6 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
         }
 
         return ActionResult.PASS;
-
     }
 
     @Override
@@ -112,5 +111,4 @@ public class TankDockBlock extends Block implements BlockEntityProvider {
         }
         super.onStateReplaced(state, world, pos, newState, moved);
     }
-
 }

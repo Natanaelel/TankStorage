@@ -22,11 +22,10 @@ public class TankPersistentState extends PersistentState {
         TANK_MAP = new HashMap<>();
     }
 
-    public static @Nullable TankPersistentState getInstance(){
+    @Nullable
+    public static TankPersistentState getInstance() {
         return INSTANCE;
     }
-
-
 
     public static TankPersistentState createFromNbt(NbtCompound nbtCompound) {
 

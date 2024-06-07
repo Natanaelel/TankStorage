@@ -128,7 +128,7 @@ public class TankStorageClient implements ClientModInitializer {
 			while (toggleInsertModeKeyBinding.wasPressed())
 				ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
 
-			while (toggleInteractionModeKeyBinding.wasPressed()){
+			while (toggleInteractionModeKeyBinding.wasPressed()) {
 				MouseEvents.onToggleInteractionMode(client.player, null);
 			}
 
@@ -169,5 +169,4 @@ public class TankStorageClient implements ClientModInitializer {
 		}
 		requestQueue.clear();
 	}
-
 }

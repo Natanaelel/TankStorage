@@ -40,7 +40,6 @@ public class TankType {
         Registry.register(Registries.SCREEN_HANDLER, Util.ID(name), this.screenHandlerType);
 
         FluidStorage.ITEM.registerForItems(Util::getFluidStorageFromItemContext, this.item);
-
     }
 
     public Item getItem() {
@@ -78,5 +77,4 @@ public class TankType {
     public ScreenHandlerType<TankScreenHandler> getScreenhandlerType() {
         return screenHandlerType;
     }
-
 }

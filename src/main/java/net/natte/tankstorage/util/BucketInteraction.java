@@ -16,7 +16,6 @@ import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult.Type;
@@ -49,10 +48,6 @@ public class BucketInteraction {
         FluidVariant selectedFluid = Util.getSelectedFluid(stack);
 
         if (selectedFluid == null) {
-
-            if (world.isClient)
-                player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
-
             ActionResult result = BucketInteraction.pickUpFluid(fluidStorage, world, player, stack);
             if (result.isAccepted() && !world.isClient) {
                 tankState.sync((ServerPlayerEntity) player);
@@ -60,9 +55,7 @@ public class BucketInteraction {
             }
             return result;
         } else {
-            if (world.isClient)
-                player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
-                ActionResult result = BucketInteraction.placeFluid(selectedFluid, fluidStorage, world,
+            ActionResult result = BucketInteraction.placeFluid(selectedFluid, fluidStorage, world,
                     player, stack);
             if (result.isAccepted() && !world.isClient) {
                 tankState.sync((ServerPlayerEntity) player);
@@ -70,13 +63,11 @@ public class BucketInteraction {
             }
             return result;
         }
-
     }
 
     // pass on miss, success on place, fail otherwise
     public static ActionResult placeFluid(FluidVariant fluidVariant, Storage<FluidVariant> fluidStorage, World world,
             PlayerEntity player, ItemStack stack) {
-        player.sendMessage(Text.of("try to place fluid"));
 
         assert !fluidVariant.isBlank() : "cannot place blank fluid";
 
@@ -84,15 +75,12 @@ public class BucketInteraction {
         BlockHitResult hit = TankFunctionality.raycast(world, player, RaycastContext.FluidHandling.NONE);
 
         if (hit.getType() == Type.MISS) {
-            player.sendMessage(Text.of("miss"));
             return ActionResult.PASS;
         }
 
         if (hit.getType() != Type.BLOCK) {
-            player.sendMessage(Text.of("not block"));
             return ActionResult.FAIL;
         }
-        /* BucketItem */
 
         BlockPos blockPos = hit.getBlockPos();
 
@@ -103,10 +91,8 @@ public class BucketInteraction {
 
         long extractedSimulated = StorageUtil.simulateExtract(fluidStorage, FluidVariant.of(fluid),
                 FluidConstants.BUCKET, null);
-        player.sendMessage(Text.of("" + extractedSimulated));
         boolean canInsertFluid = extractedSimulated == FluidConstants.BUCKET;
         if (!canInsertFluid) {
-            player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
             return ActionResult.FAIL;
         }
 
@@ -126,25 +112,19 @@ public class BucketInteraction {
         }
 
         return didPlaceFluid ? ActionResult.SUCCESS : ActionResult.FAIL;
-
     }
 
     // pass on miss, success on pickup, fail otherwise
     public static ActionResult pickUpFluid(Storage<FluidVariant> fluidStorage, World world, PlayerEntity player,
             ItemStack stack) {
-        player.sendMessage(Text.of("try to pick up fluid"));
-        // Storage<FluidVariant> fluidStorage =
-        // tankState.getFluidStorage(Util.getInsertMode(stack));
 
         BlockHitResult hit = TankFunctionality.raycast(world, player, FluidHandling.SOURCE_ONLY);
 
         if (hit.getType() == Type.MISS) {
-            player.sendMessage(Text.of("miss"));
             return ActionResult.PASS;
         }
 
         if (hit.getType() != Type.BLOCK) {
-            player.sendMessage(Text.of("not block"));
             return ActionResult.FAIL;
         }
 
@@ -152,22 +132,17 @@ public class BucketInteraction {
         Direction direction = hit.getSide();
         BlockPos blockPos2 = blockPos.offset(direction);
         if (!world.canPlayerModifyAt(player, blockPos) || !player.canPlaceOn(blockPos2, direction, stack)) {
-            player.sendMessage(Text.of("cannot modify or place"));
             return ActionResult.FAIL;
         }
 
         Fluid fluid = world.getFluidState(blockPos).getFluid();
         if (fluid == Fluids.EMPTY) {
-            player.sendMessage(Text.of("empty fluid"));
             return ActionResult.FAIL;
         }
         long insertedSimulated = StorageUtil.simulateInsert(fluidStorage, FluidVariant.of(fluid), FluidConstants.BUCKET,
                 null);
-        // player.sendMessage(Text.of("" + insertedSimulated));
-        player.sendMessage(Text.of(fluid + " " + insertedSimulated));
         boolean canInsertFluid = insertedSimulated == FluidConstants.BUCKET;
         if (!canInsertFluid) {
-            player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
             return ActionResult.FAIL;
         }
 

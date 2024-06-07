@@ -50,5 +50,4 @@ public class DummyInventory implements Inventory {
     public boolean canPlayerUse(PlayerEntity var1) {
         throw new UnsupportedOperationException("Unimplemented method 'canPlayerUse'");
     }
-    
 }

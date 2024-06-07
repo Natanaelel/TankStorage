@@ -30,5 +30,4 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
 
         matrixStack.pop();
     }
-
 }

@@ -11,5 +11,4 @@ public class TankItem extends TankFunctionality implements DyeableItem {
         super(settings);
         this.type = type;
     }
-
 }

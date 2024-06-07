@@ -14,7 +14,8 @@ import net.natte.tankstorage.util.Util;
 
 public record ToggleInsertModePacketC2S() implements FabricPacket {
 
-    public static final PacketType<ToggleInsertModePacketC2S> PACKET_TYPE = PacketType.create(Util.ID("toggleinsertmode_c2s"),
+    public static final PacketType<ToggleInsertModePacketC2S> PACKET_TYPE = PacketType.create(
+            Util.ID("toggleinsertmode_c2s"),
             ToggleInsertModePacketC2S::read);
 
     public static ToggleInsertModePacketC2S read(PacketByteBuf buf) {
@@ -30,7 +31,8 @@ public record ToggleInsertModePacketC2S() implements FabricPacket {
         return PACKET_TYPE;
     }
 
-    public static void receive(ToggleInsertModePacketC2S packet, ServerPlayerEntity player, PacketSender responseSender) {
+    public static void receive(ToggleInsertModePacketC2S packet, ServerPlayerEntity player,
+            PacketSender responseSender) {
 
         if (player.currentScreenHandler instanceof TankScreenHandler tankScreenHandler)
             toggleInsertModeOfScreenHandler(player, tankScreenHandler);
@@ -72,5 +74,4 @@ public record ToggleInsertModePacketC2S() implements FabricPacket {
         player.sendMessage(Text.translatable("popup.tankstorage.insertmode."
                 + options.insertMode.toString().toLowerCase()), true);
     }
-
 }

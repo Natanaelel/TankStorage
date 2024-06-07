@@ -36,7 +36,7 @@ public class NonBackedSlot extends Slot {
     public int getMaxItemCount(ItemStack stack) {
         return 0;
     }
-    
+
     @Override
     public void setStack(ItemStack stack) {
         this.stack = stack;
@@ -55,5 +55,4 @@ public class NonBackedSlot extends Slot {
     @Override
     public void markDirty() {
     }
-
 }

@@ -236,7 +236,6 @@ public class Util {
     @Nullable
     public static Storage<FluidVariant> getFluidStorageFromItem(ItemStack itemStack) {
         return getFluidStorageFromItemContext(itemStack, ContainerItemContext.withConstant(itemStack));
-
     }
 
     @Nullable

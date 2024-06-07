@@ -26,5 +26,4 @@ public record FluidSlotData(FluidVariant fluidVariant, long capacity, long amoun
         return new FluidSlotData(fluidStorage.getResource(), fluidStorage.getCapacity(),
                 fluidStorage.getAmount(), fluidStorage.isLocked());
     }
-
 }

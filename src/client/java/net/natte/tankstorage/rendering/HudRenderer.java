@@ -64,7 +64,6 @@ public class HudRenderer {
                 Util.clampSelectedSlot(stack, tank.getUniqueFluids().size() - 1);
             options = Util.getOptionsOrDefault(stack);
         }
-
     }
 
     private boolean shouldRender() {
@@ -130,7 +129,6 @@ public class HudRenderer {
         matrixStack.pop();
 
         RenderSystem.disableBlend();
-
     }
 
     private void renderHotbarItem(DrawContext context, int x, int y, float tickDelta, ClientPlayerEntity player,
@@ -158,5 +156,4 @@ public class HudRenderer {
         FluidRenderer.drawFluidInGui(context, fluidSlotData.fluidVariant(), x, y);
         FluidRenderer.drawFluidCount(client.textRenderer, context, fluidSlotData.amount(), x, y);
     }
-
 }

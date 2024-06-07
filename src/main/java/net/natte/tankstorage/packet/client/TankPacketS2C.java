@@ -40,5 +40,4 @@ public record TankPacketS2C(UUID uuid, int revision, List<FluidSlotData> fluids)
     public PacketType<TankPacketS2C> getType() {
         return PACKET_TYPE;
     }
-
 }

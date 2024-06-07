@@ -7,5 +7,4 @@ public class TankLinkItem extends TankFunctionality implements DyeableItem {
     public TankLinkItem(Settings settings) {
         super(settings);
     }
-
 }

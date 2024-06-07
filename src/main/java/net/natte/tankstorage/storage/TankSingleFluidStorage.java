@@ -1,11 +1,9 @@
 package net.natte.tankstorage.storage;
 
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
-import net.fabricmc.loader.api.FabricLoader;
 import net.natte.tankstorage.util.FluidSlotData;
 
 public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlotData>
@@ -42,8 +40,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlo
 
     @Override
     public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankSingleFluidStorage insert " + FabricLoader.getInstance().getEnvironmentType() + " "
-                + insertedVariant + " " + maxAmount / FluidConstants.BUCKET);
         if (!canInsert(insertedVariant))
             return 0;
 
@@ -62,9 +58,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlo
 
     @Override
     public long extract(FluidVariant extractedVariant, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankSingleFluidStorage extract " + FabricLoader.getInstance().getEnvironmentType() + " "
-                + extractedVariant + " " + maxAmount / FluidConstants.BUCKET);
-
         if (!canExtract(extractedVariant))
             return 0;
 
@@ -77,7 +70,6 @@ public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlo
             this.fluidVariant = FluidVariant.blank();
 
         return extractedAmount;
-
     }
 
     public boolean canInsert(FluidVariant insertedVariant) {

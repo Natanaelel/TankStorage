@@ -47,7 +47,6 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
         this.addDrawableChild(
                 new InsertModeButtonWidget(options.insertMode, x + titleX + this.backgroundWidth - 31, y + titleY - 4,
                         14, 14, 14, WIDGETS_TEXTURE));
-
     }
 
     @Override
@@ -65,7 +64,6 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
         int y = (height - backgroundHeight) / 2;
         drawContext.drawTexture(this.texture, x, y, 0, 0, backgroundWidth, backgroundHeight,
                 (int) Math.ceil(backgroundWidth / 256d) * 256, (int) Math.ceil(backgroundHeight / 256d) * 256);
-
     }
 
     @Override
@@ -85,7 +83,6 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
             // locked dither outline
             context.drawTexture(WIDGETS_TEXTURE, fluidSlot.x, fluidSlot.y, 0, 46, 16, 16);
         }
-
     }
 
     @Override
@@ -109,9 +106,7 @@ public class TankScreen extends HandledScreen<TankScreenHandler> {
             context.drawTooltip(textRenderer, tooltip, x, y);
             return;
         }
-
         super.drawMouseoverTooltip(context, x, y);
-
     }
 
     @Override

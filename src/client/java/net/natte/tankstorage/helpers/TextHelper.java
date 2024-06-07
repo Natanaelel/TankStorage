@@ -40,5 +40,4 @@ public class TextHelper {
             return new MaxedAmount(getAmount(amount, nums[i]), getAmount(max, nums[i]), units[i]);
         }
     }
-
 }

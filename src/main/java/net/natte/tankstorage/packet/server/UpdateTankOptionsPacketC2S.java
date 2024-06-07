@@ -58,5 +58,4 @@ public record UpdateTankOptionsPacketC2S(TankOptions options) implements FabricP
             return;
         }
     }
-
 }

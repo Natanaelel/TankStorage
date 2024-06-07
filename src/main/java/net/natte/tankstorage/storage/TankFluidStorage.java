@@ -4,13 +4,11 @@ import java.util.Iterator;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.fabricmc.loader.api.FabricLoader;
 
 public class TankFluidStorage implements Storage<FluidVariant> {
 
@@ -32,8 +30,6 @@ public class TankFluidStorage implements Storage<FluidVariant> {
 
     @Override
     public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankFluidStorage insert " + FabricLoader.getInstance().getEnvironmentType() + " " + insertedVariant + " " + maxAmount / FluidConstants.BUCKET);
-
         if (maxAmount == 0)
             return 0;
 
@@ -58,11 +54,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
                 insertedAmount = maxAmount;
                 break;
         }
-        // if (insertedAmount > 0)
-        // markDirty();
 
         return insertedAmount;
-
     }
 
     private boolean hasSlotWithVariant(FluidVariant insertedVariant) {
@@ -78,10 +71,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
         for (TankSingleFluidStorage part : parts) {
             if (insertedAmount == maxAmount)
                 break;
-            if (part.isLocked()){
-                System.out.println("before part.insert in insertIntoLockedSlots %s %d".formatted(insertedVariant, maxAmount - insertedAmount));
+            if (part.isLocked())
                 insertedAmount += part.insert(insertedVariant, maxAmount - insertedAmount, transaction);
-            }
         }
         return insertedAmount;
     }
@@ -91,10 +82,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
         for (TankSingleFluidStorage part : parts) {
             if (insertedAmount == maxAmount)
                 break;
-            if (part.getAmount() > 0){
-                System.out.println("before part.insert in insertIntoNonEmptySlots %s %d".formatted(insertedVariant, maxAmount - insertedAmount));
+            if (part.getAmount() > 0)
                 insertedAmount += part.insert(insertedVariant, maxAmount - insertedAmount, transaction);
-            }
         }
         return insertedAmount;
     }
@@ -104,7 +93,6 @@ public class TankFluidStorage implements Storage<FluidVariant> {
         for (TankSingleFluidStorage part : parts) {
             if (insertedAmount == maxAmount)
                 break;
-            System.out.println("before part.insert in insertIntoAnySlots %s %d".formatted(insertedVariant, maxAmount - insertedAmount));
             insertedAmount += part.insert(insertedVariant, maxAmount - insertedAmount, transaction);
         }
         return insertedAmount;
@@ -112,8 +100,6 @@ public class TankFluidStorage implements Storage<FluidVariant> {
 
     @Override
     public long extract(FluidVariant resource, long maxAmount, TransactionContext transaction) {
-        System.out.println("TankFluidStorage extract " + FabricLoader.getInstance().getEnvironmentType() + " " + resource + " " + maxAmount / FluidConstants.BUCKET);
-
         if (maxAmount == 0)
             return 0;
 
@@ -122,18 +108,14 @@ public class TankFluidStorage implements Storage<FluidVariant> {
         for (TankSingleFluidStorage part : parts) {
             if (extractedAmount == maxAmount)
                 break;
-            System.out.println("before part.extract %s %d".formatted(resource, maxAmount - extractedAmount));
             extractedAmount += part.extract(resource, maxAmount - extractedAmount, transaction);
         }
-        // if(extractedAmount > 0)
-        // markDirty();
         return extractedAmount;
     }
 
     @Override
-    public Iterator<StorageView<FluidVariant>> iterator() { 
+    public Iterator<StorageView<FluidVariant>> iterator() {
         return parts.stream().map(x -> (StorageView<FluidVariant>) x).iterator();
-        // return parts.iterator();
     }
 
     public TankSingleFluidStorage getSingleFluidStorage(int index) {
@@ -147,7 +129,8 @@ public class TankFluidStorage implements Storage<FluidVariant> {
     }
 
     // returns inserted fluidvariant, or null if none inserted
-    public @Nullable FluidVariant quickInsert(@Nullable Storage<FluidVariant> itemFluidStorage) {
+    @Nullable
+    public FluidVariant quickInsert(@Nullable Storage<FluidVariant> itemFluidStorage) {
 
         if (itemFluidStorage == null)
             return null;
@@ -173,7 +156,6 @@ public class TankFluidStorage implements Storage<FluidVariant> {
                     }
                     break;
                 }
-
             }
         }
         return null;

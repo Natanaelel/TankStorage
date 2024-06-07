@@ -96,7 +96,7 @@ public class FluidRenderer {
     }
 
     private static Text getFormattedFluidCount(long amount) {
-        // TODO: clean
+        // TOD0: clean
         // not today! hah!
         var significantDigits = new MathContext(3);
         var roundedAmout = new BigDecimal(amount * 1d / FluidConstants.BUCKET).round(significantDigits)
@@ -104,12 +104,11 @@ public class FluidRenderer {
         amount = roundedAmout;
         if (amount < FluidConstants.BUCKET) {
             double num = (long) (amount * 1000L * 1000d / FluidConstants.BUCKET / 1000d) / 1000d;// mB
-            String str = num > 1 ? num + "" : (num + "").substring(1);
-            return Text.of(str + "");
+            return Text.of(num > 1 ? num + "" : (num + "").substring(1));
         }
         if (amount < FluidConstants.BUCKET * 1000L) {
             var num = new BigDecimal(amount * 1d / FluidConstants.BUCKET).round(significantDigits);
-            return Text.of(num + "");
+            return Text.of(num.toString());
         }
         if (amount < FluidConstants.BUCKET * 1000L * 1000L) {
             var num = new BigDecimal(amount / 1000d / FluidConstants.BUCKET).round(significantDigits);
@@ -118,5 +117,4 @@ public class FluidRenderer {
         var num = new BigDecimal(amount / 1000d / 1000d / FluidConstants.BUCKET).round(significantDigits);
         return Text.of(num + "M");
     }
-
 }

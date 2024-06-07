@@ -26,5 +26,4 @@ public record SyncFluidPacketS2C(int syncId, int slot, FluidSlotData fluidSlotDa
     public PacketType<SyncFluidPacketS2C> getType() {
         return PACKET_TYPE;
     }
-
 }

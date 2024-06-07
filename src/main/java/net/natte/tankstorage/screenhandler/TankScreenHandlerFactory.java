@@ -52,11 +52,6 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
         buf.writeItemStack(this.tankItem);
         buf.writeInt(this.slot);
         buf.writeNbt(TankFluidStorageState.writeNbt(this.tank));
-
-    }
-
-    public static void readScreenOpeningData(TankScreenHandler screenHandler, PacketByteBuf buf) {
-
     }
 
     // called client side only
@@ -77,5 +72,4 @@ public class TankScreenHandlerFactory implements ExtendedScreenHandlerFactory {
                 ScreenHandlerContext.EMPTY);
         return screenHandler;
     }
-
 }

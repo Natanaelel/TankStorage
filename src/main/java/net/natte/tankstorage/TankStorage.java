@@ -104,7 +104,6 @@ public class TankStorage implements ModInitializer {
 
 		FluidStorage.SIDED.registerForBlockEntity(
 				(tankDockBlockEntity, direction) -> tankDockBlockEntity.getFluidStorage(), TANK_DOCK_BLOCK_ENTITY);
-
 	}
 
 	private void registerRecipes() {

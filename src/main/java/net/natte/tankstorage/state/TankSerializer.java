@@ -30,5 +30,4 @@ public class TankSerializer {
 
         return nbtCompound;
     }
-
 }

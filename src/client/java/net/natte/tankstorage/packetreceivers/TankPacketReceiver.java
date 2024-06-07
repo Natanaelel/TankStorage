@@ -15,5 +15,4 @@ public class TankPacketReceiver implements PlayPacketHandler<TankPacketS2C> {
         ClientTankCache.put(packet.uuid(),
                 new CachedFluidStorageState(packet.uuid(), packet.fluids(), packet.revision()));
     }
-
 }

@@ -41,5 +41,4 @@ public class FluidSlot extends NonBackedSlot {
     public boolean isLocked() {
         return fluidStorage.isLocked();
     }
-
 }

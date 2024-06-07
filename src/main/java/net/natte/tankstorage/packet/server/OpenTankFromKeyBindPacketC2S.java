@@ -33,7 +33,6 @@ public record OpenTankFromKeyBindPacketC2S() implements FabricPacket {
     public static void receive(OpenTankFromKeyBindPacketC2S packet, ServerPlayerEntity player,
             PacketSender responseSender) {
         int slot = findTank(player);
-        System.out.println("open screen? slot = " + slot);
 
         if (slot == -1)
             return;
@@ -55,5 +54,4 @@ public record OpenTankFromKeyBindPacketC2S() implements FabricPacket {
         }
         return -1;
     }
-
 }

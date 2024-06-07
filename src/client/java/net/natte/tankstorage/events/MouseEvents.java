@@ -50,13 +50,13 @@ public class MouseEvents {
         ClientPlayNetworking.send(new UpdateTankOptionsPacketC2S(options));
 
         return true;
-
     }
 
     public static void onToggleInteractionMode(PlayerEntity player, ItemStack tankItem) {
 
         if (tankItem == null)
             tankItem = Util.getHeldTank(player);
+
         if (tankItem == null)
             return;
 
@@ -67,7 +67,6 @@ public class MouseEvents {
 
         player.sendMessage(Text.translatable("popup.tankstorage.interactionmode."
                 + options.interactionMode.toString().toLowerCase()), true);
-
     }
 
     private static boolean isBucketMode(ItemStack itemStack) {

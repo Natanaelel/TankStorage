@@ -47,7 +47,6 @@ public class InsertModeButtonWidget extends TexturedButtonWidget {
         button.refreshTooltip();
         ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
     }
-
 }
 
 enum InsertModeOption {
@@ -104,5 +103,4 @@ enum InsertModeOption {
         return Tooltip.of(
                 getName().copy().append(Text.empty().append("\n").append(getInfo()).formatted(Formatting.DARK_GRAY)));
     }
-
 }

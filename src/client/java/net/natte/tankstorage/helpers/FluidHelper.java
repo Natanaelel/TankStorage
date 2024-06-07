@@ -26,14 +26,11 @@ public class FluidHelper {
                     (double) capacity / FluidConstants.BUCKET);
             return Text.literal(maxedAmount.digit() + " / " + maxedAmount.maxDigit() + " " + maxedAmount.unit() + "B");
         }
-
     }
 
     public static List<Text> getTooltip(FluidVariant fluid) {
-
         if (fluid.isBlank()) {
-            ArrayList<Text> list = new ArrayList<>();
-            return list;
+            return new ArrayList<>();
         }
         return FluidVariantRendering.getTooltip(fluid);
     }
@@ -43,5 +40,4 @@ public class FluidHelper {
         tooltip.add(getFluidAmount(amount, capacity));
         return tooltip;
     }
-
 }

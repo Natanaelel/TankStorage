@@ -35,5 +35,4 @@ public record LockSlotPacketC2S(int syncId, int slot)
             tankScreenHandler.lockSlotClick(packet.slot);
         }
     }
-
 }

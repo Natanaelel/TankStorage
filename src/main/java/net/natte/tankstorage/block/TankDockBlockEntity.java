@@ -87,5 +87,4 @@ public class TankDockBlockEntity extends BlockEntity {
     public NbtCompound toInitialChunkDataNbt() {
         return createNbt();
     }
-
 }
