@@ -14,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
@@ -27,7 +28,6 @@ import net.natte.tankstorage.item.tooltip.TankTooltipData;
 import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankInteractionMode;
-import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.BucketInteraction;
 import net.natte.tankstorage.util.Util;
 
@@ -39,28 +39,48 @@ public class TankFunctionality extends Item {
         super(settings);
     }
 
+    // cases
+    // sneaking hit bucket
+    // 0 0 0 -> screen
+    // 0 0 1 -> screen
+    // 0 1 0 -> screen
+    // 0 1 1 -> bucket
+    // 1 0 0 -> toggle
+    // 1 0 1 -> toggle
+    // 1 1 0 -> toggle
+    // 1 1 1 -> bucket
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getStackInHand(hand);
 
-        // TODO: open, toggle mode, bucket
-        // if (world.isClient)
-        // return TypedActionResult.pass(stack);
+        TankInteractionMode interactionMode = Util.getInteractionMode(stack);
 
-        if (player.isSneaking()) {
-            if (!world.isClient)
-                Util.onToggleInteractionMode(player, stack);
-            return TypedActionResult.success(stack);
-        }
-
-        TankOptions options = Util.getOptionsOrDefault(stack);
-        if (options.interactionMode == TankInteractionMode.BUCKET) {
-            if (BucketInteraction.interactFluid(world, player, stack))
+        if (interactionMode == TankInteractionMode.BUCKET) {
+            ActionResult result = BucketInteraction.interactFluid(world, player, stack);
+            if (result == ActionResult.PASS) {
+                if (player.isSneaking()) {
+                    if (!world.isClient)
+                        Util.onToggleInteractionMode(player, stack);
+                    return TypedActionResult.success(stack);
+                } else {
+                    return tryOpenScreen(world, player, stack);
+                }
+            } else {
+                return result.isAccepted() ? TypedActionResult.success(stack) : TypedActionResult.fail(stack);
+            }
+        } else {
+            if (player.isSneaking()) {
+                if (!world.isClient)
+                    Util.onToggleInteractionMode(player, stack);
                 return TypedActionResult.success(stack);
-            return TypedActionResult.fail(stack);
-
+            } else {
+                return tryOpenScreen(world, player, stack);
+            }
         }
-        if (player.getWorld().isClient())
+    }
+
+    private TypedActionResult<ItemStack> tryOpenScreen(World world, PlayerEntity player, ItemStack stack) {
+        if (world.isClient)
             return TypedActionResult.success(stack);
 
         TankFluidStorageState tank = Util.getOrCreateFluidStorage(stack);

@@ -17,6 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult.Type;
 import net.minecraft.util.math.BlockPos;
@@ -31,9 +32,10 @@ import net.natte.tankstorage.storage.TankInteractionMode;
 
 public class BucketInteraction {
 
-    public static boolean interactFluid(World world, PlayerEntity player, ItemStack stack) {
+    // pass on miss or no uuid, success on place/pickup, fail otherwise
+    public static ActionResult interactFluid(World world, PlayerEntity player, ItemStack stack) {
         if (!Util.hasUUID(stack))
-            return false;
+            return ActionResult.PASS;
 
         assert Util.getInteractionMode(stack) == TankInteractionMode.BUCKET
                 : "cannot interact with fluids in world if not in bucket mode";
@@ -51,8 +53,8 @@ public class BucketInteraction {
             if (world.isClient)
                 player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
 
-            boolean result = BucketInteraction.pickUpFluid(fluidStorage, world, player, stack);
-            if (result && !world.isClient) {
+            ActionResult result = BucketInteraction.pickUpFluid(fluidStorage, world, player, stack);
+            if (result.isAccepted() && !world.isClient) {
                 tankState.sync((ServerPlayerEntity) player);
                 Util.clampSelectedSlotServer(stack);
             }
@@ -60,9 +62,9 @@ public class BucketInteraction {
         } else {
             if (world.isClient)
                 player.sendMessage(Text.of("client null? " + (fluidStorage == null)));
-            boolean result = BucketInteraction.placeFluid(selectedFluid, fluidStorage, world,
+                ActionResult result = BucketInteraction.placeFluid(selectedFluid, fluidStorage, world,
                     player, stack);
-            if (result && !world.isClient) {
+            if (result.isAccepted() && !world.isClient) {
                 tankState.sync((ServerPlayerEntity) player);
                 Util.clampSelectedSlotServer(stack);
             }
@@ -71,7 +73,8 @@ public class BucketInteraction {
 
     }
 
-    public static boolean placeFluid(FluidVariant fluidVariant, Storage<FluidVariant> fluidStorage, World world,
+    // pass on miss, success on place, fail otherwise
+    public static ActionResult placeFluid(FluidVariant fluidVariant, Storage<FluidVariant> fluidStorage, World world,
             PlayerEntity player, ItemStack stack) {
         player.sendMessage(Text.of("try to place fluid"));
 
@@ -82,12 +85,12 @@ public class BucketInteraction {
 
         if (hit.getType() == Type.MISS) {
             player.sendMessage(Text.of("miss"));
-            return false;
+            return ActionResult.PASS;
         }
 
         if (hit.getType() != Type.BLOCK) {
             player.sendMessage(Text.of("not block"));
-            return false;
+            return ActionResult.FAIL;
         }
         /* BucketItem */
 
@@ -104,14 +107,14 @@ public class BucketInteraction {
         boolean canInsertFluid = extractedSimulated == FluidConstants.BUCKET;
         if (!canInsertFluid) {
             player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
-            return false;
+            return ActionResult.FAIL;
         }
 
         BlockPos blockPos3 = blockState.getBlock() instanceof FluidFillable && fluid == Fluids.WATER ? blockPos
                 : blockPos2;
 
         if (!(fluidVariant.getFluid().getBucketItem() instanceof BucketItem bucketItem))
-            return false;
+            return ActionResult.FAIL;
 
         boolean didPlaceFluid = bucketItem.placeFluid(player, world, blockPos3, hit);
 
@@ -122,11 +125,12 @@ public class BucketInteraction {
             }
         }
 
-        return didPlaceFluid;
+        return didPlaceFluid ? ActionResult.SUCCESS : ActionResult.FAIL;
 
     }
 
-    public static boolean pickUpFluid(Storage<FluidVariant> fluidStorage, World world, PlayerEntity player,
+    // pass on miss, success on pickup, fail otherwise
+    public static ActionResult pickUpFluid(Storage<FluidVariant> fluidStorage, World world, PlayerEntity player,
             ItemStack stack) {
         player.sendMessage(Text.of("try to pick up fluid"));
         // Storage<FluidVariant> fluidStorage =
@@ -136,12 +140,12 @@ public class BucketInteraction {
 
         if (hit.getType() == Type.MISS) {
             player.sendMessage(Text.of("miss"));
-            return false;
+            return ActionResult.PASS;
         }
 
         if (hit.getType() != Type.BLOCK) {
             player.sendMessage(Text.of("not block"));
-            return false;
+            return ActionResult.FAIL;
         }
 
         BlockPos blockPos = hit.getBlockPos();
@@ -149,13 +153,13 @@ public class BucketInteraction {
         BlockPos blockPos2 = blockPos.offset(direction);
         if (!world.canPlayerModifyAt(player, blockPos) || !player.canPlaceOn(blockPos2, direction, stack)) {
             player.sendMessage(Text.of("cannot modify or place"));
-            return false;
+            return ActionResult.FAIL;
         }
 
         Fluid fluid = world.getFluidState(blockPos).getFluid();
         if (fluid == Fluids.EMPTY) {
             player.sendMessage(Text.of("empty fluid"));
-            return false;
+            return ActionResult.FAIL;
         }
         long insertedSimulated = StorageUtil.simulateInsert(fluidStorage, FluidVariant.of(fluid), FluidConstants.BUCKET,
                 null);
@@ -164,7 +168,7 @@ public class BucketInteraction {
         boolean canInsertFluid = insertedSimulated == FluidConstants.BUCKET;
         if (!canInsertFluid) {
             player.sendMessage(Text.of("simulation failed on " + (world.isClient ? "client" : "server")));
-            return false;
+            return ActionResult.FAIL;
         }
 
         BlockState blockState = world.getBlockState(blockPos);
@@ -179,9 +183,9 @@ public class BucketInteraction {
             fluidDrainable.getBucketFillSound().ifPresent(sound -> player.playSound((SoundEvent) sound, 1.0f, 1.0f));
             world.emitGameEvent((Entity) player, GameEvent.FLUID_PICKUP, blockPos);
 
-            return true;
+            return ActionResult.SUCCESS;
         }
 
-        return false;
+        return ActionResult.FAIL;
     }
 }

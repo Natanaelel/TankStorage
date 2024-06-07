@@ -60,7 +60,8 @@ public class HudRenderer {
 
         if (uuid != null && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET) {
             tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 2 * 20);
-            Util.clampSelectedSlot(stack, tank.getNonEmptyFluids().size() - 1);
+            if (tank != null)
+                Util.clampSelectedSlot(stack, tank.getNonEmptyFluids().size() - 1);
             options = Util.getOptionsOrDefault(stack);
         }
 
