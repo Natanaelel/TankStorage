@@ -1,7 +1,7 @@
 package net.natte.tankstorage.cache;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class CachedFluidStorageState {
 
     public List<FluidSlotData> getUniqueFluids() {
         if (uniqueFluids == null) {
-            Map<FluidVariant, Long> counts = new HashMap<>();
+            Map<FluidVariant, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids) {
                 long count = counts.getOrDefault(fluidSlotData.fluidVariant(), 0L);
                 count += fluidSlotData.amount();
