@@ -111,7 +111,7 @@ public class TankFunctionality extends Item {
             return Optional.empty();
         TankInteractionMode interactionMode = Util.getInteractionMode(stack);
 
-        int selectedSlot = interactionMode == TankInteractionMode.BUCKET ? Util.getSelectedSlot(stack) : -1;
+        int selectedSlot = interactionMode == TankInteractionMode.BUCKET ? Util.getSelectedSlot(stack) : -2;
         return Optional.of(new TankTooltipData(tank.getUniqueFluids(), selectedSlot));
     }
 

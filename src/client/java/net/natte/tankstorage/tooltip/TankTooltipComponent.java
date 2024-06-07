@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
@@ -19,6 +20,7 @@ public class TankTooltipComponent implements TooltipComponent {
     private final List<FluidSlotData> fluids;
     private final int selectedSlot;
 
+    // renders selected bucket before other slots if bucket is selected
     public TankTooltipComponent(TankTooltipData tooltipData) {
         this.fluids = tooltipData.fluids();
         this.selectedSlot = tooltipData.selectedSlot();
@@ -46,15 +48,14 @@ public class TankTooltipComponent implements TooltipComponent {
     public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
         drawBackground(x, y, context);
         drawFluids(textRenderer, x, y, context);
-        if (selectedSlot != -1)
+        if (selectedSlot != -2)
             drawSlotHighlight(x, y, context);
     }
 
     private void drawBackground(int x, int y, DrawContext context) {
         int row = 0;
         int col = 0;
-        for (@SuppressWarnings("unused")
-        var fluid : fluids) {
+        for (int i = selectedSlot == -1 ? -1 : 0; i < fluids.size(); ++i) {
             context.drawTexture(TEXTURE, x + col * 18, y + row * 18, 20, 128, 20, 20);
             ++col;
             if (col == 9) {
@@ -67,6 +68,12 @@ public class TankTooltipComponent implements TooltipComponent {
     private void drawFluids(TextRenderer textRenderer, int x, int y, DrawContext context) {
         int row = 0;
         int col = 0;
+        if (selectedSlot == -1) {
+            // slot texture
+            context.drawTexture(TEXTURE, x + 1, y + 1, 1, 129, 18, 18);
+            context.drawItem(Items.BUCKET.getDefaultStack(), x + col * 18 + 2, y + row * 18 + 2);
+            ++col;
+        }
         for (FluidSlotData fluid : fluids) {
             drawFluidInSlot(fluid, context, textRenderer, x + col * 18 + 1, y + row * 18 + 1);
             ++col;
@@ -87,9 +94,10 @@ public class TankTooltipComponent implements TooltipComponent {
     }
 
     private void drawSlotHighlight(int x, int y, DrawContext context) {
-        int xOffset = x + 18 * (selectedSlot % 9) - 1;
-        int yOffset = y + 18 * (selectedSlot / 9) - 1;
-
+        int slotIndex = selectedSlot == -1 ? 0 : selectedSlot;
+        int xOffset = x + 18 * (slotIndex % 9) - 1;
+        int yOffset = y + 18 * (slotIndex / 9) - 1;
+        // highlight texture
         context.drawTexture(TEXTURE, xOffset, yOffset, 25, 23, 22, 22);
     }
 }
