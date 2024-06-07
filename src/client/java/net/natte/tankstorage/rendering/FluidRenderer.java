@@ -6,6 +6,8 @@
 
 package net.natte.tankstorage.rendering;
 
+import java.math.BigDecimal;
+import java.math.MathContext;
 import org.joml.Matrix4f;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -75,18 +77,15 @@ public class FluidRenderer {
     }
 
     public static void drawFluidCount(TextRenderer textRenderer, DrawContext context, long amount, int x, int y) {
-        // TODO
-        // count format (1M, 1.1M 1000B) or whatever format I decide
-        // scale
-        
+
         Text countText = getFormattedFluidCount(amount);
         int textWidth = textRenderer.getWidth(countText);
         int xOffset = x + 18 - 2;
         int yOffset = y + 18 - 2;
         MinecraftClient client = MinecraftClient.getInstance();
         int guiScale = (int) client.getWindow().getScaleFactor();
-        // float scale = guiScale == 1 ? 0.5f : (guiScale - 1) / (float) guiScale;
-        float scale = guiScale == 1 ? 0.5f : (int) (guiScale * 0.7f) / (float) guiScale;
+
+        float scale = guiScale == 1 ? 1f : (int) (guiScale * 0.7f) / (float) guiScale;
         MatrixStack matrices = context.getMatrices();
         matrices.push();
         matrices.translate(xOffset, yOffset, 0);
@@ -96,8 +95,28 @@ public class FluidRenderer {
         matrices.pop();
     }
 
-    private static Text getFormattedFluidCount(long amount){
-        return Text.of("" + (double)amount / FluidConstants.BUCKET + "B");
+    private static Text getFormattedFluidCount(long amount) {
+        // TODO: clean
+        // not today! hah!
+        var significantDigits = new MathContext(3);
+        var roundedAmout = new BigDecimal(amount * 1d / FluidConstants.BUCKET).round(significantDigits)
+                .multiply(new BigDecimal(FluidConstants.BUCKET)).longValue();
+        amount = roundedAmout;
+        if (amount < FluidConstants.BUCKET) {
+            double num = (long) (amount * 1000L * 1000d / FluidConstants.BUCKET / 1000d) / 1000d;// mB
+            String str = num > 1 ? num + "" : (num + "").substring(1);
+            return Text.of(str + "");
+        }
+        if (amount < FluidConstants.BUCKET * 1000L) {
+            var num = new BigDecimal(amount * 1d / FluidConstants.BUCKET).round(significantDigits);
+            return Text.of(num + "");
+        }
+        if (amount < FluidConstants.BUCKET * 1000L * 1000L) {
+            var num = new BigDecimal(amount / 1000d / FluidConstants.BUCKET).round(significantDigits);
+            return Text.of(num.longValue() + "k");
+        }
+        var num = new BigDecimal(amount / 1000d / 1000d / FluidConstants.BUCKET).round(significantDigits);
+        return Text.of(num + "M");
     }
 
 }
