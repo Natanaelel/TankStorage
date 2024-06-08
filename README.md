@@ -21,6 +21,9 @@ Adds Tanks of 7 increasing sizes. A portable tank that can store multiple fluids
 - Right click with a Tank to dock it.
 - Right click while crouching to pick up the Tank.
 
+### Tank Link
+- Link to another Tank to access the contents in multiple places at the same time.
+
 ### Insert modes
 - Insert All: All fluids can be inserted and extracted from the Tank Dock.
 - Filtered: Only filtered fluids can be inserted.
