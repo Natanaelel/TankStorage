@@ -9,9 +9,11 @@ import java.util.UUID;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 public class CachedFluidStorageState {
 
@@ -37,18 +39,18 @@ public class CachedFluidStorageState {
         return fluids;
     }
 
-    public Storage<FluidVariant> getFluidHandler(InsertMode insertMode) {
+    public TankFluidHandler getFluidHandler(InsertMode insertMode) {
         if (this.parts == null) {
             this.parts = fluids.stream().map(TankSingleFluidStorage::from).toList();
         }
         // don't set mark dirty listener because client should never change contents
         // without the server knowing and doing it too
-        return new TankFluidStorage(parts, insertMode);
+        return new TankFluidHandler(parts, insertMode);
     }
 
     public List<FluidSlotData> getUniqueFluids() {
         if (uniqueFluids == null) {
-            Map<FluidVariant, Long> counts = new LinkedHashMap<>();
+            Map<FluidStack, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids) {
                 long count = counts.getOrDefault(fluidSlotData.fluidVariant(), 0L);
                 count += fluidSlotData.amount();

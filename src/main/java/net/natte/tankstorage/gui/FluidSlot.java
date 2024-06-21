@@ -26,11 +26,11 @@ public class FluidSlot extends NonBackedSlot {
         return fluidStorage.getFluid();
     }
 
-    public long getAmount() {
+    public int getAmount() {
         return fluidStorage.getAmount();
     }
 
-    public long getCapacity() {
+    public int getCapacity() {
         return fluidStorage.getCapacity();
     }
 

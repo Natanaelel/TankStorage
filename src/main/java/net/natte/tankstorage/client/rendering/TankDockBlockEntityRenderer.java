@@ -1,33 +1,36 @@
-package net.natte.tankstorage.rendering;
+package net.natte.tankstorage.client.rendering;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 
 public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDockBlockEntity> {
 
-    public TankDockBlockEntityRenderer(BlockEntityRendererFactory.Context context) {
+    private final ItemRenderer itemRenderer;
+
+    public TankDockBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
+        itemRenderer = context.getItemRenderer();
+
     }
+
 
     @Override
-    public void render(TankDockBlockEntity tankDock, float timeDelta, MatrixStack matrixStack,
-            VertexConsumerProvider vertexConsumers, int light, int overlay) {
-        ItemRenderer itemRenderer = MinecraftClient.getInstance().getItemRenderer();
+    public void render(TankDockBlockEntity tankDock, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
 
-        matrixStack.push();
-        matrixStack.translate(0.5f, 0.5f, 0.5f);
+        poseStack.pushPose();
+        poseStack.translate(0.5f, 0.5f, 0.5f);
         // prevent z-fighting
-        float scale = 1f - 0.0001f;
-        matrixStack.scale(scale, scale, scale);
+        float scale = 2f - 0.0001f;
+        poseStack.scale(scale, scale, scale);
 
-        itemRenderer.renderItem(tankDock.getTank(), ModelTransformationMode.FIXED,
-                light, overlay, matrixStack, vertexConsumers, null, 0);
+        itemRenderer.renderStatic(tankDock.getTank(), ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack,
+                buffer, null, 0);
 
-        matrixStack.pop();
+        poseStack.popPose();
     }
+}
 }

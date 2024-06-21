@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.item.TankItem;
@@ -20,11 +21,21 @@ public class TankType {
     private int height;
     private DeferredHolder<Item, TankItem> item;
 
+    public int guiImageWidth;
+    public int guiImageHeight;
+    public int guiTextureWidth;
+    public int guiTextureHeight;
+
     public TankType(String name, int capacity, int width, int height) {
         this.name = name;
         this.capacity = capacity;
         this.width = width;
         this.height = height;
+
+        this.guiImageWidth = 176;
+        this.guiImageHeight = 114 + this.height * 18;
+        this.guiTextureWidth = Mth.ceil(this.guiImageWidth / 256d) * 256;
+        this.guiTextureHeight = Mth.ceil(this.guiImageHeight / 256d) * 256;
     }
 
     public void register() {

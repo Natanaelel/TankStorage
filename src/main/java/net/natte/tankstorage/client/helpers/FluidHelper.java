@@ -4,40 +4,65 @@
  * Thanks!
  */
 
-package net.natte.tankstorage.helpers;
+package net.natte.tankstorage.client.helpers;
+
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.TooltipFlag;
+import net.natte.tankstorage.helpers.FluidTextHelper;
+import net.natte.tankstorage.helpers.TextHelper;
+import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.text.Text;
-import net.natte.tankstorage.util.Util;
-
 public class FluidHelper {
+    static final int BUCKET = 1000;
 
-    public static Text getFluidAmount(long amount, long capacity) {
-        if (capacity < 100 * FluidConstants.BUCKET || Util.isShiftDown.get()) {
+    public static Component getFluidAmount(long amount, long capacity) {
+        if (capacity < 100 * BUCKET || Util.isShiftDown.get()) {
             String text = FluidTextHelper.getUnicodeMillibuckets(amount, false) + " / " + capacity / 81;
-            return Text.literal(text + " mB");
+            return Component.literal(text + " mB");
         } else {
-            var maxedAmount = TextHelper.getMaxedAmount((double) amount / FluidConstants.BUCKET,
-                    (double) capacity / FluidConstants.BUCKET);
-            return Text.literal(maxedAmount.digit() + " / " + maxedAmount.maxDigit() + " " + maxedAmount.unit() + "B");
+            var maxedAmount = TextHelper.getMaxedAmount((double) amount / BUCKET,
+                    (double) capacity / BUCKET);
+            return Component.literal(maxedAmount.digit() + " / " + maxedAmount.maxDigit() + " " + maxedAmount.unit() + "B");
         }
     }
 
-    public static List<Text> getTooltip(FluidVariant fluid) {
-        if (fluid.isBlank()) {
+    public static List<Component> getTooltip(FluidStack fluid) {
+        if (fluid.isEmpty()) {
             return new ArrayList<>();
         }
-        return FluidVariantRendering.getTooltip(fluid);
+        return getTooltip(fluid);
     }
 
-    public static List<Text> getTooltipForFluidStorage(FluidVariant fluid, long amount, long capacity) {
-        List<Text> tooltip = getTooltip(fluid);
+    public static List<Component> getTooltipForFluidStorage(FluidStack fluid, long amount, long capacity) {
+        List<Component> tooltip = getTooltip(fluid);
         tooltip.add(getFluidAmount(amount, capacity));
         return tooltip;
+    }
+
+    public static List<Component> getTooltip(FluidStack fluidVariant, TooltipFlag context) {
+        List<Component> tooltip = new ArrayList<>();
+
+        // Name first
+        tooltip.add(getName(fluidVariant));
+
+        // If advanced tooltips are enabled, render the fluid id
+        if (context.isAdvanced()) {
+            tooltip.add(Component.literal(BuiltInRegistries.FLUID.getKey(fluidVariant.getFluid()).toString()).withStyle(ChatFormatting.DARK_GRAY));
+        }
+
+        // TODO: consider adding an event to append to tooltips?
+
+        return tooltip;
+    }
+
+    public static Component getName(FluidStack variant) {
+        return variant.getFluid().getFluidType().getDescription(variant);
     }
 }

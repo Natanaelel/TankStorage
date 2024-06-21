@@ -1,142 +1,158 @@
-package net.natte.tankstorage.screen;
+package net.natte.tankstorage.client.screen;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.natte.tankstorage.client.TankStorageClient;
+import net.natte.tankstorage.client.helpers.FluidHelper;
+import net.natte.tankstorage.client.rendering.FluidRenderer;
+import net.natte.tankstorage.container.TankType;
+import net.natte.tankstorage.gui.FluidSlot;
+import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
+import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
-import net.natte.tankstorage.TankStorageClient;
-import net.natte.tankstorage.container.TankType;
-import net.natte.tankstorage.gui.FluidSlot;
-import net.natte.tankstorage.helpers.FluidHelper;
-import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
-import net.natte.tankstorage.rendering.FluidRenderer;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
-import net.natte.tankstorage.storage.TankOptions;
-import net.natte.tankstorage.util.Util;
+public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
 
-public class TankScreen extends HandledScreen<TankScreenHandler> {
+    private static final ResourceLocation WIDGETS_TEXTURE = Util.ID("textures/gui/widgets.png");
 
-    private static final Identifier WIDGETS_TEXTURE = Util.ID("textures/gui/widgets.png");
+    private final TankType type;
+    private final ResourceLocation texture;
+    private boolean isLockSlotKeyDown = false;
 
-    private TankType type;
-    private Identifier texture;
-
-    public TankScreen(TankScreenHandler handler, PlayerInventory inventory, Text title, TankType type) {
+    public TankScreen(TankScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
-        this.type = type;
+        this.type = handler.getTankType();
 
         this.texture = Util.ID("textures/gui/" + this.type.width() + "x" + this.type.height() + ".png");
-        this.backgroundHeight = 114 + this.type.height() * 18;
-        this.playerInventoryTitleY += this.type.height() * 18 - 52;
+        this.imageHeight = 114 + this.type.height() * 18;
+        this.inventoryLabelY += this.type.height() * 18 - 52;
     }
 
     @Override
     protected void init() {
         super.init();
-        TankOptions options = Util.getOrCreateOptions(this.handler.getTankItem());
 
-        this.addDrawableChild(
-                new InsertModeButtonWidget(options.insertMode, x + titleX + this.backgroundWidth - 31, y + titleY - 4,
+        this.addRenderableWidget(
+                new InsertModeButtonWidget(Util.getInsertMode(this.menu.getTankItem()), leftPos + titleLabelX + this.imageWidth - 31, topPos + titleLabelX - 4,
                         14, 14, 14, WIDGETS_TEXTURE));
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context);
-        super.render(context, mouseX, mouseY, delta);
-        this.drawMouseoverTooltip(context, mouseX, mouseY);
+    protected void renderBg(GuiGraphics guiGraphics, float tickDelta, int mouseX, int mouseY) {
+        guiGraphics.blit(this.texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.type.guiTextureWidth, this.type.guiTextureHeight);
+
+    }
+
+    @Override
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        super.render(guiGraphics, mouseX, mouseY, delta);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
         this.setFocused(null);
     }
 
     @Override
-    protected void drawBackground(DrawContext drawContext, float timeDelta, int mouseX, int mouseY) {
-
-        int x = (width - backgroundWidth) / 2;
-        int y = (height - backgroundHeight) / 2;
-        drawContext.drawTexture(this.texture, x, y, 0, 0, backgroundWidth, backgroundHeight,
-                (int) Math.ceil(backgroundWidth / 256d) * 256, (int) Math.ceil(backgroundHeight / 256d) * 256);
-    }
-
-    @Override
-    protected void drawSlot(DrawContext context, Slot slot) {
+    protected void renderSlot(GuiGraphics guiGraphics, Slot slot) {
         if (!(slot instanceof FluidSlot fluidSlot)) {
-            super.drawSlot(context, slot);
+            super.renderSlot(guiGraphics, slot);
             return;
         }
 
-        FluidVariant fluidVariant = fluidSlot.getFluidVariant();
-        if (!fluidVariant.isBlank()) {
-            FluidRenderer.drawFluidInGui(context, fluidVariant, slot.x, slot.y);
+        FluidStack fluidVariant = fluidSlot.getFluid();
+        if (!fluidVariant.isEmpty()) {
+            FluidRenderer.drawFluidInGui(guiGraphics, fluidVariant, slot.x, slot.y);
             // draw fluid count
-            FluidRenderer.drawFluidCount(textRenderer, context, fluidSlot.getAmount(), slot.x, slot.y);
+            FluidRenderer.drawFluidCount(font, guiGraphics, fluidSlot.getAmount(), slot.x, slot.y);
         }
         if (fluidSlot.isLocked()) {
             // locked dither outline
-            context.drawTexture(WIDGETS_TEXTURE, fluidSlot.x, fluidSlot.y, 0, 46, 16, 16);
+            guiGraphics.blit(WIDGETS_TEXTURE, fluidSlot.x, fluidSlot.y, 0, 46, 16, 16);
         }
     }
 
     @Override
-    protected void drawMouseoverTooltip(DrawContext context, int x, int y) {
-        if (this.focusedSlot instanceof FluidSlot fluidSlot) {
-            boolean hasCursorStack = !this.getScreenHandler().getCursorStack().isEmpty();
+    protected void renderTooltip(GuiGraphics context, int x, int y) {
+        if (this.hoveredSlot instanceof FluidSlot fluidSlot) {
+            boolean hasCursorStack = !this.menu.getCarried().isEmpty();
             boolean shouldAddFluidSlotInfo = fluidSlot.getAmount() > 0 || fluidSlot.isLocked();
             if (!shouldAddFluidSlotInfo && !hasCursorStack)
                 return;
 
-            FluidVariant fluidVariant = fluidSlot.getFluidVariant();
-            List<Text> tooltip = new ArrayList<>();
+            FluidStack fluidVariant = fluidSlot.getFluid();
+            List<Component> tooltip = new ArrayList<>();
             if (shouldAddFluidSlotInfo)
                 tooltip.addAll(FluidHelper.getTooltipForFluidStorage(fluidVariant, fluidSlot.getAmount(),
                         fluidSlot.getCapacity()));
 
             if (hasCursorStack)
-                tooltip.add(Text.translatable("tooltip.tankstorage.insert_or_extract_desc")
-                        .setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
+                tooltip.add(Component.translatable("tooltip.tankstorage.insert_or_extract_desc")
+                        .setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
 
-            context.drawTooltip(textRenderer, tooltip, x, y);
+            context.renderComponentTooltip(font, tooltip, x, y);
             return;
         }
-        super.drawMouseoverTooltip(context, x, y);
+        super.renderTooltip(context, x, y);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && TankStorageClient.lockSlotKeyBinding.isPressed()) {
-            Slot slot = getSlotAt(mouseX, mouseY);
-            if (slot != null) {
-                int slotIndex = slot.id;
-                if (slot instanceof FluidSlot) {
-                    ClientPlayNetworking.send(new LockSlotPacketC2S(this.getScreenHandler().syncId, slotIndex));
-                    this.cancelNextRelease = true;
-                    return true;
-                }
-            }
+        if (this.hoveredSlot instanceof FluidSlot fluidSlot && button == 0 && this.isLockSlotKeyDown) {
+            this.menu.handleSlotLock(fluidSlot, this.menu.getCarried());
+
+            this.skipNextRelease = true;
+            return true;
+
         }
+
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (TankStorageClient.lockSlotKeyBinding.matchesKey(keyCode, scanCode))
-            TankStorageClient.lockSlotKeyBinding.setPressed(true);
+        if (TankStorageClient.lockSlotKeyBinding.matches(keyCode, scanCode))
+            this.isLockSlotKeyDown = true;
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
     public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
-        if (TankStorageClient.lockSlotKeyBinding.matchesKey(keyCode, scanCode))
-            TankStorageClient.lockSlotKeyBinding.setPressed(false);
-
+        if (TankStorageClient.lockSlotKeyBinding.matches(keyCode, scanCode))
+            this.isLockSlotKeyDown = false;
         return super.keyReleased(keyCode, scanCode, modifiers);
+    }
+
+    private void handleSlotLock(FluidSlot tankSlot, ItemStack cursorStack) {
+
+        int hoveredSlotIndex = tankSlot.index;
+        ItemStack hoveredStack = tankSlot.getItem();
+        ItemStack cursorStack = this.menu.getCarried();
+
+        boolean isSlotEmpty = hoveredStack.isEmpty();
+        ItemStack lockedStack = tankSlot.getLockedStack();
+
+        boolean shouldUnLock = tankSlot.isLocked() && (cursorStack.isEmpty() || !isSlotEmpty || ItemStack.isSameItemSameComponents(cursorStack, lockedStack));
+
+        // optimistically lock slot on client, will be synced later
+        if (shouldUnLock)
+            this.menu.unlockSlot(tankSlot.index);
+        else
+            this.menu.lockSlot(tankSlot.index, isSlotEmpty ? cursorStack : hoveredStack);
+
+        minecraft.getConnection().send(
+                new LockSlotPacketC2S(
+                        this.menu.containerId,
+                        hoveredSlotIndex,
+                        isSlotEmpty ? cursorStack : hoveredStack,
+                        !shouldUnLock));
     }
 }

@@ -1,22 +1,32 @@
 package net.natte.tankstorage.packet.server;
 
-import io.netty.buffer.ByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.natte.tankstorage.gui.FluidSlot;
+import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record LockSlotPacketC2S(int syncId, int slot) implements CustomPacketPayload {
+public record LockSlotPacketC2S(int syncId, int slot, FluidStack fluid,
+                                boolean shouldLock) implements CustomPacketPayload {
 
     public static final Type<LockSlotPacketC2S> TYPE = new Type<>(Util.ID("lock_slot_c2s"));
-    public static final StreamCodec<ByteBuf, LockSlotPacketC2S> STREAM_CODEC = StreamCodec.composite(
+    public static final StreamCodec<RegistryFriendlyByteBuf, LockSlotPacketC2S> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.INT,
             LockSlotPacketC2S::syncId,
             ByteBufCodecs.INT,
             LockSlotPacketC2S::slot,
+            FluidStack.OPTIONAL_STREAM_CODEC,
+            LockSlotPacketC2S::fluid,
+            ByteBufCodecs.BOOL,
+            LockSlotPacketC2S::shouldLock,
             LockSlotPacketC2S::new
+
     );
 
     @Override
@@ -25,9 +35,16 @@ public record LockSlotPacketC2S(int syncId, int slot) implements CustomPacketPay
     }
 
     public static void receive(LockSlotPacketC2S packet, IPayloadContext context) {
-        if (packet.syncId == context.player().containerMenu.containerId
-                && context.player().containerMenu instanceof TankScreenHandler tankScreenHandler) {
-            tankScreenHandler.lockSlotClick(packet.slot);
+        if (context.player().containerMenu instanceof TankScreenHandler tankScreenHandler && packet.syncId == tankScreenHandler.containerId) {
+
+
+            if (!tankScreenHandler.lockSlot(packet.slot, packet.fluid, packet.shouldLock)) {
+                // lock was invalid, update client to tell them to revert optimistic update
+                if (packet.slot >= 0 && packet.slot < tankScreenHandler.slots.size() && tankScreenHandler.getSlot(packet.slot) instanceof FluidSlot fluidSlot) {
+                    FluidSlotData fluidSlotData = new FluidSlotData(fluidSlot.getFluid(), fluidSlot.getCapacity(), fluidSlot.getAmount(), fluidSlot.isLocked());
+                    context.listener().send(new SyncFluidPacketS2C(packet.syncId, packet.slot, fluidSlotData));
+                }
+            }
         }
     }
 }

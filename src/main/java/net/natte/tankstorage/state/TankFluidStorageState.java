@@ -164,9 +164,6 @@ public class TankFluidStorageState {
         PacketDistributor.sendToPlayer(player,new TankPacketS2C(uuid, getRevision(), getFluidSlots()));
     }
 
-    public TankFluidHandler getFluidHandler(InsertMode insertMode) {
-        return null;
-    }
 
     public TankType getType() {
         return type;

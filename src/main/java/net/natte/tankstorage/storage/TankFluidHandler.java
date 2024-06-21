@@ -1,21 +1,38 @@
 package net.natte.tankstorage.storage;
 
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
 import java.util.List;
 
-public class TankFluidHandler implements IFluidHandler {
+public class TankFluidHandler implements IFluidHandlerItem {
 
-    public boolean insertOnly = false;
-    public FluidStack extractOnly = null;
+    private boolean insertOnly = false;
+    private FluidStack extractOnly = null;
 
     private List<TankSingleFluidStorage> parts;
     private InsertMode insertMode;
+    private ItemStack item = ItemStack.EMPTY;
 
     public TankFluidHandler(List<TankSingleFluidStorage> parts, InsertMode insertMode) {
         this.parts = parts;
         this.insertMode = insertMode;
+    }
+
+    public TankFluidHandler withItem(ItemStack item) {
+        this.item = item;
+        return this;
+    }
+
+    public TankFluidHandler insertOnly() {
+        this.insertOnly = true;
+        return this;
+    }
+
+    public TankFluidHandler extractOnly(FluidStack extractOnly) {
+        this.extractOnly = extractOnly;
     }
 
     @Override
@@ -136,5 +153,10 @@ public class TankFluidHandler implements IFluidHandler {
         }
 
         return resource == null ? FluidStack.EMPTY : resource.copyWithAmount(extracted);
+    }
+
+    @Override
+    public ItemStack getContainer() {
+        return item;
     }
 }

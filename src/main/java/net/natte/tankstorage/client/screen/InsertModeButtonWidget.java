@@ -1,106 +1,77 @@
-package net.natte.tankstorage.screen;
+package net.natte.tankstorage.client.screen;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.TexturedButtonWidget;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.storage.InsertMode;
+import net.neoforged.neoforge.network.PacketDistributor;
 
-@Environment(EnvType.CLIENT)
-public class InsertModeButtonWidget extends TexturedButtonWidget {
+import java.time.Duration;
 
-    public InsertModeOption state;
+public class InsertModeButtonWidget extends Button {
+
+    public InsertMode insertMode;
+
+    private final ResourceLocation texture;
 
     private static final int textureWidth = 256;
     private static final int textureHeight = 256;
 
-    public InsertModeButtonWidget(InsertMode insertMode, int x, int y, int width, int height, int hoveredVOffset,
-            Identifier texture) {
-        super(x, y, width, height, 0, 0, hoveredVOffset, texture, textureWidth, textureHeight,
-                b -> onInsertModeButtonPress((InsertModeButtonWidget) b), ScreenTexts.EMPTY);
+    private int uOffset;
 
-        this.state = InsertModeOption.from(insertMode);
+    public InsertModeButtonWidget(InsertMode insertMode, int x, int y, int width, int height, int hoveredVOffset,
+                                  ResourceLocation texture) {
+        super(x, y, width, height, CommonComponents.EMPTY, b -> onInsertModeButtonPress((InsertModeButtonWidget) b), DEFAULT_NARRATION);
+        this.texture = texture;
+
+        this.insertMode = insertMode;
+
         this.refreshTooltip();
-        this.setTooltipDelay(700);
+        updateUOffset();
+        this.setTooltipDelay(Duration.ofMillis(700));
     }
 
+
     @Override
-    public void renderButton(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.drawTexture(context, this.texture, this.getX(), this.getY(), this.state.uOffset(), this.state.vOffset(),
-                this.hoveredVOffset,
+    public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.blit(this.texture, this.getX(), this.getY(), uOffset, 70 + (this.isHoveredOrFocused() ? this.height : 0),
                 this.width, this.height, textureWidth, textureHeight);
     }
 
     public void refreshTooltip() {
-        this.setTooltip(state.getTooltip());
+        String name = switch (this.insertMode) {
+            case ALL -> "all";
+            case FILTERED -> "filtered";
+            case VOID_OVERFLOW -> "void_overflow";
+        };
+
+        this.setTooltip(
+                Tooltip.create(
+                        Component.translatable("title.bankstorage.pickupmode." + name)
+                                .append("\n")
+                                .append(
+                                        Component.translatable("tooltip.bankstorage.pickupmode." + name)
+                                                .withStyle(ChatFormatting.DARK_GRAY)
+                                )));
     }
 
     private static void onInsertModeButtonPress(InsertModeButtonWidget button) {
-        button.state = InsertModeOption.from(button.state.toInsertMode().next());
+        button.insertMode = button.insertMode.next();
+        button.updateUOffset();
         button.refreshTooltip();
-        ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
-    }
-}
-
-enum InsertModeOption {
-    ALL("all", 14, 70),
-    FILTERED("filtered", 28, 70),
-    VOID_OVERFLOW("void_overflow", 42, 70);
-
-    private Text name;
-    private Text info;
-
-    private int uOffset;
-    private int vOffset;
-
-    private InsertModeOption(String name, int uOffset, int vOffset) {
-        this.name = Text.translatable("title.tankstorage.insertmode." + name);
-        this.info = Text.translatable("tooltip.tankstorage.insertmode." + name);
-        this.uOffset = uOffset;
-        this.vOffset = vOffset;
+        PacketDistributor.sendToServer(new ToggleInsertModePacketC2S());
     }
 
-    public static InsertModeOption from(InsertMode insertMode) {
-        return switch (insertMode) {
-            case ALL -> ALL;
-            case FILTERED -> FILTERED;
-            case VOID_OVERFLOW -> VOID_OVERFLOW;
+    private void updateUOffset() {
+        this.uOffset = switch (this.insertMode) {
+            case ALL -> 0;
+            case FILTERED -> 14;
+            case VOID_OVERFLOW -> 28;
         };
-    }
-
-    public InsertMode toInsertMode() {
-        return switch (this) {
-            case ALL -> InsertMode.ALL;
-            case FILTERED -> InsertMode.FILTERED;
-            case VOID_OVERFLOW -> InsertMode.VOID_OVERFLOW;
-        };
-    }
-
-    public Text getName() {
-        return this.name;
-    }
-
-    public Text getInfo() {
-        return this.info;
-    }
-
-    public int uOffset() {
-        return this.uOffset;
-    }
-
-    public int vOffset() {
-        return this.vOffset;
-    }
-
-    public Tooltip getTooltip() {
-        return Tooltip.of(
-                getName().copy().append(Text.empty().append("\n").append(getInfo()).formatted(Formatting.DARK_GRAY)));
     }
 }

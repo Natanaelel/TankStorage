@@ -26,4 +26,12 @@ public record TankOptions(InsertMode insertMode, TankInteractionMode interaction
     private static TankOptions of(byte insertMode, byte interactionMode) {
         return new TankOptions(InsertMode.values()[insertMode], TankInteractionMode.values()[interactionMode]);
     }
+
+    public TankOptions nextInteractionMode() {
+        return new TankOptions(insertMode, interactionMode.next());
+    }
+
+    public TankOptions nextInsertMode() {
+        return new TankOptions(insertMode.next(), interactionMode);
+    }
 }

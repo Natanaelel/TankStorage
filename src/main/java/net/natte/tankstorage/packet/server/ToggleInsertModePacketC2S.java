@@ -7,6 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
+import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
@@ -37,20 +38,13 @@ public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
     private static void toggleInsertModeOfScreenHandler(ServerPlayer player,
                                                         TankScreenHandler tankScreenHandler) {
         ItemStack tank = tankScreenHandler.getTankItem();
-        TankOptions options = Util.getOrCreateOptions(tank);
-        options.insertMode = options.insertMode.next();
-        Util.setOptions(tank, options);
+        tank.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInsertMode);
 
         // dock.markDirty if has dock pos
         tankScreenHandler.getContext().execute(
                 (world, blockPos) -> world
                         .getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY.get())
-                        .ifPresent(dock -> {
-                            if (dock.hasTank()) {
-                                Util.setOptions(dock.getTank(), options);
-                                dock.markDirty();
-                            }
-                        }));
+                        .ifPresent(TankDockBlockEntity::markDirty));
     }
 
     private static void toggleInsertModeOfHeldTank(ServerPlayer player) {
@@ -62,10 +56,9 @@ public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
         else
             return;
 
-        TankOptions options = Util.getOrCreateOptions(stack);
-        options.insertMode = options.insertMode.next();
-        Util.setOptions(stack, options);
+        stack.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInsertMode);
+
         player.displayClientMessage(Component.translatable("popup.tankstorage.insertmode."
-                + options.insertMode.toString().toLowerCase()), true);
+                + Util.getInsertMode(stack).toString().toLowerCase()), true);
     }
 }
