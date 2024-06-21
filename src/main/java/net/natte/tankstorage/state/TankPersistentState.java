@@ -1,33 +1,29 @@
 package net.natte.tankstorage.state;
 
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.natte.tankstorage.TankStorage;
+import net.natte.tankstorage.container.TankType;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.jetbrains.annotations.Nullable;
+public class TankPersistentState extends SavedData {
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.world.PersistentState;
-import net.natte.tankstorage.TankStorage;
-import net.natte.tankstorage.container.TankType;
-
-public class TankPersistentState extends PersistentState {
-
-    private static final String TANK_DATA_KEY = "tank_data";
+    private static final String TANK_DATA_KEY = "tank";
     private final Map<UUID, TankFluidStorageState> TANK_MAP;
-
-    private static TankPersistentState INSTANCE;
 
     public TankPersistentState() {
         TANK_MAP = new HashMap<>();
     }
 
-    @Nullable
-    public static TankPersistentState getInstance() {
-        return INSTANCE;
-    }
-
-    public static TankPersistentState createFromNbt(NbtCompound nbtCompound) {
+    public static TankPersistentState createFromNbt(CompoundTag nbtCompound, HolderLookup.Provider registryLookup) {
 
         TankPersistentState state = new TankPersistentState();
 
@@ -35,8 +31,11 @@ public class TankPersistentState extends PersistentState {
 
         TankStorage.LOGGER.debug("Loading tanks from nbt");
 
-        NbtCompound tankNbt = nbtCompound.getCompound(TANK_DATA_KEY);
-        TankSerializer.readNbt(state.TANK_MAP, tankNbt);
+        Tag tankNbt = nbtCompound.get(TANK_DATA_KEY);
+        List<TankFluidStorageState> tanks = TankSerializer.CODEC.parse(registryLookup.createSerializationContext(NbtOps.INSTANCE), tankNbt).getOrThrow();
+        for (TankFluidStorageState tank : tanks)
+            state.TANK_MAP.put(tank.uuid, tank);
+
 
         TankStorage.LOGGER.debug("Loading done");
 
@@ -44,11 +43,12 @@ public class TankPersistentState extends PersistentState {
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbtCompound) {
+    public CompoundTag save(CompoundTag nbtCompound, HolderLookup.Provider registryLookup) {
 
         TankStorage.LOGGER.debug("Saving tanks to nbt");
 
-        NbtCompound tankNbt = TankSerializer.writeNbt(TANK_MAP);
+        List<TankFluidStorageState> tanks = List.copyOf(TANK_MAP.values());
+        Tag tankNbt = TankSerializer.CODEC.encodeStart(registryLookup.createSerializationContext(NbtOps.INSTANCE), tanks).getOrThrow();
         nbtCompound.put(TANK_DATA_KEY, tankNbt);
 
         TankStorage.LOGGER.debug("Saving done");

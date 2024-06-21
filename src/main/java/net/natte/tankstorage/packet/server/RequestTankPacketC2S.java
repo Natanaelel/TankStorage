@@ -1,40 +1,37 @@
 package net.natte.tankstorage.packet.server;
 
-import java.util.UUID;
-
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record RequestTankPacketC2S(UUID uuid, int revision) implements FabricPacket {
+import java.util.UUID;
 
-    public static final PacketType<RequestTankPacketC2S> PACKET_TYPE = PacketType.create(Util.ID("request_tank_c2s"),
-            RequestTankPacketC2S::read);
+public record RequestTankPacketC2S(UUID uuid, int revision) implements CustomPacketPayload {
 
-    public static RequestTankPacketC2S read(PacketByteBuf buf) {
-        return new RequestTankPacketC2S(buf.readUuid(), buf.readInt());
-    }
+    public static final Type<RequestTankPacketC2S> TYPE = new Type<>(Util.ID("request_tank_c2s"));
+    public static final StreamCodec<ByteBuf, RequestTankPacketC2S> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC,
+            RequestTankPacketC2S::uuid,
+            ByteBufCodecs.INT,
+            RequestTankPacketC2S::revision,
+            RequestTankPacketC2S::new
+    );
 
     @Override
-    public void write(PacketByteBuf buf) {
-        buf.writeUuid(uuid);
-        buf.writeInt(revision);
+    public Type<RequestTankPacketC2S> type() {
+        return TYPE;
     }
 
-    @Override
-    public PacketType<RequestTankPacketC2S> getType() {
-        return PACKET_TYPE;
-    }
-
-    public static void receive(RequestTankPacketC2S packet, ServerPlayerEntity player, PacketSender responseSender) {
+    public static void receive(RequestTankPacketC2S packet, IPayloadContext context) {
         TankFluidStorageState tank = Util.getFluidStorage(packet.uuid);
         if (tank.getRevision() != packet.revision) {
-            responseSender.sendPacket(new TankPacketS2C(tank.uuid, tank.getRevision(), tank.getFluidSlotDatas()));
+            context.connection().send(new TankPacketS2C(tank.uuid, tank.getRevision(), tank.getFluidSlots()));
         }
     }
 }

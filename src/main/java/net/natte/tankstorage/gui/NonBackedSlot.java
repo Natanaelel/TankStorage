@@ -1,11 +1,11 @@
 package net.natte.tankstorage.gui;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+
 
 public class NonBackedSlot extends Slot {
-
     private ItemStack stack = ItemStack.EMPTY;
 
     public NonBackedSlot(int x, int y) {
@@ -13,46 +13,46 @@ public class NonBackedSlot extends Slot {
     }
 
     @Override
-    public boolean canInsert(ItemStack stack) {
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 
     @Override
-    public boolean canTakeItems(PlayerEntity playerEntity) {
+    public boolean mayPickup(Player player) {
         return false;
     }
 
     @Override
-    public ItemStack getStack() {
+    public ItemStack getItem() {
         return this.stack;
     }
 
     @Override
-    public int getMaxItemCount() {
+    public int getMaxStackSize() {
         return 0;
     }
 
     @Override
-    public int getMaxItemCount(ItemStack stack) {
+    public int getMaxStackSize(ItemStack stack) {
         return 0;
     }
 
     @Override
-    public void setStack(ItemStack stack) {
+    public void setByPlayer(ItemStack stack) {
         this.stack = stack;
     }
 
     @Override
-    public void setStackNoCallbacks(ItemStack stack) {
+    public void set(ItemStack stack) {
         this.stack = stack;
     }
 
     @Override
-    public ItemStack takeStack(int amount) {
+    public ItemStack remove(int amount) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
     }
 }

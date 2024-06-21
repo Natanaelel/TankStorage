@@ -1,132 +1,171 @@
 package net.natte.tankstorage;
 
-import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
-import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
-import net.minecraft.block.Block;
-import net.minecraft.block.MapColor;
-import net.minecraft.block.cauldron.CauldronBehavior;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.sound.BlockSoundGroup;
+import com.mojang.serialization.Codec;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.cauldron.CauldronInteraction;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.MapColor;
 import net.natte.tankstorage.block.TankDockBlock;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.TankLinkItem;
-import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
-import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
-import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
-import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
-import net.natte.tankstorage.packet.server.UpdateTankOptionsPacketC2S;
+import net.natte.tankstorage.packet.client.TankPacketS2C;
+import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
+import net.natte.tankstorage.packet.server.*;
 import net.natte.tankstorage.recipe.TankLinkRecipe;
-import net.natte.tankstorage.recipe.TankRecipe;
+import net.natte.tankstorage.recipe.TankUpgradeRecipe;
+import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.state.TankStateManager;
+import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
-
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 
-public class TankStorage implements ModInitializer {
+@Mod(TankStorage.MOD_ID)
+public class TankStorage {
 
-	public static final String MOD_ID = "tankstorage";
+    public static final String MOD_ID = "tankstorage";
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	private static final TankType TANK_1 = new TankType("tank_1", 4 * FluidConstants.BUCKET, 3, 1);
-	private static final TankType TANK_2 = new TankType("tank_2", 16 * FluidConstants.BUCKET, 6, 1);
-	private static final TankType TANK_3 = new TankType("tank_3", 64 * FluidConstants.BUCKET, 9, 1);
-	private static final TankType TANK_4 = new TankType("tank_4", 256 * FluidConstants.BUCKET, 6, 2);
-	private static final TankType TANK_5 = new TankType("tank_5", 1024 * FluidConstants.BUCKET, 5, 3);
-	private static final TankType TANK_6 = new TankType("tank_6", 4096 * FluidConstants.BUCKET, 9, 2);
-	private static final TankType TANK_7 = new TankType("tank_7", 1_000_000 * FluidConstants.BUCKET, 9, 3);
+    private static final int BUCKET = 1000;
+    private static final TankType TANK_1 = new TankType("tank_1", 4 * BUCKET, 3, 1);
+    private static final TankType TANK_2 = new TankType("tank_2", 16 * BUCKET, 6, 1);
+    private static final TankType TANK_3 = new TankType("tank_3", 64 * BUCKET, 9, 1);
+    private static final TankType TANK_4 = new TankType("tank_4", 256 * BUCKET, 6, 2);
+    private static final TankType TANK_5 = new TankType("tank_5", 1024 * BUCKET, 5, 3);
+    private static final TankType TANK_6 = new TankType("tank_6", 4096 * BUCKET, 9, 2);
+    private static final TankType TANK_7 = new TankType("tank_7", 1_000_000 * BUCKET, 9, 3);
 
-	public static final TankType[] TANK_TYPES = { TANK_1, TANK_2, TANK_3, TANK_4, TANK_5, TANK_6, TANK_7 };
+    public static final TankType[] TANK_TYPES = {TANK_1, TANK_2, TANK_3, TANK_4, TANK_5, TANK_6, TANK_7};
 
-	public static final Item TANK_LINK_ITEM = new TankLinkItem(new Item.Settings().maxCount(1));
 
-	private static final Block TANK_DOCK_BLOCK = new TankDockBlock(
-			FabricBlockSettings.create()
-					.strength(5.0f, 6.0f)
-					.mapColor(MapColor.BLACK)
-					.requiresTool()
-					.sounds(BlockSoundGroup.METAL).nonOpaque());
+    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID);
+    private static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MOD_ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(BuiltInRegistries.BLOCK_ENTITY_TYPE, MOD_ID);
+    private static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(BuiltInRegistries.MENU, MOD_ID);
+    private static final DeferredRegister<RecipeSerializer<?>> RECIPES = DeferredRegister.create(BuiltInRegistries.RECIPE_SERIALIZER, MOD_ID);
+    private static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(BuiltInRegistries.DATA_COMPONENT_TYPE, MOD_ID);
 
-	public static final BlockEntityType<TankDockBlockEntity> TANK_DOCK_BLOCK_ENTITY = FabricBlockEntityTypeBuilder
-			.create(TankDockBlockEntity::new, TANK_DOCK_BLOCK).build();
 
-	@Override
-	public void onInitialize() {
+    public static final DeferredHolder<Item, TankLinkItem> TANK_LINK_ITEM = ITEMS.register("tank_link", () -> new TankLinkItem(new Item.Properties().stacksTo(1)));
 
-		registerTanks();
-		registerLink();
-		registerDock();
+    public static final DeferredHolder<Block, TankDockBlock> TANK_DOCK_BLOCK = BLOCKS.register("tank_dock", () -> new TankDockBlock(BlockBehaviour.Properties.of().strength(5.0f, 6.0f).mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().sound(SoundType.METAL).noOcclusion()));
 
-		registerRecipes();
+    private static final DeferredHolder<Item, BlockItem> TANK_DOCK_ITEM = ITEMS.register("tank_dock", () -> new BlockItem(TANK_DOCK_BLOCK.get(), new Item.Properties()));
 
-		registerNetworkListeners();
-		registerEventListeners();
-	}
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TankDockBlockEntity>> TANK_DOCK_BLOCK_ENTITY = BLOCK_ENTITIES.register("tank_dock", () -> BlockEntityType.Builder.of(TankDockBlockEntity::new, TANK_DOCK_BLOCK.get()).build(null));
 
-	private void registerTanks() {
-		for (TankType tankType : TANK_TYPES) {
-			tankType.register();
-		}
 
-		ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register(group -> {
-			for (TankType type : TANK_TYPES) {
-				group.add(type.getItem());
-			}
-			group.add(TANK_LINK_ITEM);
-			group.add(TANK_DOCK_BLOCK);
-		});
-	}
+    public static final DeferredHolder<MenuType<?>, MenuType<TankScreenHandler>> TANK_MENU = MENU_TYPES.register("tank_menu", () -> IMenuTypeExtension.create(TankScreenHandlerFactory::createClientScreenHandler));
 
-	private void registerLink() {
-		Registry.register(Registries.ITEM, Util.ID("tank_link"), TANK_LINK_ITEM);
-		CauldronBehavior.WATER_CAULDRON_BEHAVIOR.put(TANK_LINK_ITEM, CauldronBehavior.CLEAN_DYEABLE_ITEM);
-		FluidStorage.ITEM.registerForItems(Util::getFluidStorageFromItemContext, TANK_LINK_ITEM);
-	}
+    private static final DeferredHolder<RecipeSerializer<?>, TankUpgradeRecipe.Serializer> TANK_UPGRADE_RECIPE = RECIPES.register("tank_upgrade", TankUpgradeRecipe.Serializer::new);
+    private static final DeferredHolder<RecipeSerializer<?>, TankLinkRecipe.Serializer> TANK_LINK_RECIPE = RECIPES.register("tank_link", TankLinkRecipe.Serializer::new);
 
-	private void registerDock() {
 
-		Registry.register(Registries.BLOCK, Util.ID("tank_dock"), TANK_DOCK_BLOCK);
-		Registry.register(Registries.ITEM, Util.ID("tank_dock"), new BlockItem(TANK_DOCK_BLOCK, new Item.Settings()));
-		Registry.register(Registries.BLOCK_ENTITY_TYPE, Util.ID("tank_dock"), TANK_DOCK_BLOCK_ENTITY);
+    public static final DataComponentType<UUID> UUIDComponentType = DataComponentType.<UUID>builder().persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build();
+    public static final DataComponentType<TankOptions> OptionsComponentType = DataComponentType.<TankOptions>builder().persistent(TankOptions.CODEC).networkSynchronized(TankOptions.STREAM_CODEC).build();
+    public static final DataComponentType<Integer> SelectedSlotComponentType = DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT).build();
+    public static final DataComponentType<TankType> TankTypeComponentType = DataComponentType.<TankType>builder().persistent(TankType.CODEC).networkSynchronized(TankType.STREAM_CODEC).build();
 
-		FluidStorage.SIDED.registerForBlockEntity(
-				(tankDockBlockEntity, direction) -> tankDockBlockEntity.getFluidStorage(), TANK_DOCK_BLOCK_ENTITY);
-	}
 
-	private void registerRecipes() {
-		Registry.register(Registries.RECIPE_SERIALIZER, Util.ID("tank_upgrade"),
-				new TankRecipe.Serializer());
-		Registry.register(Registries.RECIPE_SERIALIZER, Util.ID("tank_link"),
-				new TankLinkRecipe.Serializer());
-	}
+    public TankStorage(IEventBus modBus) {
 
-	private void registerNetworkListeners() {
-		ServerPlayNetworking.registerGlobalReceiver(LockSlotPacketC2S.PACKET_TYPE, LockSlotPacketC2S::receive);
-		ServerPlayNetworking.registerGlobalReceiver(RequestTankPacketC2S.PACKET_TYPE, RequestTankPacketC2S::receive);
-		ServerPlayNetworking.registerGlobalReceiver(UpdateTankOptionsPacketC2S.PACKET_TYPE,
-				UpdateTankOptionsPacketC2S::receive);
-		ServerPlayNetworking.registerGlobalReceiver(ToggleInsertModePacketC2S.PACKET_TYPE,
-				ToggleInsertModePacketC2S::receive);
-		ServerPlayNetworking.registerGlobalReceiver(OpenTankFromKeyBindPacketC2S.PACKET_TYPE,
-				OpenTankFromKeyBindPacketC2S::receive);
-	}
+        ITEMS.register(modBus);
+        BLOCKS.register(modBus);
+        BLOCK_ENTITIES.register(modBus);
+        MENU_TYPES.register(modBus);
+        RECIPES.register(modBus);
+        COMPONENTS.register(modBus);
 
-	private void registerEventListeners() {
-		ServerLifecycleEvents.SERVER_STARTED.register(TankStateManager::initialize);
-	}
+        registerTanks();
+        registerComponents();
+
+        modBus.addListener(this::registerCauldronInteractions);
+        modBus.addListener(this::addItemsToCreativeTab);
+        modBus.addListener(this::registerCapabilities);
+        modBus.addListener(this::registerPackets);
+
+        NeoForge.EVENT_BUS.addListener(TankStateManager::initialize);
+    }
+
+
+    private void registerCauldronInteractions(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            CauldronInteraction.WATER.map().put(TANK_LINK_ITEM.get(), CauldronInteraction.DYED_ITEM);
+            for (TankType type : TANK_TYPES)
+                CauldronInteraction.WATER.map().put(type.getItem(), CauldronInteraction.DYED_ITEM);
+        });
+    }
+
+    private void addItemsToCreativeTab(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() != CreativeModeTabs.FUNCTIONAL_BLOCKS)
+            return;
+
+        for (TankType type : TANK_TYPES)
+            event.accept(type.getItem());
+        event.accept(TANK_LINK_ITEM.get());
+        event.accept(TANK_DOCK_BLOCK.get());
+
+    }
+
+    private void registerTanks() {
+        for (TankType tankType : TANK_TYPES) {
+            tankType.register();
+        }
+    }
+
+    private void registerComponents() {
+        COMPONENTS.register("uuid", () -> UUIDComponentType);
+        COMPONENTS.register("uuid", () -> OptionsComponentType);
+        COMPONENTS.register("uuid", () -> SelectedSlotComponentType);
+        COMPONENTS.register("uuid", () -> TankTypeComponentType);
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, TANK_DOCK_BLOCK_ENTITY.get(), TankDockBlockEntity::getFluidHandler);
+
+        for (TankType type : TANK_TYPES)
+            event.registerItem(Capabilities.FluidHandler.ITEM, Util::getFluidHandlerFromItem, type.getItem());
+        event.registerItem(Capabilities.FluidHandler.ITEM, Util::getFluidHandlerFromItem, TANK_LINK_ITEM.get());
+    }
+
+
+    private void registerPackets(RegisterPayloadHandlersEvent event) {
+        PayloadRegistrar registrar = event.registrar(MOD_ID);
+        registrar.playToClient(SyncFluidPacketS2C.TYPE, SyncFluidPacketS2C.STREAM_CODEC, SyncFluidPacketS2C::receive);
+        registrar.playToClient(TankPacketS2C.TYPE, TankPacketS2C.STREAM_CODEC, TankPacketS2C::receive);
+
+        registrar.playToServer(LockSlotPacketC2S.TYPE, LockSlotPacketC2S.STREAM_CODEC, LockSlotPacketC2S::receive);
+        registrar.playToServer(RequestTankPacketC2S.TYPE, RequestTankPacketC2S.STREAM_CODEC, RequestTankPacketC2S::receive);
+        registrar.playToServer(UpdateTankOptionsPacketC2S.TYPE, UpdateTankOptionsPacketC2S.STREAM_CODEC, UpdateTankOptionsPacketC2S::receive);
+        registrar.playToServer(ToggleInsertModePacketC2S.TYPE, ToggleInsertModePacketC2S.STREAM_CODEC, ToggleInsertModePacketC2S::receive);
+        registrar.playToServer(OpenTankFromKeyBindPacketC2S.TYPE, OpenTankFromKeyBindPacketC2S.STREAM_CODEC, OpenTankFromKeyBindPacketC2S::receive);
+    }
 }

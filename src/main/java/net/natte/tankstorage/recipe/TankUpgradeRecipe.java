@@ -10,11 +10,12 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.util.Identifier;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.natte.tankstorage.util.Util;
 
-public class TankRecipe extends ShapedRecipe {
+public class TankUpgradeRecipe extends ShapedRecipe {
 
-    public TankRecipe(ShapedRecipe recipe) {
+    public TankUpgradeRecipe(ShapedRecipe recipe) {
         super(recipe.getId(), "tank_upgrade", recipe.getCategory(), recipe.getWidth(), recipe.getHeight(),
                 recipe.getIngredients(), recipe.getOutput(null));
     }
@@ -36,13 +37,13 @@ public class TankRecipe extends ShapedRecipe {
     public static class Serializer extends ShapedRecipe.Serializer {
 
         @Override
-        public TankRecipe read(Identifier id, JsonObject json) {
-            return new TankRecipe(super.read(id, json));
+        public TankUpgradeRecipe read(Identifier id, JsonObject json) {
+            return new TankUpgradeRecipe(super.read(id, json));
         }
 
         @Override
-        public TankRecipe read(Identifier id, PacketByteBuf buf) {
-            return new TankRecipe(super.read(id, buf));
+        public TankUpgradeRecipe read(Identifier id, PacketByteBuf buf) {
+            return new TankUpgradeRecipe(super.read(id, buf));
 
         }
     }

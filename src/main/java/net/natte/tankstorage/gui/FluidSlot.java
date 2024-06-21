@@ -1,8 +1,8 @@
 package net.natte.tankstorage.gui;
 
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 public class FluidSlot extends NonBackedSlot {
 
@@ -14,16 +14,16 @@ public class FluidSlot extends NonBackedSlot {
     }
 
     @Override
-    public void setStack(ItemStack stack) {
+    public void setByPlayer(ItemStack stack) {
     }
 
     @Override
-    public ItemStack getStack() {
+    public ItemStack getItem() {
         return ItemStack.EMPTY;
     }
 
-    public FluidVariant getFluidVariant() {
-        return fluidStorage.getResource();
+    public FluidStack getFluid() {
+        return fluidStorage.getFluid();
     }
 
     public long getAmount() {
@@ -34,7 +34,7 @@ public class FluidSlot extends NonBackedSlot {
         return fluidStorage.getCapacity();
     }
 
-    public boolean canInsert(FluidVariant fluidVariant) {
+    public boolean canInsert(FluidStack fluidVariant) {
         return fluidStorage.canInsert(fluidVariant);
     }
 

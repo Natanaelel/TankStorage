@@ -1,7 +1,5 @@
 package net.natte.tankstorage.block;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,13 +15,16 @@ import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.util.Util;
 
-public class TankDockBlock extends Block implements BlockEntityProvider {
+public class TankDockBlock extends Block implements EntityBlock {
 
-    public TankDockBlock(Settings settings) {
+    public TankDockBlock(BlockBehaviour.Properties settings) {
         super(settings);
     }
 

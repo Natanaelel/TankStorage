@@ -1,11 +1,5 @@
-package net.natte.tankstorage;
+package net.natte.tankstorage.client;
 
-import java.util.Set;
-import java.util.UUID;
-
-import org.lwjgl.glfw.GLFW;
-
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -13,14 +7,18 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.minecraft.item.DyeableItem;
 import net.minecraft.item.ItemConvertible;
 import net.minecraft.util.Identifier;
+import net.natte.tankstorage.ClientUtil;
+import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
@@ -28,9 +26,9 @@ import net.natte.tankstorage.events.MouseEvents;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
-import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
+import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.packetreceivers.SyncFluidPacketReceiver;
 import net.natte.tankstorage.packetreceivers.TankPacketReceiver;
 import net.natte.tankstorage.rendering.HudRenderer;
@@ -39,13 +37,20 @@ import net.natte.tankstorage.screen.TankScreen;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.tooltip.TankTooltipComponent;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import org.lwjgl.glfw.GLFW;
 
-public class TankStorageClient implements ClientModInitializer {
+import java.util.Set;
+import java.util.UUID;
 
-	public static final KeyBinding lockSlotKeyBinding = ClientUtil.keyBind("lockslot", GLFW.GLFW_KEY_LEFT_ALT);
-	public static final KeyBinding toggleInsertModeKeyBinding = ClientUtil.keyBind("toggleinsertmode");
-	public static final KeyBinding toggleInteractionModeKeyBinding = ClientUtil.keyBind("toggleinteractionmode");
-	public static final KeyBinding openTankFromKeyBinding = ClientUtil.keyBind("opentankfromkeybind");
+@Mod(value = TankStorage.MOD_ID, dist = Dist.CLIENT)
+public class TankStorageClient {
+
+	public static final KeyMapping lockSlotKeyBinding = ClientUtil.keyBind("lockslot", GLFW.GLFW_KEY_LEFT_ALT);
+	public static final KeyMapping toggleInsertModeKeyBinding = ClientUtil.keyBind("toggleinsertmode");
+	public static final KeyMapping toggleInteractionModeKeyBinding = ClientUtil.keyBind("toggleinteractionmode");
+	public static final KeyMapping openTankFromKeyBinding = ClientUtil.keyBind("opentankfromkeybind");
 
 	private static final HudRenderer tankHudRenderer = new HudRenderer();
 
@@ -53,8 +58,7 @@ public class TankStorageClient implements ClientModInitializer {
 		Util.isShiftDown = () -> Screen.hasShiftDown();
 	}
 
-	@Override
-	public void onInitializeClient() {
+	public TankStorageClient() {
 
 		registerHandledScreens();
 		registerRenderers();

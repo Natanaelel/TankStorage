@@ -2,6 +2,16 @@ package net.natte.tankstorage.util;
 
 import java.util.List;
 import java.util.UUID;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
+import net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
 import com.google.common.base.Supplier;
@@ -39,8 +49,8 @@ public class Util {
     private static final String OPTIONS_KEY = "tankstorage:options";
     public static final String TYPE_KEY = "tankstorage:type";
 
-    public static Identifier ID(String id) {
-        return new Identifier(TankStorage.MOD_ID, id);
+    public static ResourceLocation ID(String id) {
+        return ResourceLocation.fromNamespaceAndPath(TankStorage.MOD_ID, id);
     }
 
     // call serverside only. returns null if unlinked linkitem
@@ -105,48 +115,33 @@ public class Util {
     }
 
     public static void setOptions(ItemStack stack, TankOptions options) {
-        stack.getOrCreateNbt().put(OPTIONS_KEY, options.asNbt());
+        stack.set(TankStorage.OptionsComponentType, options);
     }
 
     public static InsertMode getInsertMode(ItemStack tankItem) {
-        return getOrCreateOptions(tankItem).insertMode;
+        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).insertMode();
     }
 
     public static int getSelectedSlot(ItemStack itemStack) {
-        return getOptionsOrDefault(itemStack).selectedSlot;
+        return itemStack.getOrDefault(TankStorage.SelectedSlotComponentType, -1);
     }
 
     public static int clampSelectedSlot(ItemStack itemStack, int max) {
-        TankOptions options = getOrCreateOptions(itemStack);
-        options.selectedSlot = Math.min(options.selectedSlot, max);
-        setOptions(itemStack, options);
-        return options.selectedSlot;
+        int selectedSlot = getSelectedSlot(itemStack);
+        int clampedSelectedSlot = Math.min(selectedSlot, max);
+        if (clampedSelectedSlot != selectedSlot)
+            itemStack.set(TankStorage.SelectedSlotComponentType, clampedSelectedSlot);
+        return clampedSelectedSlot;
     }
 
     public static TankType getType(ItemStack stack) {
-        Item item = stack.getItem();
-
-        if (item instanceof TankItem tankItem)
+        if (stack.getItem() instanceof TankItem tankItem)
             return tankItem.type;
-
-        if (item instanceof TankLinkItem) {
-            if (!stack.hasNbt())
-                return null;
-            if (!stack.getNbt().contains(TYPE_KEY))
-                return null;
-            return TankType.fromName(stack.getNbt().getString(TYPE_KEY));
-        }
-
-        assert false : "getType called on non-tanklike item";
-        return null;
+        return stack.getOrDefault(TankStorage.TankTypeComponentType, TankStorage.TANK_TYPES[0]);
     }
 
     public static void setType(ItemStack stack, TankType type) {
-        stack.getOrCreateNbt().putString(TYPE_KEY, type.getName());
-    }
-
-    public static boolean isTankLike(ItemStack stack) {
-        return stack.getItem() instanceof TankItem || stack.getItem() instanceof TankLinkItem;
+        stack.set(TankStorage.TankTypeComponentType, type);
     }
 
     public static boolean isTank(ItemStack stack) {
@@ -157,22 +152,25 @@ public class Util {
         return stack.getItem() instanceof TankLinkItem;
     }
 
-    public static FluidVariant getFirstFluidVariant(ItemStack itemStack) {
+    public static boolean isTankLike(ItemStack stack) {
+        return isTank(stack) || isLink(stack);
+    }
 
-        Storage<FluidVariant> fluidStorage = ContainerItemContext.withConstant(itemStack).find(FluidStorage.ITEM);
 
-        if (fluidStorage == null)
-            return FluidVariant.blank();
+    public static FluidStack getFirstFluid(ItemStack itemStack) {
 
-        for (StorageView<FluidVariant> fluidView : fluidStorage) {
-            return fluidView.getResource();
-        }
+        IFluidHandlerItem fluidHandler = itemStack.getCapability(Capabilities.FluidHandler.ITEM);
+        if (fluidHandler == null)
+            return FluidStack.EMPTY;
 
-        return FluidVariant.blank();
+        if (fluidHandler.getTanks() == 0)
+            return FluidStack.EMPTY;
+
+        return fluidHandler.getFluidInTank(0);
     }
 
     // called only serverside
-    public static void trySync(ItemStack stack, ServerPlayerEntity player) {
+    public static void trySync(ItemStack stack, ServerPlayer player) {
         if (!Util.isTankLike(stack))
             return;
         if (!Util.hasUUID(stack))
@@ -185,16 +183,14 @@ public class Util {
 
     // if in bucketmode: only allow extraction of selected fluid
     @Nullable
-    public static Storage<FluidVariant> getFluidStorageFromItemContext(ItemStack itemStack,
-            ContainerItemContext containerItemContext) {
+    public static IFluidHandlerItem getFluidHandlerFromItem(ItemStack itemStack, Void v) {
 
         if (!Util.hasUUID(itemStack))
             return null;
 
-        TankOptions options = Util.getOrCreateOptions(itemStack);
-        InsertMode insertMode = options.insertMode;
-        int selectedslot = options.selectedSlot;
-        TankInteractionMode interactionMode = options.interactionMode;
+        InsertMode insertMode = Util.getInsertMode(itemStack);
+        int selectedslot = Util.getSelectedSlot(itemStack);
+        TankInteractionMode interactionMode = Util.getInteractionMode(itemStack);
 
         boolean isClient = Thread.currentThread().getName().equals("Render thread");
 
@@ -205,7 +201,7 @@ public class Util {
 
             if (interactionMode == TankInteractionMode.BUCKET) {
                 if (selectedslot == -1) {
-                    return FilteringStorage.insertOnlyOf(cached.getFluidStorage(insertMode));
+                    return FilteringStorage.insertOnlyOf(cached.getFluidHandler(insertMode, ));
                 } else {
                     selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
                     FluidVariant selectedFluid = selectedslot == -1 ? FluidVariant.blank()
@@ -235,7 +231,7 @@ public class Util {
 
     @Nullable
     public static Storage<FluidVariant> getFluidStorageFromItem(ItemStack itemStack) {
-        return getFluidStorageFromItemContext(itemStack, ContainerItemContext.withConstant(itemStack));
+        return getFluidHandlerFromItem(itemStack, ContainerItemContext.withConstant(itemStack));
     }
 
     @Nullable

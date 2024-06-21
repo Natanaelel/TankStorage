@@ -11,6 +11,7 @@ import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.natte.tankstorage.util.Util;
 
 public class TankLinkRecipe extends ShapedRecipe {

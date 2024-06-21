@@ -4,22 +4,31 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.natte.tankstorage.TankStorage;
+import net.natte.tankstorage.state.TankFluidStorageState;
+import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import org.jetbrains.annotations.Nullable;
 
 public class TankDockBlockEntity extends BlockEntity {
 
     private ItemStack tankItem = ItemStack.EMPTY;
-    private Storage<FluidVariant> fluidStorage = null;
+    private TankFluidHandler fluidHandler = null;
 
     public TankDockBlockEntity(BlockPos pos, BlockState state) {
-        super(TankStorage.TANK_DOCK_BLOCK_ENTITY, pos, state);
+        super(TankStorage.TANK_DOCK_BLOCK_ENTITY.get(), pos, state);
     }
 
     public boolean hasTank() {
@@ -43,8 +52,8 @@ public class TankDockBlockEntity extends BlockEntity {
     }
 
     public Storage<FluidVariant> getFluidStorage() {
-        if (fluidStorage != null)
-            return fluidStorage;
+        if (fluidHandler != null)
+            return fluidHandler;
 
         if (world.isClient)
             return Storage.empty();
@@ -55,14 +64,25 @@ public class TankDockBlockEntity extends BlockEntity {
         if (!Util.hasUUID(tankItem))
             return Storage.empty();
 
-        fluidStorage = Util.getOrCreateFluidStorage(tankItem).getFluidStorage(Util.getInsertMode(tankItem));
+//        fluidHandler =
 
-        return fluidStorage;
+        return fluidHandler;
+    }
+
+    @Nullable
+    public IFluidHandler getFluidHandler(@Nullable Direction direction) {
+        // TODO
+        if(this.fluidHandler == null){
+            TankFluidStorageState tank = Util.getOrCreateFluidStorage(tankItem);
+            this.fluidHandler = tank.getFluidHandler(Util.getInsertMode(tankItem));;
+        }
+
+        return this.fluidHandler;
     }
 
     @Override
     public void markDirty() {
-        fluidStorage = null;
+        fluidHandler = null;
         super.markDirty();
     }
 
@@ -87,4 +107,6 @@ public class TankDockBlockEntity extends BlockEntity {
     public NbtCompound toInitialChunkDataNbt() {
         return createNbt();
     }
+
+
 }

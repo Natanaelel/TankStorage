@@ -1,8 +1,5 @@
 package net.natte.tankstorage.screenhandler;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.context.ContainerItemContext;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -13,15 +10,18 @@ import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.block.TankDockBlockEntity;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
@@ -32,10 +32,16 @@ import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
-public class TankScreenHandler extends ScreenHandler {
+import java.util.ArrayList;
+import java.util.List;
 
-    private ScreenHandlerContext context;
+public class TankScreenHandler extends AbstractContainerMenu {
+
+
+    private ContainerLevelAccess context;
 
     private ItemStack tankItem;
     private TankType tankType;
@@ -44,14 +50,15 @@ public class TankScreenHandler extends ScreenHandler {
 
     private Runnable onChangeListener;
 
-    private ServerPlayerEntity player;
+    @Nullable
+    private ServerPlayer player;
 
     private List<FluidSlotData> trackedFluids;
 
-    public TankScreenHandler(int syncId, PlayerInventory playerInventory, TankFluidStorageState tank, TankType tankType,
-            ItemStack tankItem, int slot, ScreenHandlerContext screenHandlerContext) {
+    public TankScreenHandler(int syncId, Inventory playerInventory, @Nullable TankFluidStorageState tank, TankType tankType,
+                             ItemStack tankItem, int slot, ContainerLevelAccess screenHandlerContext) {
 
-        super(tankType.getScreenhandlerType(), syncId);
+        super(TankStorage.TANK_MENU.get(), syncId);
 
         this.tankItem = tankItem;
         this.tank = tank;
@@ -60,7 +67,7 @@ public class TankScreenHandler extends ScreenHandler {
 
         this.fluidStorage = this.tank.getFluidStorage(Util.getInsertMode(tankItem));
 
-        if (playerInventory.player instanceof ServerPlayerEntity serverPlayerEntity) {
+        if (playerInventory.player instanceof ServerPlayer serverPlayerEntity) {
 
             this.onChangeListener = this::sendContentUpdates;
 
@@ -108,7 +115,7 @@ public class TankScreenHandler extends ScreenHandler {
         }
     }
 
-    public ScreenHandlerContext getContext() {
+    public ContainerLevelAccess getContext() {
         return context;
     }
 
@@ -119,13 +126,13 @@ public class TankScreenHandler extends ScreenHandler {
     // when shift clicking on an item containing fluids, try to insert that fluid
     // into max 1 fluid slot
     @Override
-    public ItemStack quickMove(PlayerEntity playerEntity, int slotIndex) {
+    public ItemStack quickMoveStack(Player playerEntity, int slotIndex) {
 
         Slot slot = this.slots.get(slotIndex);
         if (slot instanceof FluidSlot)
             return ItemStack.EMPTY;
 
-        ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerSlot(playerEntity,
+        ContainerLevelAccess containerItemContext = ContainerLevelAccess.ofPlayerSlot(playerEntity,
                 PlayerInventoryStorage.of(playerEntity).getSlot(slot.getIndex()));
 
         Storage<FluidVariant> stackFluidStorage = containerItemContext.find(FluidStorage.ITEM);
@@ -180,6 +187,24 @@ public class TankScreenHandler extends ScreenHandler {
             if (!(world.getBlockEntity(pos) instanceof TankDockBlockEntity blockEntity))
                 return false;
             if (!blockEntity.hasTank())
+                return false;
+            return true;
+        }, true);
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        if (!AbstractContainerMenu.stillValid(this.context, player, TankStorage.TANK_DOCK_BLOCK.get()))
+            return false;
+
+        return this.context.evaluate((world, pos) -> {
+            if (!(world.getBlockEntity(pos) instanceof TankDockBlockEntity blockEntity))
+                return false;
+            if (!blockEntity.hasTank())
+                return false;
+            if (!blockEntity.getTank().has(TankStorage.UUIDComponentType))
+                return false;
+            if (!blockEntity.getTank().get(TankStorage.UUIDComponentType).equals(this.tank.uuid))
                 return false;
             return true;
         }, true);
@@ -309,7 +334,7 @@ public class TankScreenHandler extends ScreenHandler {
         boolean isSlotLocked = fluidSlot.isLocked();
         boolean isSlotEmpty = fluidSlot.getAmount() == 0;
         boolean isCursorEmpty = getCursorStack().isEmpty();
-        FluidVariant cursorFluidVariant = Util.getFirstFluidVariant(getCursorStack());
+        FluidVariant cursorFluidVariant = Util.getFirstFluid(getCursorStack());
         boolean areFluidVariantsEqual = slotFluidVariant.equals(cursorFluidVariant);
 
         // slot unlocked empty 0 cursor empty -> lock empty
@@ -363,11 +388,10 @@ public class TankScreenHandler extends ScreenHandler {
     }
 
     // called only on server
-    private void syncFluidState(int slot, ServerPlayerEntity player) {
+    private void syncFluidState(int slot, ServerPlayer player) {
         TankSingleFluidStorage singleFluidStorage = this.fluidStorage.getSingleFluidStorage(slot);
         this.trackedFluids.set(slot, FluidSlotData.from(singleFluidStorage));
-        ServerPlayNetworking.send(player,
-                new SyncFluidPacketS2C(this.syncId, slot, FluidSlotData.from(singleFluidStorage)));
+        PacketDistributor.sendToPlayer(player, new SyncFluidPacketS2C(this.containerId, slot, FluidSlotData.from(singleFluidStorage)));
     }
 
     @Override
@@ -393,4 +417,5 @@ public class TankScreenHandler extends ScreenHandler {
                 syncFluidState(i, this.player);
         }
     }
+
 }

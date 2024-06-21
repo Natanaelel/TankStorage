@@ -1,24 +1,24 @@
 package net.natte.tankstorage.state;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.neoforged.neoforge.network.PacketDistributor;
+
+import java.util.*;
 
 public class TankFluidStorageState {
 
@@ -28,7 +28,15 @@ public class TankFluidStorageState {
     private List<TankSingleFluidStorage> fluidStorageParts;
 
     private short revision = 0; // start different from client (0) to update client cache
-    private List<Runnable> listeners = new ArrayList<>();
+    private final List<Runnable> listeners = new ArrayList<>();
+
+    public TankFluidStorageState(TankType type, UUID uuid, List<FluidSlotData> fluidSlots) {
+        this(type, uuid);
+        this.fluidStorageParts = new ArrayList<>();
+        for (FluidSlotData slot : fluidSlots) {
+            this.fluidStorageParts.add(new TankSingleFluidStorage(this.type.getCapacity(), slot.amount(), slot.fluidVariant(), slot.isLocked()));
+        }
+    }
 
     private TankFluidStorageState(TankType type, UUID uuid) {
         this.type = type;
@@ -49,6 +57,10 @@ public class TankFluidStorageState {
         fluidStorage.setMarkDirtyListener(this::markDirty);
         // fluidStorage.
         return fluidStorage;
+    }
+
+    public TankFluidHandler getFluidHandler(InsertMode insertMode) {
+        return new TankFluidHandler(fluidStorageParts, insertMode);
     }
 
     public TankFluidStorageState asType(TankType type) {
@@ -77,55 +89,6 @@ public class TankFluidStorageState {
         return tank;
     }
 
-    public static TankFluidStorageState readNbt(NbtCompound nbt) {
-
-        UUID uuid = nbt.getUuid("uuid");
-        TankType type = TankType.fromName(nbt.getString("type"));
-        short revision = nbt.getShort("revision");
-
-        List<TankSingleFluidStorage> parts = new ArrayList<>();
-        NbtList fluids = nbt.getList("fluids", NbtElement.COMPOUND_TYPE);
-
-        for (NbtElement nbtElement : fluids) {
-            NbtCompound fluidNbt = (NbtCompound) nbtElement;
-
-            FluidVariant fluidVariant = FluidVariant.fromNbt(fluidNbt.getCompound("variant"));
-            long amount = fluidNbt.getLong("amount");
-            boolean isLocked = fluidNbt.getBoolean("locked");
-
-            TankSingleFluidStorage fluidSlot = new TankSingleFluidStorage(type.getCapacity(), amount, fluidVariant,
-                    isLocked);
-            parts.add(fluidSlot);
-        }
-
-        TankFluidStorageState state = new TankFluidStorageState(type, uuid);
-        state.fluidStorageParts = parts;
-        state.revision = revision;
-        return state;
-    }
-
-    public static NbtCompound writeNbt(TankFluidStorageState tank) {
-
-        NbtCompound nbt = new NbtCompound();
-
-        nbt.putUuid("uuid", tank.uuid);
-        nbt.putString("type", tank.type.getName());
-        nbt.putShort("revision", tank.getRevision());
-
-        NbtList fluids = new NbtList();
-
-        for (TankSingleFluidStorage part : tank.fluidStorageParts) {
-            NbtCompound fluidNbt = new NbtCompound();
-            fluidNbt.put("variant", part.getResource().toNbt());
-            fluidNbt.putLong("amount", part.getAmount());
-            fluidNbt.putBoolean("locked", part.isLocked());
-            fluids.add(fluidNbt);
-        }
-
-        nbt.put("fluids", fluids);
-
-        return nbt;
-    }
 
     public static TankFluidStorageState create(TankType type, UUID uuid) {
         TankFluidStorageState tank = new TankFluidStorageState(type, uuid);
@@ -137,10 +100,10 @@ public class TankFluidStorageState {
         return tank;
     }
 
-    public List<FluidSlotData> getFluidSlotDatas() {
+    public List<FluidSlotData> getFluidSlots() {
         List<FluidSlotData> fluids = new ArrayList<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
-            fluids.add(new FluidSlotData(part.getResource(), this.type.getCapacity(), part.getAmount(),
+            fluids.add(new FluidSlotData(part.getFluid(), this.type.getCapacity(), part.getAmount(),
                     part.isLocked()));
         }
         return fluids;
@@ -197,7 +160,19 @@ public class TankFluidStorageState {
     }
 
     // called only serverside
-    public void sync(ServerPlayerEntity player) {
-        ServerPlayNetworking.send(player, new TankPacketS2C(uuid, getRevision(), getFluidSlotDatas()));
+    public void sync(ServerPlayer player) {
+        PacketDistributor.sendToPlayer(player,new TankPacketS2C(uuid, getRevision(), getFluidSlots()));
+    }
+
+    public TankFluidHandler getFluidHandler(InsertMode insertMode) {
+        return null;
+    }
+
+    public TankType getType() {
+        return type;
+    }
+
+    public UUID getUuid() {
+        return uuid;
     }
 }

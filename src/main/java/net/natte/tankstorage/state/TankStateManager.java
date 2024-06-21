@@ -1,32 +1,33 @@
 package net.natte.tankstorage.state;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.PersistentStateManager;
-import net.minecraft.world.World;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.natte.tankstorage.TankStorage;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 public class TankStateManager {
+
+    public static final SavedData.Factory<TankPersistentState> TYPE = new SavedData.Factory<>(
+            TankPersistentState::new,
+            TankPersistentState::createFromNbt,
+            null);
 
     private static TankPersistentState INSTANCE;
 
     public static TankPersistentState getState() {
-        INSTANCE.markDirty();
+        INSTANCE.setDirty();
         return INSTANCE;
     }
 
     // must be called on server start
-    public static void initialize(MinecraftServer server) {
-        INSTANCE = getState(server);
+    public static void initialize(ServerStartedEvent event) {
+        INSTANCE = getState(event.getServer());
     }
 
     private static TankPersistentState getState(MinecraftServer server) {
-        PersistentStateManager persistentStateManager = server.getWorld(World.OVERWORLD).getPersistentStateManager();
+        DimensionDataStorage persistentStateManager = server.overworld().getDataStorage();
 
-        TankPersistentState state = persistentStateManager.getOrCreate(
-                TankPersistentState::createFromNbt,
-                TankPersistentState::new,
-                TankStorage.MOD_ID);
-
-        return state;
+        return persistentStateManager.computeIfAbsent(TYPE, TankStorage.MOD_ID);
     }
 }

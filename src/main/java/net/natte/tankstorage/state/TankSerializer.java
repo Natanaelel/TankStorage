@@ -1,33 +1,29 @@
 package net.natte.tankstorage.state;
 
-import java.util.Map;
-import java.util.UUID;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.UUIDUtil;
+import net.natte.tankstorage.container.TankType;
+import net.natte.tankstorage.util.FluidSlotData;
+import net.neoforged.neoforge.fluids.FluidStack;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import java.util.List;
 
 public class TankSerializer {
 
-    public static void readNbt(Map<UUID, TankFluidStorageState> tankMap, NbtCompound nbtCompound) {
+    private static final Codec<FluidSlotData> FLUID_SLOT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            FluidStack.OPTIONAL_CODEC.fieldOf("id").forGetter(FluidSlotData::fluidVariant),
+            Codec.INT.fieldOf("amount").forGetter(FluidSlotData::amount),
+            Codec.BOOL.fieldOf("locked").forGetter(FluidSlotData::isLocked)
+    ).apply(instance, FluidSlotData::new));
 
-        NbtList tanks = nbtCompound.getList("tanks", NbtElement.COMPOUND_TYPE);
-        for (NbtElement nbtElement : tanks) {
-            TankFluidStorageState tankFluidStorageState = TankFluidStorageState.readNbt((NbtCompound) nbtElement);
-            tankMap.put(tankFluidStorageState.uuid, tankFluidStorageState);
-        }
-    }
 
-    public static NbtCompound writeNbt(Map<UUID, TankFluidStorageState> tankMap) {
+    private static final Codec<TankFluidStorageState> TANK_CODEC = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    TankType.CODEC.fieldOf("type").forGetter(TankFluidStorageState::getType),
+                    UUIDUtil.STRING_CODEC.fieldOf("uuid").forGetter(TankFluidStorageState::getUuid),
+                    FLUID_SLOT_CODEC.listOf().fieldOf("fluids").forGetter(TankFluidStorageState::getFluidSlots)
+            ).apply(instance, TankFluidStorageState::new));
 
-        NbtList tanks = new NbtList();
-        for (TankFluidStorageState tank : tankMap.values()) {
-            NbtCompound nbt = TankFluidStorageState.writeNbt(tank);
-            tanks.add(nbt);
-        }
-        NbtCompound nbtCompound = new NbtCompound();
-        nbtCompound.put("tanks", tanks);
-
-        return nbtCompound;
-    }
+    public static final Codec<List<TankFluidStorageState>> CODEC = TANK_CODEC.listOf();
 }

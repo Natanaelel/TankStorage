@@ -1,37 +1,32 @@
 package net.natte.tankstorage.packet.server;
 
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record LockSlotPacketC2S(int syncId, int slot)
-        implements FabricPacket {
+public record LockSlotPacketC2S(int syncId, int slot) implements CustomPacketPayload {
 
-    public static final PacketType<LockSlotPacketC2S> PACKET_TYPE = PacketType.create(Util.ID("lock_slot_c2s"),
-            LockSlotPacketC2S::read);
-
-    public static LockSlotPacketC2S read(PacketByteBuf buf) {
-        return new LockSlotPacketC2S(buf.readInt(), buf.readInt());
-    }
-
-    @Override
-    public void write(PacketByteBuf buf) {
-        buf.writeInt(syncId);
-        buf.writeInt(slot);
-    }
+    public static final Type<LockSlotPacketC2S> TYPE = new Type<>(Util.ID("lock_slot_c2s"));
+    public static final StreamCodec<ByteBuf, LockSlotPacketC2S> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.INT,
+            LockSlotPacketC2S::syncId,
+            ByteBufCodecs.INT,
+            LockSlotPacketC2S::slot,
+            LockSlotPacketC2S::new
+    );
 
     @Override
-    public PacketType<LockSlotPacketC2S> getType() {
-        return PACKET_TYPE;
+    public Type<LockSlotPacketC2S> type() {
+        return TYPE;
     }
 
-    public static void receive(LockSlotPacketC2S packet, ServerPlayerEntity player, PacketSender responseSender) {
-        if (packet.syncId == player.currentScreenHandler.syncId
-                && player.currentScreenHandler instanceof TankScreenHandler tankScreenHandler) {
+    public static void receive(LockSlotPacketC2S packet, IPayloadContext context) {
+        if (packet.syncId == context.player().containerMenu.containerId
+                && context.player().containerMenu instanceof TankScreenHandler tankScreenHandler) {
             tankScreenHandler.lockSlotClick(packet.slot);
         }
     }

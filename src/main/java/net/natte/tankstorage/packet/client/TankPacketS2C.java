@@ -1,43 +1,40 @@
 package net.natte.tankstorage.packet.client;
 
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.natte.tankstorage.cache.CachedFluidStorageState;
+import net.natte.tankstorage.cache.ClientTankCache;
+import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.minecraft.network.PacketByteBuf;
-import net.natte.tankstorage.util.FluidSlotData;
-import net.natte.tankstorage.util.Util;
+public record TankPacketS2C(UUID uuid, int revision, List<FluidSlotData> fluids) implements CustomPacketPayload {
 
-public record TankPacketS2C(UUID uuid, int revision, List<FluidSlotData> fluids) implements FabricPacket {
-
-    public static final PacketType<TankPacketS2C> PACKET_TYPE = PacketType.create(Util.ID("tank_s2c"),
-            TankPacketS2C::read);
-
-    public static TankPacketS2C read(PacketByteBuf buf) {
-        UUID uuid = buf.readUuid();
-        int revision = buf.readInt();
-        int size = buf.readInt();
-        List<FluidSlotData> fluids = new ArrayList<>();
-        for (int i = 0; i < size; ++i) {
-            fluids.add(FluidSlotData.read(buf));
-        }
-        return new TankPacketS2C(uuid, revision, fluids);
-    }
+    public static final Type<TankPacketS2C> TYPE = new Type<>(Util.ID("tank_s2c"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, TankPacketS2C> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC,
+            TankPacketS2C::uuid,
+            ByteBufCodecs.INT,
+            TankPacketS2C::revision,
+            FluidSlotData.STREAM_CODEC.apply(ByteBufCodecs.collection(ArrayList::new)),
+            TankPacketS2C::fluids,
+            TankPacketS2C::new
+    );
 
     @Override
-    public void write(PacketByteBuf buf) {
-        buf.writeUuid(uuid);
-        buf.writeInt(revision);
-        buf.writeInt(fluids.size());
-        for (FluidSlotData fluidSlotData : fluids) {
-            fluidSlotData.write(buf);
-        }
+    public Type<TankPacketS2C> type() {
+        return TYPE;
     }
 
-    @Override
-    public PacketType<TankPacketS2C> getType() {
-        return PACKET_TYPE;
+    public static void receive(TankPacketS2C packet, IPayloadContext context) {
+        ClientTankCache.put(packet.uuid,
+                new CachedFluidStorageState(packet.uuid, packet.fluids, packet.revision));
     }
 }

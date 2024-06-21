@@ -1,29 +1,36 @@
 package net.natte.tankstorage.util;
 
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
+import net.neoforged.neoforge.fluids.FluidStack;
 
-public record FluidSlotData(FluidVariant fluidVariant, long capacity, long amount, boolean isLocked) {
+public record FluidSlotData(FluidStack fluidVariant, int capacity, int amount, boolean isLocked) {
 
-    public static FluidSlotData read(PacketByteBuf buf) {
-        return new FluidSlotData(FluidVariant.fromPacket(buf), buf.readLong(), buf.readLong(), buf.readBoolean());
-    }
+    public static final StreamCodec<RegistryFriendlyByteBuf, FluidSlotData> STREAM_CODEC = StreamCodec.composite(
+            FluidStack.OPTIONAL_STREAM_CODEC,
+            FluidSlotData::fluidVariant,
+            ByteBufCodecs.INT,
+            FluidSlotData::capacity,
+            ByteBufCodecs.INT,
+            FluidSlotData::amount,
+            ByteBufCodecs.BOOL,
+            FluidSlotData::isLocked,
+            FluidSlotData::new
+    );
 
-    public void write(PacketByteBuf buf) {
-        fluidVariant.toPacket(buf);
-        buf.writeLong(capacity);
-        buf.writeLong(amount);
-        buf.writeBoolean(isLocked);
+    public FluidSlotData(FluidStack fluidVariant, int amount, boolean isLocked){
+        this(fluidVariant, 0, amount, isLocked);
     }
 
     public boolean equalsOther(TankSingleFluidStorage other) {
         return isLocked == other.isLocked() && capacity == other.getCapacity() && amount == other.getAmount()
-                && fluidVariant.equals(other.getResource());
+                && FluidStack.isSameFluidSameComponents(fluidVariant, other.getFluid());
     }
 
     public static FluidSlotData from(TankSingleFluidStorage fluidStorage) {
-        return new FluidSlotData(fluidStorage.getResource(), fluidStorage.getCapacity(),
+        return new FluidSlotData(fluidStorage.getFluid(), fluidStorage.getCapacity(),
                 fluidStorage.getAmount(), fluidStorage.isLocked());
     }
 }

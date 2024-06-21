@@ -1,50 +1,29 @@
 package net.natte.tankstorage.storage;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 
-public class TankOptions {
+public record TankOptions(InsertMode insertMode, TankInteractionMode interactionMode) {
 
-    public InsertMode insertMode;
-    public int selectedSlot;
-    public TankInteractionMode interactionMode;
+    public static final TankOptions DEFAULT = new TankOptions(InsertMode.ALL, TankInteractionMode.OPEN_SCREEN);
 
-    public TankOptions() {
-        this.insertMode = InsertMode.ALL;
-        this.selectedSlot = -1;
-        this.interactionMode = TankInteractionMode.OPEN_SCREEN;
-    }
+    public static final Codec<TankOptions> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BYTE.fieldOf("insertMode").forGetter(t -> (byte) t.insertMode.ordinal()),
+            Codec.BYTE.fieldOf("interactionMode").forGetter(t -> (byte) t.interactionMode.ordinal())
+    ).apply(instance, TankOptions::of));
 
-    public static TankOptions fromNbt(NbtCompound nbt) {
-        TankOptions options = new TankOptions();
-        int b = MathHelper.clamp(nbt.getByte("insertmode"), 0, InsertMode.values().length);
-        options.insertMode = InsertMode.values()[b];
-        options.selectedSlot = nbt.getInt("selectedslot");
-        options.interactionMode = nbt.getBoolean("interactionmode") ? TankInteractionMode.OPEN_SCREEN
-                : TankInteractionMode.BUCKET;
-        return options;
-    }
 
-    public NbtCompound asNbt() {
-        NbtCompound nbt = new NbtCompound();
-        nbt.putByte("insertmode", (byte) insertMode.ordinal());
-        nbt.putInt("selectedslot", selectedSlot);
-        nbt.putBoolean("interactionmode", interactionMode == TankInteractionMode.OPEN_SCREEN);
-        return nbt;
-    }
+    public static final StreamCodec<FriendlyByteBuf, TankOptions> STREAM_CODEC = StreamCodec.composite(
+            NeoForgeStreamCodecs.enumCodec(InsertMode.class),
+            TankOptions::insertMode,
+            NeoForgeStreamCodecs.enumCodec(TankInteractionMode.class),
+            TankOptions::interactionMode,
+            TankOptions::new);
 
-    public static TankOptions read(PacketByteBuf buf) {
-        TankOptions options = new TankOptions();
-        options.insertMode = InsertMode.values()[MathHelper.clamp(buf.readByte(), 0, InsertMode.values().length)];
-        options.selectedSlot = buf.readInt();
-        options.interactionMode = buf.readBoolean() ? TankInteractionMode.OPEN_SCREEN : TankInteractionMode.BUCKET;
-        return options;
-    }
-
-    public void write(PacketByteBuf buf) {
-        buf.writeByte(insertMode.ordinal());
-        buf.writeInt(selectedSlot);
-        buf.writeBoolean(interactionMode == TankInteractionMode.OPEN_SCREEN);
+    private static TankOptions of(byte insertMode, byte interactionMode) {
+        return new TankOptions(InsertMode.values()[insertMode], TankInteractionMode.values()[interactionMode]);
     }
 }

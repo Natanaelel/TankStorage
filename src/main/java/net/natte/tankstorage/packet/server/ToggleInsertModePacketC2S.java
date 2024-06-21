@@ -1,56 +1,50 @@
 package net.natte.tankstorage.packet.server;
 
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+import io.netty.buffer.ByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record ToggleInsertModePacketC2S() implements FabricPacket {
+public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
 
-    public static final PacketType<ToggleInsertModePacketC2S> PACKET_TYPE = PacketType.create(
-            Util.ID("toggleinsertmode_c2s"),
-            ToggleInsertModePacketC2S::read);
+    public static final ToggleInsertModePacketC2S INSTANCE = new ToggleInsertModePacketC2S();
 
-    public static ToggleInsertModePacketC2S read(PacketByteBuf buf) {
-        return new ToggleInsertModePacketC2S();
-    }
+    public static final Type<ToggleInsertModePacketC2S> TYPE = new Type<>(Util.ID("toggleinsertmode_c2s"));
+    public static final StreamCodec<ByteBuf, ToggleInsertModePacketC2S> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
-    @Override
-    public void write(PacketByteBuf buf) {
-    }
 
     @Override
-    public PacketType<ToggleInsertModePacketC2S> getType() {
-        return PACKET_TYPE;
+    public Type<ToggleInsertModePacketC2S> type() {
+        return TYPE;
     }
 
-    public static void receive(ToggleInsertModePacketC2S packet, ServerPlayerEntity player,
-            PacketSender responseSender) {
+    public static void receive(ToggleInsertModePacketC2S packet, IPayloadContext context) {
 
-        if (player.currentScreenHandler instanceof TankScreenHandler tankScreenHandler)
+        ServerPlayer player = ((ServerPlayer) context.player());
+        if (player.containerMenu instanceof TankScreenHandler tankScreenHandler)
             toggleInsertModeOfScreenHandler(player, tankScreenHandler);
         else
             toggleInsertModeOfHeldTank(player);
     }
 
-    private static void toggleInsertModeOfScreenHandler(ServerPlayerEntity player,
-            TankScreenHandler tankScreenHandler) {
+    private static void toggleInsertModeOfScreenHandler(ServerPlayer player,
+                                                        TankScreenHandler tankScreenHandler) {
         ItemStack tank = tankScreenHandler.getTankItem();
         TankOptions options = Util.getOrCreateOptions(tank);
         options.insertMode = options.insertMode.next();
         Util.setOptions(tank, options);
 
         // dock.markDirty if has dock pos
-        tankScreenHandler.getContext().run(
+        tankScreenHandler.getContext().execute(
                 (world, blockPos) -> world
-                        .getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY)
+                        .getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY.get())
                         .ifPresent(dock -> {
                             if (dock.hasTank()) {
                                 Util.setOptions(dock.getTank(), options);
@@ -59,19 +53,19 @@ public record ToggleInsertModePacketC2S() implements FabricPacket {
                         }));
     }
 
-    private static void toggleInsertModeOfHeldTank(ServerPlayerEntity player) {
+    private static void toggleInsertModeOfHeldTank(ServerPlayer player) {
         ItemStack stack;
-        if (Util.isTankLike(player.getMainHandStack()))
-            stack = player.getMainHandStack();
-        else if (Util.isTankLike(player.getOffHandStack()))
-            stack = player.getOffHandStack();
+        if (Util.isTankLike(player.getMainHandItem()))
+            stack = player.getMainHandItem();
+        else if (Util.isTankLike(player.getOffhandItem()))
+            stack = player.getOffhandItem();
         else
             return;
 
         TankOptions options = Util.getOrCreateOptions(stack);
         options.insertMode = options.insertMode.next();
         Util.setOptions(stack, options);
-        player.sendMessage(Text.translatable("popup.tankstorage.insertmode."
+        player.displayClientMessage(Component.translatable("popup.tankstorage.insertmode."
                 + options.insertMode.toString().toLowerCase()), true);
     }
 }

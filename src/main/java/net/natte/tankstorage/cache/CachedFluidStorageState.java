@@ -37,7 +37,7 @@ public class CachedFluidStorageState {
         return fluids;
     }
 
-    public Storage<FluidVariant> getFluidStorage(InsertMode insertMode) {
+    public Storage<FluidVariant> getFluidHandler(InsertMode insertMode) {
         if (this.parts == null) {
             this.parts = fluids.stream().map(TankSingleFluidStorage::from).toList();
         }

@@ -1,129 +1,108 @@
 package net.natte.tankstorage.storage;
 
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
-import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
-import net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.neoforged.neoforge.fluids.FluidStack;
 
-public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlotData>
-        implements SingleSlotStorage<FluidVariant> {
+public class TankSingleFluidStorage {
 
-    private long capacity;
-    private long amount;
-    private FluidVariant fluidVariant;
+    private final int capacity;
+    private int amount;
+    // don't care about the FluidStack count, as long as it is >= 1
+    private FluidStack fluidVariant;
     private boolean isLocked;
 
     private Runnable onMarkDirty;
 
-    public TankSingleFluidStorage(long capacity, long amount, FluidVariant fluidVariant, boolean isLocked) {
+    public TankSingleFluidStorage(int capacity, int amount, FluidStack fluidVariant, boolean isLocked) {
         this.capacity = capacity;
         this.amount = amount;
         this.fluidVariant = fluidVariant;
         this.isLocked = isLocked;
     }
 
-    public TankSingleFluidStorage(long capacity) {
-        this(capacity, 0, FluidVariant.blank(), false);
+    public TankSingleFluidStorage(int capacity) {
+        this(capacity, 0, FluidStack.EMPTY, false);
     }
 
     public void setMarkDirtyListener(Runnable listener) {
         this.onMarkDirty = listener;
     }
 
-    public TankSingleFluidStorage update(long amount, FluidVariant fluidVariant, boolean isLocked) {
+    public TankSingleFluidStorage update(int amount, FluidStack fluidVariant, boolean isLocked) {
         this.amount = amount;
         this.fluidVariant = fluidVariant;
         this.isLocked = isLocked;
         return this;
     }
 
-    @Override
-    public long insert(FluidVariant insertedVariant, long maxAmount, TransactionContext transaction) {
+    /**
+     * @return how much was inserted
+     */
+    public int insert(FluidStack insertedVariant, int maxAmount, boolean simulate) {
         if (!canInsert(insertedVariant))
             return 0;
 
-        updateSnapshots(transaction);
+        int space = capacity - amount;
+        int insertedAmount = Math.min(maxAmount, space);
+        if (insertedAmount > 0 && !simulate) {
+            this.amount += insertedAmount;
+            if (this.fluidVariant.isEmpty())
+                this.fluidVariant = insertedVariant;
+            markDirty();
+        }
 
-        long space = capacity - amount;
-        long insertedAmount = Math.min(maxAmount, space);
-
-        if (this.fluidVariant.isBlank())
-            this.fluidVariant = insertedVariant;
-
-        this.amount += insertedAmount;
 
         return insertedAmount;
     }
 
-    @Override
-    public long extract(FluidVariant extractedVariant, long maxAmount, TransactionContext transaction) {
+    /**
+     * @return how much was extracted
+     */
+    public int extract(FluidStack extractedVariant, int maxAmount, boolean simulate) {
         if (!canExtract(extractedVariant))
             return 0;
 
-        updateSnapshots(transaction);
-
-        long extractedAmount = Math.min(maxAmount, this.amount);
-
-        this.amount -= extractedAmount;
-        if (this.amount == 0 && !this.isLocked)
-            this.fluidVariant = FluidVariant.blank();
+        int extractedAmount = Math.min(maxAmount, this.amount);
+        if (extractedAmount > 0 && !simulate) {
+            this.amount -= extractedAmount;
+            if (this.amount == 0 && !this.isLocked)
+                this.fluidVariant = FluidStack.EMPTY;
+            markDirty();
+        }
 
         return extractedAmount;
     }
 
-    public boolean canInsert(FluidVariant insertedVariant) {
-        if (insertedVariant.equals(this.fluidVariant))
-            return true;
-        if (this.fluidVariant.isBlank() && !this.isLocked)
-            return true;
-        return false;
+    public boolean canInsert(FluidStack insertedVariant) {
+        if (insertedVariant.isEmpty())
+            return false;
+
+        if (this.fluidVariant.isEmpty())
+            return !this.isLocked;
+
+        return FluidStack.isSameFluidSameComponents(this.fluidVariant, insertedVariant);
     }
 
-    private boolean canExtract(FluidVariant extractedVariant) {
-        if (extractedVariant.equals(this.fluidVariant))
-            return true;
-        return false;
+    private boolean canExtract(FluidStack extractedVariant) {
+        if (extractedVariant.isEmpty())
+            return false;
+        return FluidStack.isSameFluidSameComponents(this.fluidVariant, extractedVariant);
     }
 
-    @Override
-    public boolean isResourceBlank() {
-        return fluidVariant.isBlank();
-    }
-
-    @Override
-    public FluidVariant getResource() {
+    public FluidStack getFluid() {
         return fluidVariant;
     }
 
-    @Override
-    public long getAmount() {
+    public int getAmount() {
         return amount;
     }
 
-    @Override
-    public long getCapacity() {
+    public int getCapacity() {
         return capacity;
     }
 
     public boolean isLocked() {
         return isLocked;
-    }
-
-    @Override
-    protected VariableFluidSlotData createSnapshot() {
-        return new VariableFluidSlotData(fluidVariant, amount);
-    }
-
-    @Override
-    protected void readSnapshot(VariableFluidSlotData snapshot) {
-        this.fluidVariant = snapshot.fluidVariant();
-        this.amount = snapshot.amount();
-    }
-
-    @Override
-    protected void onFinalCommit() {
-        markDirty();
     }
 
     private void markDirty() {
@@ -132,18 +111,18 @@ public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlo
         }
     }
 
-    public void lock(FluidVariant newFluidVariant, boolean shouldLock) {
+    public void lock(FluidStack newFluidVariant, boolean shouldLock) {
         if (shouldLock) {
             if (this.amount == 0) {
                 this.fluidVariant = newFluidVariant;
                 this.isLocked = true;
-            } else if (this.fluidVariant.equals(newFluidVariant)) {
+            } else if (FluidStack.isSameFluid(this.fluidVariant, newFluidVariant)) {
                 this.isLocked = true;
             }
         } else {
             this.isLocked = false;
             if (this.amount == 0)
-                this.fluidVariant = FluidVariant.blank();
+                this.fluidVariant = FluidStack.EMPTY;
         }
     }
 
@@ -151,8 +130,4 @@ public class TankSingleFluidStorage extends SnapshotParticipant<VariableFluidSlo
         return new TankSingleFluidStorage(fluidSlotData.capacity(), fluidSlotData.amount(),
                 fluidSlotData.fluidVariant(), fluidSlotData.isLocked());
     }
-}
-
-// what can change during a transaction
-record VariableFluidSlotData(FluidVariant fluidVariant, long amount) {
 }

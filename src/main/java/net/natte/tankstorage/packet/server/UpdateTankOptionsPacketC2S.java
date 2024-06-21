@@ -1,43 +1,34 @@
 package net.natte.tankstorage.packet.server;
 
-import net.fabricmc.fabric.api.networking.v1.FabricPacket;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.fabricmc.fabric.api.networking.v1.PacketType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record UpdateTankOptionsPacketC2S(TankOptions options) implements FabricPacket {
+public record UpdateTankOptionsPacketC2S(TankOptions options) implements CustomPacketPayload {
 
-    public static final PacketType<UpdateTankOptionsPacketC2S> PACKET_TYPE = PacketType.create(Util.ID("options_c2s"),
-            UpdateTankOptionsPacketC2S::read);
-
-    public static UpdateTankOptionsPacketC2S read(PacketByteBuf buf) {
-        return new UpdateTankOptionsPacketC2S(TankOptions.read(buf));
-    }
+    public static final Type<UpdateTankOptionsPacketC2S> TYPE = new Type<>(Util.ID("options_c2s"));
+    public static final StreamCodec<FriendlyByteBuf, UpdateTankOptionsPacketC2S> STREAM_CODEC = TankOptions.STREAM_CODEC.map(UpdateTankOptionsPacketC2S::new, UpdateTankOptionsPacketC2S::options);
 
     @Override
-    public void write(PacketByteBuf buf) {
-        options.write(buf);
+    public Type<UpdateTankOptionsPacketC2S> type() {
+        return TYPE;
     }
 
-    @Override
-    public PacketType<UpdateTankOptionsPacketC2S> getType() {
-        return PACKET_TYPE;
-    }
-
-    public static void receive(UpdateTankOptionsPacketC2S packet, ServerPlayerEntity playerEntity,
-            PacketSender responseServer) {
-        if (playerEntity.currentScreenHandler instanceof TankScreenHandler tankScreenHandler) {
-            ScreenHandlerContext context = tankScreenHandler.getContext();
-            if (context != ScreenHandlerContext.EMPTY) {
-                context.run((world, blockPos) -> {
-                    world.getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY).ifPresent(dock -> {
+    public static void receive(UpdateTankOptionsPacketC2S packet, IPayloadContext context){
+        Player player = context.player();
+        if (player.containerMenu instanceof TankScreenHandler tankScreenHandler) {
+            ContainerLevelAccess ccontext = tankScreenHandler.getContext();
+            if (ccontext != ContainerLevelAccess.NULL) {
+                ccontext.execute((world, blockPos) -> {
+                    world.getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY.get()).ifPresent(dock -> {
                         if (dock.hasTank()) {
                             Util.setOptions(dock.getTank(), packet.options);
                         }
@@ -47,12 +38,12 @@ public record UpdateTankOptionsPacketC2S(TankOptions options) implements FabricP
             }
         }
         ItemStack stack;
-        stack = playerEntity.getMainHandStack();
+        stack = player.getMainHandItem();
         if (Util.isTankLike(stack) && Util.hasUUID(stack)) {
             Util.setOptions(stack, packet.options);
             return;
         }
-        stack = playerEntity.getOffHandStack();
+        stack = player.getOffhandItem();
         if (Util.isTankLike(stack) && Util.hasUUID(stack)) {
             Util.setOptions(stack, packet.options);
             return;

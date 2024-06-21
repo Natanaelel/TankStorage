@@ -4,6 +4,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Properties;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.minecraft.client.item.TooltipContext;
@@ -21,6 +22,8 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.world.World;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
@@ -35,7 +38,7 @@ public class TankFunctionality extends Item {
 
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance(Locale.US);
 
-    public TankFunctionality(Settings settings) {
+    public TankFunctionality(Properties settings) {
         super(settings);
     }
 
