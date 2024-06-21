@@ -1,9 +1,9 @@
 package net.natte.tankstorage.item.tooltip;
 
-import java.util.List;
-
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.natte.tankstorage.util.FluidSlotData;
 
-public record TankTooltipData(List<FluidSlotData> fluids, int selectedSlot) implements TooltipData {
+import java.util.List;
+
+public record TankTooltipData(List<FluidSlotData> fluids, int selectedSlot) implements TooltipComponent {
 }

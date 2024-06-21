@@ -81,9 +81,9 @@ public class TankDockBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
         fluidHandler = null;
-        super.markDirty();
+        super.setChanged();
     }
 
     @Override

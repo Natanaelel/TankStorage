@@ -12,27 +12,21 @@ import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.client.rendering.HudRenderer;
 import net.natte.tankstorage.client.rendering.TankDockBlockEntityRenderer;
 import net.natte.tankstorage.client.screen.TankScreen;
+import net.natte.tankstorage.client.tooltip.TankTooltipComponent;
 import net.natte.tankstorage.container.TankType;
-import net.natte.tankstorage.events.MouseEvents;
+import net.natte.tankstorage.client.events.MouseEvents;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
-import net.natte.tankstorage.packet.client.TankPacketS2C;
-import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
 import net.natte.tankstorage.packet.server.OpenTankFromKeyBindPacketC2S;
 import net.natte.tankstorage.packet.server.RequestTankPacketC2S;
 import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
-import net.natte.tankstorage.rendering.HudRenderer;
-import net.natte.tankstorage.rendering.TankDockBlockEntityRenderer;
-import net.natte.tankstorage.tooltip.TankTooltipComponent;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
-import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Set;
@@ -57,26 +51,22 @@ public class TankStorageClient {
         modBus.addListener(this::registerHandledScreens);
         modBus.addListener(this::registerItemColors);
         modBus.addListener(this::registerModelPredicates);
-        registerRenderers(modBus);
+        modBus.addListener(this::registerKeyBinds);
+        modBus.addListener(this::registerTooltipComponents);
+        modBus.addListener(this::registerRenderers);
 
-        registerNetworkListeners();
-        registerKeyBinds();
-        registerKeyBindListeners();
-        registerTooltipComponents();
-        registerTickEvents();
-        registerEvents();
-
+        NeoForge.EVENT_BUS.addListener(this::handleTickEvents);
+        NeoForge.EVENT_BUS.addListener(tankHudRenderer::render);
+        NeoForge.EVENT_BUS.addListener(MouseEvents::onScroll);
     }
+
 
     private void registerHandledScreens(RegisterMenuScreensEvent event) {
         event.register(TankStorage.TANK_MENU.get(), TankScreen::new);
     }
 
-    private void registerRenderers(IEventBus modBus) {
-        NeoForge.EVENT_BUS.addListener(tankHudRenderer::render);
-
-        modBus.<EntityRenderersEvent.RegisterRenderers>addListener(event -> event.registerBlockEntityRenderer(TankStorage.TANK_DOCK_BLOCK_ENTITY.get(), TankDockBlockEntityRenderer::new));
-
+    private void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(TankStorage.TANK_DOCK_BLOCK_ENTITY.get(), TankDockBlockEntityRenderer::new);
     }
 
     private void registerItemColors(RegisterColorHandlersEvent.Item event) {
@@ -96,54 +86,36 @@ public class TankStorageClient {
         });
     }
 
-    private void registerNetworkListeners() {
-        ClientPlayNetworking.registerGlobalReceiver(SyncFluidPacketS2C.PACKET_TYPE, new SyncFluidPacketReceiver());
-        ClientPlayNetworking.registerGlobalReceiver(TankPacketS2C.PACKET_TYPE, new TankPacketReceiver());
+    public void registerKeyBinds(RegisterKeyMappingsEvent event) {
+        event.register(toggleInteractionModeKeyBinding);
+        event.register(toggleInsertModeKeyBinding);
+        event.register(lockSlotKeyBinding);
+        event.register(openTankFromKeyBinding);
     }
 
-    private void registerKeyBinds() {
-        KeyBindingHelper.registerKeyBinding(lockSlotKeyBinding);
-        KeyBindingHelper.registerKeyBinding(toggleInsertModeKeyBinding);
-        KeyBindingHelper.registerKeyBinding(toggleInteractionModeKeyBinding);
-        KeyBindingHelper.registerKeyBinding(openTankFromKeyBinding);
+    private void handleTickEvents(ClientTickEvent.Post event) {
+        handleInputs();
+        tankHudRenderer.tick();
+        ClientTankCache.advanceThrottledQueue();
+        sendQueuedRequests();
 
     }
 
-    private void registerKeyBindListeners() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (toggleInsertModeKeyBinding.wasPressed())
-                ClientPlayNetworking.send(new ToggleInsertModePacketC2S());
+    private void handleInputs() {
+        while (toggleInsertModeKeyBinding.consumeClick())
+            PacketDistributor.sendToServer(ToggleInsertModePacketC2S.INSTANCE);
 
-            while (toggleInteractionModeKeyBinding.wasPressed()) {
-                MouseEvents.onToggleInteractionMode(client.player, null);
-            }
+        while (toggleInteractionModeKeyBinding.consumeClick())
+            MouseEvents.onToggleInteractionMode();
 
-            while (openTankFromKeyBinding.wasPressed())
-                ClientPlayNetworking.send(new OpenTankFromKeyBindPacketC2S());
-        });
+
+        while (openTankFromKeyBinding.consumeClick())
+            PacketDistributor.sendToServer(OpenTankFromKeyBindPacketC2S.INSTANCE);
     }
 
-    private void registerTooltipComponents() {
-        TooltipComponentCallback.EVENT.register(data -> {
-            if (data instanceof TankTooltipData tooltipData)
-                return new TankTooltipComponent(tooltipData);
-            return null;
-        });
-    }
 
-    private void registerTickEvents() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            tankHudRenderer.tick(client);
-            ClientTankCache.advanceThrottledQueue();
-            sendQueuedRequests();
-        });
-    }
-
-    private void registerEvents() {
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            ClientTankCache.clear();
-            tankHudRenderer.reset();
-        });
+    private void registerTooltipComponents(RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(TankTooltipData.class, TankTooltipComponent::new);
     }
 
     private void sendQueuedRequests() {
@@ -151,7 +123,7 @@ public class TankStorageClient {
         for (UUID uuid : requestQueue) {
             CachedFluidStorageState state = ClientTankCache.get(uuid);
             int revision = state == null ? -1 : state.getRevision();
-            ClientPlayNetworking.send(new RequestTankPacketC2S(uuid, revision));
+            PacketDistributor.sendToServer(new RequestTankPacketC2S(uuid, revision));
         }
         requestQueue.clear();
     }

@@ -37,9 +37,9 @@ public class HudRenderer {
         this.client = null;
     }
 
-    public void tick(Minecraft minecraftClient) {
+    public void tick() {
         if (client == null)
-            client = minecraftClient;
+            client = Minecraft.getInstance();
 
         if (client.player == null)
             return;

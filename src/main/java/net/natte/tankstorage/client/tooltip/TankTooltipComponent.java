@@ -1,21 +1,19 @@
-package net.natte.tankstorage.tooltip;
+package net.natte.tankstorage.client.tooltip;
 
-import java.util.List;
-
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.TooltipComponent;
-import net.minecraft.item.Items;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
-import net.natte.tankstorage.rendering.FluidRenderer;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
 
-public class TankTooltipComponent implements TooltipComponent {
+import java.util.List;
 
-    public static final Identifier TEXTURE = Util.ID("/textures/gui/widgets.png");
+public class TankTooltipComponent implements ClientTooltipComponent {
+
+    public static final ResourceLocation TEXTURE = Util.ID("/textures/gui/widgets.png");
 
     private final List<FluidSlotData> fluids;
     private final int selectedSlot;
@@ -25,9 +23,9 @@ public class TankTooltipComponent implements TooltipComponent {
         this.fluids = tooltipData.fluids();
         this.selectedSlot = tooltipData.selectedSlot();
     }
-
+    
     @Override
-    public int getWidth(TextRenderer textRenderer) {
+    public int getWidth(Font textRenderer) {
         return getColumns() * 18 + 2;
     }
 
@@ -37,7 +35,7 @@ public class TankTooltipComponent implements TooltipComponent {
     }
 
     private int getRows() {
-        return MathHelper.ceil(fluids.size() / 9d);
+        return Mth.ceil(fluids.size() / 9d);
     }
 
     private int getColumns() {
@@ -45,14 +43,14 @@ public class TankTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
+    public void drawItems(Font textRenderer, int x, int y, GuiGraphics context) {
         drawBackground(x, y, context);
         drawFluids(textRenderer, x, y, context);
         if (selectedSlot != -2)
             drawSlotHighlight(x, y, context);
     }
 
-    private void drawBackground(int x, int y, DrawContext context) {
+    private void drawBackground(int x, int y, GuiGraphics context) {
         int row = 0;
         int col = 0;
         for (int i = selectedSlot == -1 ? -1 : 0; i < fluids.size(); ++i) {
