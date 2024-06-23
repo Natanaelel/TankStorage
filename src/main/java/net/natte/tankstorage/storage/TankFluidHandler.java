@@ -33,6 +33,7 @@ public class TankFluidHandler implements IFluidHandlerItem {
 
     public TankFluidHandler extractOnly(FluidStack extractOnly) {
         this.extractOnly = extractOnly;
+        return this;
     }
 
     @Override

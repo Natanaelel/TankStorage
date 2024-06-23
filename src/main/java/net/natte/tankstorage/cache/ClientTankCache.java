@@ -16,8 +16,11 @@ public class ClientTankCache {
     private static final Set<UUID> requestQueue = new HashSet<>();
     private static final Map<UUID, Integer> throddledQueue = new HashMap<>();
 
+    public static boolean markDirtyForPreview = false;
+
     public static void put(UUID uuid, CachedFluidStorageState state) {
         CACHE.put(uuid, state);
+        markDirtyForPreview = true;
     }
 
     @Nullable

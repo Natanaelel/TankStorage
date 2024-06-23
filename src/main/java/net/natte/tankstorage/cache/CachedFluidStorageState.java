@@ -1,19 +1,12 @@
 package net.natte.tankstorage.cache;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
-import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
+
+import java.util.*;
 
 public class CachedFluidStorageState {
 
@@ -48,6 +41,7 @@ public class CachedFluidStorageState {
         return new TankFluidHandler(parts, insertMode);
     }
 
+    // TODO: large FluidSlotData with long amount
     public List<FluidSlotData> getUniqueFluids() {
         if (uniqueFluids == null) {
             Map<FluidStack, Long> counts = new LinkedHashMap<>();
@@ -59,7 +53,8 @@ public class CachedFluidStorageState {
             uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {
                 if (count > 0)
-                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+//                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0, count.intValue(), false));
             });
 
         }

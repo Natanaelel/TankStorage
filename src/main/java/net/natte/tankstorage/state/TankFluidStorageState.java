@@ -1,21 +1,14 @@
 package net.natte.tankstorage.state;
 
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
-import net.natte.tankstorage.storage.TankFluidStorage;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.*;
@@ -51,13 +44,13 @@ public class TankFluidStorageState {
         this.listeners.remove(listener);
     }
 
-    // called only serverside
-    public TankFluidStorage getFluidStorage(InsertMode insertMode) {
-        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
-        fluidStorage.setMarkDirtyListener(this::markDirty);
-        // fluidStorage.
-        return fluidStorage;
-    }
+//    // called only serverside
+//    public TankFluidStorage getFluidStorage(InsertMode insertMode) {
+//        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
+//        fluidStorage.setMarkDirtyListener(this::markDirty);
+//        // fluidStorage.
+//        return fluidStorage;
+//    }
 
     public TankFluidHandler getFluidHandler(InsertMode insertMode) {
         return new TankFluidHandler(fluidStorageParts, insertMode);
@@ -84,7 +77,7 @@ public class TankFluidStorageState {
 
             tank.fluidStorageParts.set(i,
                     new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
-                            oldFluidStorage.getResource(), oldFluidStorage.isLocked()));
+                            oldFluidStorage.getFluid(), oldFluidStorage.isLocked()));
         }
         return tank;
     }
@@ -100,6 +93,10 @@ public class TankFluidStorageState {
         return tank;
     }
 
+    public TankSingleFluidStorage getPart(int slot){
+        return this.fluidStorageParts.get(slot);
+    }
+
     public List<FluidSlotData> getFluidSlots() {
         List<FluidSlotData> fluids = new ArrayList<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
@@ -113,7 +110,7 @@ public class TankFluidStorageState {
         List<FluidSlotData> fluids = new ArrayList<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
             if (part.getAmount() > 0)
-                fluids.add(new FluidSlotData(part.getResource(), this.type.getCapacity(), part.getAmount(),
+                fluids.add(new FluidSlotData(part.getFluid(), this.type.getCapacity(), part.getAmount(),
                         part.isLocked()));
         }
         return fluids;
@@ -128,17 +125,19 @@ public class TankFluidStorageState {
         return count;
     }
 
+    // TODO: large FluidSlotData with long amount
     public List<FluidSlotData> getUniqueFluids() {
-        Map<FluidVariant, Long> counts = new LinkedHashMap<>();
+        Map<FluidStack, Long> counts = new LinkedHashMap<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
-            long count = counts.getOrDefault(part.getResource(), 0L);
+            long count = counts.getOrDefault(part.getFluid(), 0L);
             count += part.getAmount();
-            counts.put(part.getResource(), count);
+            counts.put(part.getFluid(), count);
         }
         List<FluidSlotData> uniqueFluids = new ArrayList<>();
         counts.forEach((fluidVariant, count) -> {
             if (count > 0)
-                uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+//                uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
+                uniqueFluids.add(new FluidSlotData(fluidVariant, 0, count.intValue(), false));
         });
 
         return uniqueFluids;

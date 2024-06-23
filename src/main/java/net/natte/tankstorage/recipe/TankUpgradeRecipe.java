@@ -1,50 +1,61 @@
 package net.natte.tankstorage.recipe;
 
-import java.util.Optional;
-
-import com.google.gson.JsonObject;
-
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.recipe.ShapedRecipe;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.util.Util;
+
+import java.util.Optional;
 
 public class TankUpgradeRecipe extends ShapedRecipe {
 
     public TankUpgradeRecipe(ShapedRecipe recipe) {
-        super(recipe.getId(), "tank_upgrade", recipe.getCategory(), recipe.getWidth(), recipe.getHeight(),
-                recipe.getIngredients(), recipe.getOutput(null));
+        super(recipe.getGroup(), recipe.category(), recipe.pattern, recipe.result);
     }
 
     @Override
-    public ItemStack craft(RecipeInputInventory recipeInputInventory, DynamicRegistryManager dynamicRegistryManager) {
-        Optional<ItemStack> maybeTankItemStack = recipeInputInventory.getInputStacks().stream()
+    public boolean isSpecial() {
+        return true;
+    }
+
+
+    @Override
+    public ItemStack assemble(CraftingInput recipeInputInventory, HolderLookup.Provider registryLookup) {
+        Optional<ItemStack> maybeBankItemStack = recipeInputInventory.items().stream()
                 .filter(Util::isTank).findFirst();
 
-        if (maybeTankItemStack.isEmpty()) {
+        if (maybeBankItemStack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        ItemStack result = super.craft(recipeInputInventory, dynamicRegistryManager);
-        result.setNbt(maybeTankItemStack.get().getNbt());
+        ItemStack result = super.assemble(recipeInputInventory, registryLookup);
+        result.applyComponentsAndValidate(maybeBankItemStack.get().getComponentsPatch());
 
         return result;
     }
 
-    public static class Serializer extends ShapedRecipe.Serializer {
+    @Override
+    public RecipeSerializer<?> getSerializer() {
+        return TankStorage.TANK_UPGRADE_RECIPE.get();
+    }
+
+    public static class Serializer implements RecipeSerializer<TankUpgradeRecipe> {
+        public static final MapCodec<TankUpgradeRecipe> CODEC = ShapedRecipe.Serializer.CODEC.xmap(TankUpgradeRecipe::new, ShapedRecipe.class::cast);
+        public static final StreamCodec<RegistryFriendlyByteBuf, TankUpgradeRecipe> STREAM_CODEC = ShapedRecipe.Serializer.STREAM_CODEC.map(TankUpgradeRecipe::new, ShapedRecipe.class::cast);
 
         @Override
-        public TankUpgradeRecipe read(Identifier id, JsonObject json) {
-            return new TankUpgradeRecipe(super.read(id, json));
+        public MapCodec<TankUpgradeRecipe> codec() {
+            return CODEC;
         }
 
         @Override
-        public TankUpgradeRecipe read(Identifier id, PacketByteBuf buf) {
-            return new TankUpgradeRecipe(super.read(id, buf));
-
+        public StreamCodec<RegistryFriendlyByteBuf, TankUpgradeRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

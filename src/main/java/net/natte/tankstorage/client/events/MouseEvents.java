@@ -1,16 +1,17 @@
 package net.natte.tankstorage.client.events;
 
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
-import net.natte.tankstorage.cache.ClientTankCache;
+import net.natte.tankstorage.client.TankStorageClient;
+import net.natte.tankstorage.client.rendering.HudRenderer;
+import net.natte.tankstorage.packet.server.SelectedSlotPacketC2S;
 import net.natte.tankstorage.packet.server.UpdateTankOptionsPacketC2S;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
@@ -23,37 +24,35 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @OnlyIn(Dist.CLIENT)
 public class MouseEvents {
 
-    public static void onScroll(InputEvent.MouseScrollingEvent event){
+    public static void onScroll(InputEvent.MouseScrollingEvent event) {
+
         int scroll = -(int) Math.signum(event.getScrollDeltaY());
 
         LocalPlayer player = Minecraft.getInstance().player;
+
+        if (player == null)
+            return;
+
         if (!player.isShiftKeyDown())
             return;
 
-        ItemStack right = player.getMainHandItem();
-        ItemStack left = player.getOffhandItem();
-        ItemStack tank;
-        if (Util.isTankLike(right) && Util.hasUUID(right))
-            tank = right;
-        else if (Util.isTankLike(left) && Util.hasUUID(left))
-            tank = left;
-        else
+        HudRenderer preview = TankStorageClient.tankHudRenderer;
+
+        if (!preview.isBucketMode())
             return;
 
-        if (!isBucketMode(tank))
+        CachedFluidStorageState cachedBankStorage = preview.fluidStorage;
+
+        if (cachedBankStorage == null)
             return;
 
-        CachedFluidStorageState state = ClientTankCache.get(Util.getUUID(tank));
-        if (state == null)
-            return;
-        TankOptions options = Util.getOrCreateOptions(tank);
 
-        int selectedSlot = options.selectedSlot;
-        selectedSlot -= (int) Math.signum(scroll);
-        selectedSlot = MathHelper.clamp(selectedSlot, -1, state.getUniqueFluids().size() - 1);
-        options.selectedSlot = selectedSlot;
-//        TODO
-        PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(options));
+        int selectedItemSlot = preview.selectedSlot;
+
+        int newSelectedItemSlot = Mth.clamp(selectedItemSlot + scroll, 0, cachedBankStorage.getUniqueFluids().size() - 1);
+        preview.selectedSlot = newSelectedItemSlot;
+
+        PacketDistributor.sendToServer(new SelectedSlotPacketC2S(preview.renderingFromHand == InteractionHand.MAIN_HAND, newSelectedItemSlot));
 
         event.setCanceled(true);
     }
@@ -76,9 +75,5 @@ public class MouseEvents {
 
         player.displayClientMessage(Component.translatable("popup.tankstorage.interactionmode."
                 + interactionMode.toString().toLowerCase()), true);
-    }
-
-    private static boolean isBucketMode(ItemStack itemStack) {
-        return Util.getInteractionMode(itemStack) == TankInteractionMode.BUCKET;
     }
 }

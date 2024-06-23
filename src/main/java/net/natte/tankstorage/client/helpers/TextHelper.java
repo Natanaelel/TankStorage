@@ -4,7 +4,7 @@
  * Thanks!
  */
 
-package net.natte.tankstorage.helpers;
+package net.natte.tankstorage.client.helpers;
 
 public class TextHelper {
 

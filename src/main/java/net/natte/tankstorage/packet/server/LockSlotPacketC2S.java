@@ -42,7 +42,7 @@ public record LockSlotPacketC2S(int syncId, int slot, FluidStack fluid,
                 // lock was invalid, update client to tell them to revert optimistic update
                 if (packet.slot >= 0 && packet.slot < tankScreenHandler.slots.size() && tankScreenHandler.getSlot(packet.slot) instanceof FluidSlot fluidSlot) {
                     FluidSlotData fluidSlotData = new FluidSlotData(fluidSlot.getFluid(), fluidSlot.getCapacity(), fluidSlot.getAmount(), fluidSlot.isLocked());
-                    context.listener().send(new SyncFluidPacketS2C(packet.syncId, packet.slot, fluidSlotData));
+                    context.reply(new SyncFluidPacketS2C(packet.syncId, packet.slot, fluidSlotData));
                 }
             }
         }

@@ -40,7 +40,7 @@ public class TankStorageClient {
     public static final KeyMapping toggleInteractionModeKeyBinding = ClientUtil.keyBind("toggleinteractionmode");
     public static final KeyMapping openTankFromKeyBinding = ClientUtil.keyBind("opentankfromkeybind");
 
-    private static final HudRenderer tankHudRenderer = new HudRenderer();
+    public static final HudRenderer tankHudRenderer = new HudRenderer();
 
     static {
         Util.isShiftDown = Screen::hasShiftDown;

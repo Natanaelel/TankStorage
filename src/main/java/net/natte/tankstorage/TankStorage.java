@@ -53,8 +53,8 @@ public class TankStorage {
     public static final String MOD_ID = "tankstorage";
 
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final int BUCKET = 1000;
 
-    private static final int BUCKET = 1000;
     private static final TankType TANK_1 = new TankType("tank_1", 4 * BUCKET, 3, 1);
     private static final TankType TANK_2 = new TankType("tank_2", 16 * BUCKET, 6, 1);
     private static final TankType TANK_3 = new TankType("tank_3", 64 * BUCKET, 9, 1);
@@ -85,8 +85,8 @@ public class TankStorage {
 
     public static final DeferredHolder<MenuType<?>, MenuType<TankScreenHandler>> TANK_MENU = MENU_TYPES.register("tank_menu", () -> IMenuTypeExtension.create(TankScreenHandlerFactory::createClientScreenHandler));
 
-    private static final DeferredHolder<RecipeSerializer<?>, TankUpgradeRecipe.Serializer> TANK_UPGRADE_RECIPE = RECIPES.register("tank_upgrade", TankUpgradeRecipe.Serializer::new);
-    private static final DeferredHolder<RecipeSerializer<?>, TankLinkRecipe.Serializer> TANK_LINK_RECIPE = RECIPES.register("tank_link", TankLinkRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, TankUpgradeRecipe.Serializer> TANK_UPGRADE_RECIPE = RECIPES.register("tank_upgrade", TankUpgradeRecipe.Serializer::new);
+    public static final DeferredHolder<RecipeSerializer<?>, TankLinkRecipe.Serializer> TANK_LINK_RECIPE = RECIPES.register("tank_link", TankLinkRecipe.Serializer::new);
 
 
     public static final DataComponentType<UUID> UUIDComponentType = DataComponentType.<UUID>builder().persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build();
@@ -143,9 +143,9 @@ public class TankStorage {
 
     private void registerComponents() {
         COMPONENTS.register("uuid", () -> UUIDComponentType);
-        COMPONENTS.register("uuid", () -> OptionsComponentType);
-        COMPONENTS.register("uuid", () -> SelectedSlotComponentType);
-        COMPONENTS.register("uuid", () -> TankTypeComponentType);
+        COMPONENTS.register("options", () -> OptionsComponentType);
+        COMPONENTS.register("selected_slot", () -> SelectedSlotComponentType);
+        COMPONENTS.register("type", () -> TankTypeComponentType);
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -165,6 +165,7 @@ public class TankStorage {
         registrar.playToServer(LockSlotPacketC2S.TYPE, LockSlotPacketC2S.STREAM_CODEC, LockSlotPacketC2S::receive);
         registrar.playToServer(RequestTankPacketC2S.TYPE, RequestTankPacketC2S.STREAM_CODEC, RequestTankPacketC2S::receive);
         registrar.playToServer(UpdateTankOptionsPacketC2S.TYPE, UpdateTankOptionsPacketC2S.STREAM_CODEC, UpdateTankOptionsPacketC2S::receive);
+        registrar.playToServer(SelectedSlotPacketC2S.TYPE, SelectedSlotPacketC2S.STREAM_CODEC, SelectedSlotPacketC2S::receive);
         registrar.playToServer(ToggleInsertModePacketC2S.TYPE, ToggleInsertModePacketC2S.STREAM_CODEC, ToggleInsertModePacketC2S::receive);
         registrar.playToServer(OpenTankFromKeyBindPacketC2S.TYPE, OpenTankFromKeyBindPacketC2S.STREAM_CODEC, OpenTankFromKeyBindPacketC2S::receive);
     }

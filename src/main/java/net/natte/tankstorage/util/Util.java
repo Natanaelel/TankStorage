@@ -211,6 +211,7 @@ public class Util {
         return getFluidHandlerFromItem(itemStack, null);
     }
 
+    // never returns FluidStack.EMPTY but instead null
     @Nullable
     public static FluidStack getSelectedFluid(ItemStack itemStack) {
 

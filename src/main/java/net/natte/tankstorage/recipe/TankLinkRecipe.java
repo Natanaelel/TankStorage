@@ -1,65 +1,76 @@
 package net.natte.tankstorage.recipe;
 
-import java.util.Optional;
-
-import com.google.gson.JsonObject;
-
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.recipe.ShapedRecipe;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.util.Util;
+
+import java.util.Optional;
 
 public class TankLinkRecipe extends ShapedRecipe {
 
     public TankLinkRecipe(ShapedRecipe recipe) {
-        super(recipe.getId(), "tank_link", recipe.getCategory(), recipe.getWidth(), recipe.getHeight(),
-                recipe.getIngredients(), recipe.getOutput(null));
+        super(recipe.getGroup(), recipe.category(), recipe.pattern, recipe.result);
     }
 
     @Override
-    public ItemStack craft(RecipeInputInventory recipeInputInventory, DynamicRegistryManager dynamicRegistryManager) {
-        Optional<ItemStack> maybeTankItemStack = recipeInputInventory.getInputStacks().stream()
-                .filter(Util::isTank).findFirst();
+    public boolean isSpecial() {
+        return true;
+    }
+
+    @Override
+    public ItemStack assemble(CraftingInput recipeInputInventory, HolderLookup.Provider registryLookup) {
+        Optional<ItemStack> maybeTankItemStack = recipeInputInventory.items().stream()
+                .filter(Util::isTankLike).findFirst();
 
         if (maybeTankItemStack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        ItemStack tank = maybeTankItemStack.get();
-        if (!Util.hasUUID(tank)) {
+        ItemStack bank = maybeTankItemStack.get();
+        if (!Util.hasUUID(bank)) {
             return ItemStack.EMPTY;
         }
-        ItemStack result = super.craft(recipeInputInventory, dynamicRegistryManager);
-        result.setNbt(tank.getNbt());
-        Util.setType(result, Util.getType(tank));
+        ItemStack result = super.assemble(recipeInputInventory, registryLookup);
+        result.applyComponents(bank.getComponentsPatch());
+        result.set(TankStorage.TankTypeComponentType, Util.getType(bank));
         return result;
     }
 
     @Override
-    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory recipeInputInventory) {
-        DefaultedList<ItemStack> defaultedList = DefaultedList.ofSize(recipeInputInventory.size(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput recipeInputInventory) {
+        NonNullList<ItemStack> defaultedList = NonNullList.withSize(recipeInputInventory.size(), ItemStack.EMPTY);
         for (int i = 0; i < defaultedList.size(); ++i) {
-            ItemStack stack = recipeInputInventory.getStack(i);
+            ItemStack stack = recipeInputInventory.getItem(i);
             if (Util.isTank(stack))
                 defaultedList.set(i, stack.copyWithCount(1));
         }
         return defaultedList;
     }
 
-    public static class Serializer extends ShapedRecipe.Serializer {
+    @Override
+    public RecipeSerializer<?> getSerializer() {
+        return TankStorage.TANK_LINK_RECIPE.get();
+    }
+
+    public static class Serializer implements RecipeSerializer<TankLinkRecipe> {
+        public static final MapCodec<TankLinkRecipe> CODEC = ShapedRecipe.Serializer.CODEC.xmap(TankLinkRecipe::new, ShapedRecipe.class::cast);
+        public static final StreamCodec<RegistryFriendlyByteBuf, TankLinkRecipe> STREAM_CODEC = ShapedRecipe.Serializer.STREAM_CODEC.map(TankLinkRecipe::new, ShapedRecipe.class::cast);
 
         @Override
-        public TankLinkRecipe read(Identifier id, JsonObject json) {
-            return new TankLinkRecipe(super.read(id, json));
+        public MapCodec<TankLinkRecipe> codec() {
+            return CODEC;
         }
 
         @Override
-        public TankLinkRecipe read(Identifier id, PacketByteBuf buf) {
-            return new TankLinkRecipe(super.read(id, buf));
+        public StreamCodec<RegistryFriendlyByteBuf, TankLinkRecipe> streamCodec() {
+            return STREAM_CODEC;
         }
     }
 }

@@ -14,9 +14,7 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
 
     public TankDockBlockEntityRenderer(BlockEntityRendererProvider.Context context) {
         itemRenderer = context.getItemRenderer();
-
     }
-
 
     @Override
     public void render(TankDockBlockEntity tankDock, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
@@ -32,5 +30,4 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
 
         poseStack.popPose();
     }
-}
 }

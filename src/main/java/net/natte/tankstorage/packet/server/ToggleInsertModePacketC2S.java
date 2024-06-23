@@ -44,7 +44,7 @@ public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
         tankScreenHandler.getContext().execute(
                 (world, blockPos) -> world
                         .getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY.get())
-                        .ifPresent(TankDockBlockEntity::markDirty));
+                        .ifPresent(TankDockBlockEntity::setChanged));
     }
 
     private static void toggleInsertModeOfHeldTank(ServerPlayer player) {

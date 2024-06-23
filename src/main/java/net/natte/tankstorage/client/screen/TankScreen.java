@@ -8,13 +8,11 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.client.TankStorageClient;
 import net.natte.tankstorage.client.helpers.FluidHelper;
 import net.natte.tankstorage.client.rendering.FluidRenderer;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
-import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.screenhandler.TankScreenHandler;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -129,30 +127,5 @@ public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
         if (TankStorageClient.lockSlotKeyBinding.matches(keyCode, scanCode))
             this.isLockSlotKeyDown = false;
         return super.keyReleased(keyCode, scanCode, modifiers);
-    }
-
-    private void handleSlotLock(FluidSlot tankSlot, ItemStack cursorStack) {
-
-        int hoveredSlotIndex = tankSlot.index;
-        ItemStack hoveredStack = tankSlot.getItem();
-        ItemStack cursorStack = this.menu.getCarried();
-
-        boolean isSlotEmpty = hoveredStack.isEmpty();
-        ItemStack lockedStack = tankSlot.getLockedStack();
-
-        boolean shouldUnLock = tankSlot.isLocked() && (cursorStack.isEmpty() || !isSlotEmpty || ItemStack.isSameItemSameComponents(cursorStack, lockedStack));
-
-        // optimistically lock slot on client, will be synced later
-        if (shouldUnLock)
-            this.menu.unlockSlot(tankSlot.index);
-        else
-            this.menu.lockSlot(tankSlot.index, isSlotEmpty ? cursorStack : hoveredStack);
-
-        minecraft.getConnection().send(
-                new LockSlotPacketC2S(
-                        this.menu.containerId,
-                        hoveredSlotIndex,
-                        isSlotEmpty ? cursorStack : hoveredStack,
-                        !shouldUnLock));
     }
 }

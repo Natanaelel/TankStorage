@@ -8,11 +8,10 @@ package net.natte.tankstorage.client.helpers;
 
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.TooltipFlag;
-import net.natte.tankstorage.helpers.FluidTextHelper;
-import net.natte.tankstorage.helpers.TextHelper;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -37,7 +36,7 @@ public class FluidHelper {
         if (fluid.isEmpty()) {
             return new ArrayList<>();
         }
-        return getTooltip(fluid);
+        return getTooltip(fluid, Minecraft.getInstance().options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
     }
 
     public static List<Component> getTooltipForFluidStorage(FluidStack fluid, long amount, long capacity) {

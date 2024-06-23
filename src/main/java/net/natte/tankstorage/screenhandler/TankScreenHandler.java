@@ -17,7 +17,7 @@ import net.natte.tankstorage.gui.LockedSlot;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
 import net.natte.tankstorage.packet.server.LockSlotPacketC2S;
 import net.natte.tankstorage.state.TankFluidStorageState;
-import net.natte.tankstorage.storage.TankFluidStorage;
+import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
@@ -37,7 +37,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
     private ItemStack tankItem;
     private TankType tankType;
     private TankFluidStorageState tank;
-    private TankFluidStorage fluidStorage;
+    private TankFluidHandler fluidStorage;
     private int slotWithOpenedTank;
 
     private Runnable onChangeListener;
@@ -57,7 +57,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
         this.slotWithOpenedTank = slot;
         this.context = screenHandlerContext;
 
-        this.fluidStorage = this.tank.getFluidStorage(Util.getInsertMode(tankItem));
+        this.fluidStorage = this.tank.getFluidHandler(Util.getInsertMode(tankItem));
 
         if (playerInventory.player instanceof ServerPlayer serverPlayerEntity) {
 
@@ -67,7 +67,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
             this.player = serverPlayerEntity;
             this.trackedFluids = new ArrayList<>(this.tankType.size());
             for (int i = 0; i < this.tankType.size(); ++i) {
-                TankSingleFluidStorage tankSingleFluidStorage = this.fluidStorage.getSingleFluidStorage(i);
+                TankSingleFluidStorage tankSingleFluidStorage = this.tank.getPart(i);
                 this.trackedFluids.add(FluidSlotData.from(tankSingleFluidStorage));
             }
         }
@@ -81,7 +81,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
                 int slotIndex = x + y * cols;
                 int slotX = 8 + x * 18 + (9 - cols) * 9;
                 int slotY = 18 + y * 18;
-                this.addSlot(new FluidSlot(this.fluidStorage.getSingleFluidStorage(slotIndex), slotX, slotY));
+                this.addSlot(new FluidSlot(this.tank.getPart(slotIndex), slotX, slotY));
             }
         }
 
@@ -302,7 +302,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
             return false;
         if (shouldLock && fluidSlot.getAmount() > 0 && !FluidStack.isSameFluidSameComponents(fluidSlot.getFluid(), fluidVariant))
             return false;
-        fluidStorage.getSingleFluidStorage(slot).lock(fluidVariant, shouldLock);
+        tank.getPart(slot).lock(fluidVariant, shouldLock);
         return true;
     }
 
@@ -339,7 +339,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
 
     // called only on server
     private void syncFluidSlot(int slot, ServerPlayer player) {
-        TankSingleFluidStorage singleFluidStorage = this.fluidStorage.getSingleFluidStorage(slot);
+        TankSingleFluidStorage singleFluidStorage = this.tank.getPart(slot);
         this.trackedFluids.set(slot, FluidSlotData.from(singleFluidStorage));
         PacketDistributor.sendToPlayer(player, new SyncFluidPacketS2C(this.containerId, slot, FluidSlotData.from(singleFluidStorage)));
     }
@@ -354,7 +354,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
     public void updateFluidSlot(int slot, FluidSlotData fluidSlotData) {
         if (slot < 0 || slot >= this.tankType.size())
             return;
-        this.fluidStorage.getSingleFluidStorage(slot).update(fluidSlotData.amount(), fluidSlotData.fluidVariant(),
+        this.tank.getPart(slot).update(fluidSlotData.amount(), fluidSlotData.fluidVariant(),
                 fluidSlotData.isLocked());
     }
 
@@ -363,7 +363,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
         super.broadcastChanges();
         for (int i = 0; i < this.trackedFluids.size(); ++i) {
             FluidSlotData trackedFluidSlot = this.trackedFluids.get(i);
-            if (!trackedFluidSlot.equalsOther(this.fluidStorage.getSingleFluidStorage(i)))
+            if (!trackedFluidSlot.equalsOther(this.tank.getPart(i)))
                 syncFluidSlot(i, this.player);
         }
     }

@@ -6,9 +6,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.storage.TankInteractionMode;
@@ -29,42 +32,75 @@ public class HudRenderer {
     private UUID uuid;
     private CachedFluidStorageState tank;
     private TankOptions options;
-    private int selectedSlot = -1;
+    public int selectedSlot = -1;
 
     private HumanoidArm arm;
+    private boolean hasTank = false;
+    public InteractionHand renderingFromHand;
+    private ItemStack tankItem = ItemStack.EMPTY;
+    private HumanoidArm mainArm;
+    private TankInteractionMode bucketMode;
+    public CachedFluidStorageState fluidStorage;
 
     public void reset() {
         this.client = null;
     }
 
     public void tick() {
-        if (client == null)
-            client = Minecraft.getInstance();
+        if (this.client == null)
+            this.client = Minecraft.getInstance();
 
         if (client.player == null)
             return;
 
-        uuid = null;
-        tank = null;
-        options = null;
+        updateTank();
 
-        ItemStack stack;
+        if (this.uuid != null && this.bucketMode == TankInteractionMode.BUCKET)
+            fluidStorage = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 2 * 20);
 
-        if (Util.isTankLike(stack = client.player.getMainHandItem()) && Util.hasUUID(stack)) {
-            arm = client.player.getMainArm();
-            uuid = Util.getUUID(stack);
-        } else if (Util.isTankLike(stack = client.player.getOffhandItem()) && Util.hasUUID(stack)) {
-            arm = client.player.getMainArm().getOpposite();
-            uuid = Util.getUUID(stack);
+    }
+
+    private void updateTank() {
+        boolean hadTank = this.hasTank;
+        if (canRenderFrom(this.client.player.getMainHandItem())) {
+            this.renderingFromHand = InteractionHand.MAIN_HAND;
+            this.hasTank = true;
+        } else if (canRenderFrom(this.client.player.getOffhandItem())) {
+            this.renderingFromHand = InteractionHand.OFF_HAND;
+            this.hasTank = true;
+        } else
+            this.hasTank = false;
+
+        if (this.hasTank) {
+            this.tankItem = this.client.player.getItemInHand(this.renderingFromHand);
+            this.uuid = Util.getUUID(this.tankItem);
+            this.bucketMode = this.tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode();
+            this.mainArm = this.client.player.getMainArm();
+            this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
+            if (ClientTankCache.markDirtyForPreview) {
+                ClientTankCache.markDirtyForPreview = false;
+                this.fluidStorage = ClientTankCache.get(uuid);
+            }
+            if (!hadTank) {
+                this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
+            }
+            if (this.fluidStorage != null) {
+                this.selectedSlot = Mth.clamp(this.selectedSlot, 0, this.fluidStorage.getUniqueFluids().size() - 1);
+            }
         }
+    }
 
-        if (uuid != null && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET) {
-            tank = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 2 * 20);
-            if (tank != null)
-                Util.clampSelectedSlot(stack, tank.getUniqueFluids().size() - 1);
-            options = Util.getOptionsOrDefault(stack);
-            selectedSlot = Util.getSelectedSlot(stack);
-        }
+    private boolean canRenderFrom(ItemStack stack) {
+        if (!Util.isTankLike(stack))
+            return false;
+        if (!Util.hasUUID(stack))
+            return false;
+        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode() == TankInteractionMode.BUCKET)
+            return false;
+        CachedFluidStorageState cachedBankStorage = ClientTankCache.get(Util.getUUID(stack));
+        if (cachedBankStorage == null)
+            return false;
+        return true;
     }
 
     private boolean shouldRender() {
@@ -136,5 +172,13 @@ public class HudRenderer {
                                    FluidSlotData fluidSlotData, int i) {
         FluidRenderer.drawFluidInGui(context, fluidSlotData.fluidVariant(), x, y);
         FluidRenderer.drawFluidCount(client.font, context, fluidSlotData.amount(), x, y);
+    }
+
+    public ItemStack getItem() {
+        return tankItem;
+    }
+
+    public boolean isBucketMode() {
+        return hasTank && bucketMode == TankInteractionMode.BUCKET;
     }
 }

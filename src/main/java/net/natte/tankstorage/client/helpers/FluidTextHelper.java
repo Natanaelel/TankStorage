@@ -4,15 +4,15 @@
  * Thanks!
  */
 
-package net.natte.tankstorage.helpers;
+package net.natte.tankstorage.client.helpers;
 
 import com.google.common.math.LongMath;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.registry.Registries;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.material.Fluid;
 
 public class FluidTextHelper {
     public static String toString(Fluid fluid) {
-        return Registries.FLUID.getKey(fluid).toString();
+        return BuiltInRegistries.FLUID.getKey(fluid).toString();
     }
 
     // Return a unicode string representing a fraction, like ¹⁄₈₁
