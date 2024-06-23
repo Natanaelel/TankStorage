@@ -37,6 +37,8 @@ public class TankScreenHandler extends AbstractContainerMenu {
     private ItemStack tankItem;
     private TankType tankType;
     private TankFluidStorageState tank;
+
+    @Nullable
     private TankFluidHandler fluidStorage;
     private int slotWithOpenedTank;
 
@@ -47,7 +49,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
 
     private List<FluidSlotData> trackedFluids;
 
-    public TankScreenHandler(int syncId, Inventory playerInventory, @Nullable TankFluidStorageState tank, TankType tankType,
+    public TankScreenHandler(int syncId, Inventory playerInventory, TankFluidStorageState tank, TankType tankType,
                              ItemStack tankItem, int slot, ContainerLevelAccess screenHandlerContext) {
         super(TankStorage.TANK_MENU.get(), syncId);
 

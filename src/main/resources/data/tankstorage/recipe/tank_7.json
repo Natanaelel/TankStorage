@@ -3,14 +3,14 @@
   "pattern": ["AAA", "ABA", "AAA"],
   "key": {
     "A": {
-      "item": "minecraft:iron_block"
+      "item": "minecraft:netherite_ingot"
     },
     "B": {
-      "item": "tankstorage:tank_2"
+      "item": "tankstorage:tank_6"
     }
   },
   "result": {
-    "item": "tankstorage:tank_3",
+    "id": "tankstorage:tank_7",
     "count": 1
   }
 }

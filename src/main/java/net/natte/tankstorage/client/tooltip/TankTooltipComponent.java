@@ -15,7 +15,7 @@ import java.util.List;
 
 public class TankTooltipComponent implements ClientTooltipComponent {
 
-    public static final ResourceLocation TEXTURE = Util.ID("/textures/gui/widgets.png");
+    public static final ResourceLocation TEXTURE = Util.ID("textures/gui/widgets.png");
 
     private final List<FluidSlotData> fluids;
     private final int selectedSlot;
@@ -37,7 +37,7 @@ public class TankTooltipComponent implements ClientTooltipComponent {
     }
 
     private int getRows() {
-        return Mth.ceil(fluids.size() / 9d);
+        return Math.max(1, Mth.ceil(fluids.size() / 9d));
     }
 
     private int getColumns() {

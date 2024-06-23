@@ -3,14 +3,14 @@
   "pattern": ["AAA", "ABA", "AAA"],
   "key": {
     "A": {
-      "item": "minecraft:gold_block"
+      "item": "minecraft:copper_block"
     },
     "B": {
-      "item": "tankstorage:tank_3"
+      "item": "tankstorage:tank_1"
     }
   },
   "result": {
-    "item": "tankstorage:tank_4",
+    "id": "tankstorage:tank_2",
     "count": 1
   }
 }

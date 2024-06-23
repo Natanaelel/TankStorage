@@ -11,7 +11,7 @@
     }
   },
   "result": {
-    "item": "tankstorage:tank_dock",
+    "id": "tankstorage:tank_dock",
     "count": 1
   }
 }

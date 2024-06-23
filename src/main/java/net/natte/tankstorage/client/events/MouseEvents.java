@@ -41,7 +41,7 @@ public class MouseEvents {
         if (!preview.isBucketMode())
             return;
 
-        CachedFluidStorageState cachedBankStorage = preview.fluidStorage;
+        CachedFluidStorageState cachedBankStorage = preview.tank;
 
         if (cachedBankStorage == null)
             return;
@@ -71,7 +71,7 @@ public class MouseEvents {
         TankInteractionMode interactionMode = Util.getInteractionMode(tankItem);
 
         // TODO: make more robust
-        PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(Util.getOrCreateOptions(tankItem)));
+        PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(Util.getOptionsOrDefault(tankItem)));
 
         player.displayClientMessage(Component.translatable("popup.tankstorage.interactionmode."
                 + interactionMode.toString().toLowerCase()), true);

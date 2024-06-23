@@ -42,7 +42,7 @@ public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
         super.init();
 
         this.addRenderableWidget(
-                new InsertModeButtonWidget(Util.getInsertMode(this.menu.getTankItem()), leftPos + titleLabelX + this.imageWidth - 31, topPos + titleLabelX - 4,
+                new InsertModeButtonWidget(Util.getInsertMode(this.menu.getTankItem()), leftPos + titleLabelX + this.imageWidth - 31, topPos + titleLabelY - 4,
                         14, 14, 14, WIDGETS_TEXTURE));
     }
 

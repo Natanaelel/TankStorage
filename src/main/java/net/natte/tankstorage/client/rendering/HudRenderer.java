@@ -30,7 +30,7 @@ public class HudRenderer {
     private Minecraft client;
 
     private UUID uuid;
-    private CachedFluidStorageState tank;
+    public CachedFluidStorageState tank;
     private TankOptions options;
     public int selectedSlot = -1;
 
@@ -40,7 +40,6 @@ public class HudRenderer {
     private ItemStack tankItem = ItemStack.EMPTY;
     private HumanoidArm mainArm;
     private TankInteractionMode bucketMode;
-    public CachedFluidStorageState fluidStorage;
 
     public void reset() {
         this.client = null;
@@ -56,7 +55,7 @@ public class HudRenderer {
         updateTank();
 
         if (this.uuid != null && this.bucketMode == TankInteractionMode.BUCKET)
-            fluidStorage = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 2 * 20);
+            tank = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 2 * 20);
 
     }
 
@@ -77,15 +76,16 @@ public class HudRenderer {
             this.bucketMode = this.tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode();
             this.mainArm = this.client.player.getMainArm();
             this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
+            this.options = Util.getOptionsOrDefault(this.tankItem);
             if (ClientTankCache.markDirtyForPreview) {
                 ClientTankCache.markDirtyForPreview = false;
-                this.fluidStorage = ClientTankCache.get(uuid);
+                this.tank = ClientTankCache.get(uuid);
             }
             if (!hadTank) {
                 this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
             }
-            if (this.fluidStorage != null) {
-                this.selectedSlot = Mth.clamp(this.selectedSlot, 0, this.fluidStorage.getUniqueFluids().size() - 1);
+            if (this.tank != null) {
+                this.selectedSlot = Mth.clamp(this.selectedSlot, 0, this.tank.getUniqueFluids().size() - 1);
             }
         }
     }
@@ -95,7 +95,7 @@ public class HudRenderer {
             return false;
         if (!Util.hasUUID(stack))
             return false;
-        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode() == TankInteractionMode.BUCKET)
+        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode() != TankInteractionMode.BUCKET)
             return false;
         CachedFluidStorageState cachedBankStorage = ClientTankCache.get(Util.getUUID(stack));
         if (cachedBankStorage == null)
@@ -104,6 +104,8 @@ public class HudRenderer {
     }
 
     private boolean shouldRender() {
+        if (!hasTank)
+            return false;
         if (tank == null)
             return false;
         if (options == null)

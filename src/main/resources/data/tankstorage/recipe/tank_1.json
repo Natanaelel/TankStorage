@@ -14,7 +14,7 @@
     }
   },
   "result": {
-    "item": "tankstorage:tank_1",
+    "id": "tankstorage:tank_1",
     "count": 1
   }
 }

@@ -50,7 +50,7 @@ public class TankScreenHandlerFactory implements MenuProvider {
 //        TankFluidStorageState tank = TankFluidStorageState.readNbt(buf.readNbt());
 
         TankScreenHandler screenHandler = new TankScreenHandler(syncId, playerInventory,
-                null,
+                TankFluidStorageState.create(tankType, null), // dummy tank
                 tankType,
                 tankItem,
                 slot,

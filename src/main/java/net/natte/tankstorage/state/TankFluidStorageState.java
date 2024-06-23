@@ -71,13 +71,17 @@ public class TankFluidStorageState {
                 .debug("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
 
         TankFluidStorageState tank = new TankFluidStorageState(type, this.uuid);
+        tank.fluidStorageParts = new ArrayList<>();
 
         for (int i = 0; i < this.fluidStorageParts.size(); ++i) {
-            TankSingleFluidStorage oldFluidStorage = tank.fluidStorageParts.get(i);
+            TankSingleFluidStorage oldFluidStorage = this.fluidStorageParts.get(i);
 
-            tank.fluidStorageParts.set(i,
-                    new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
-                            oldFluidStorage.getFluid(), oldFluidStorage.isLocked()));
+            tank.fluidStorageParts.add(new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
+                    oldFluidStorage.getFluid(), oldFluidStorage.isLocked()));
+        }
+        for (int i = this.fluidStorageParts.size(); i < type.size(); ++i) {
+            tank.fluidStorageParts.add(new TankSingleFluidStorage(type.getCapacity(), 0,
+                    FluidStack.EMPTY, false));
         }
         return tank;
     }
@@ -93,7 +97,7 @@ public class TankFluidStorageState {
         return tank;
     }
 
-    public TankSingleFluidStorage getPart(int slot){
+    public TankSingleFluidStorage getPart(int slot) {
         return this.fluidStorageParts.get(slot);
     }
 
@@ -160,7 +164,7 @@ public class TankFluidStorageState {
 
     // called only serverside
     public void sync(ServerPlayer player) {
-        PacketDistributor.sendToPlayer(player,new TankPacketS2C(uuid, getRevision(), getFluidSlots()));
+        PacketDistributor.sendToPlayer(player, new TankPacketS2C(uuid, getRevision(), getFluidSlots()));
     }
 
 

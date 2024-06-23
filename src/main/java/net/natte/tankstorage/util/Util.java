@@ -30,27 +30,20 @@ public class Util {
 
     public static Supplier<Boolean> isShiftDown = () -> false;
 
-    private static final String UUID_KEY = "tankstorage:uuid";
-    private static final String OPTIONS_KEY = "tankstorage:options";
-    public static final String TYPE_KEY = "tankstorage:type";
-
     public static ResourceLocation ID(String id) {
         return ResourceLocation.fromNamespaceAndPath(TankStorage.MOD_ID, id);
     }
 
     // call serverside only. returns null if unlinked linkitem
+    @Nullable
     public static TankFluidStorageState getOrCreateFluidStorage(ItemStack tankItem) {
-        if (isLink(tankItem) && !hasUUID(tankItem))
-            return null;
-        if (!hasUUID(tankItem))
-            setUUID(tankItem, UUID.randomUUID());
-        UUID uuid = getUUID(tankItem);
-        TankFluidStorageState tank = getFluidStorage(uuid);
-        if (tank == null) {
-            tank = TankFluidStorageState.create(getType(tankItem), uuid);
-            TankStateManager.getState().set(uuid, tank);
-        }
-        return tank;
+        if (isLink(tankItem))
+            return hasUUID(tankItem) ? getFluidStorage(getUUID(tankItem)) : null;
+
+        UUID uuid = hasUUID(tankItem) ? getUUID(tankItem) : UUID.randomUUID();
+        TankType type = getType(tankItem);
+
+        return TankStateManager.getState().getOrCreate(uuid, type);
     }
 
     // assumes stack has uuid
@@ -73,16 +66,6 @@ public class Util {
 
     public static UUID getUUID(ItemStack tankItem) {
         return tankItem.get(TankStorage.UUIDComponentType);
-    }
-
-    public static void setUUID(ItemStack tankItem, UUID uuid) {
-        tankItem.set(TankStorage.UUIDComponentType, uuid);
-    }
-
-    public static TankOptions getOrCreateOptions(ItemStack tankItem) {
-        if (!tankItem.has(TankStorage.OptionsComponentType))
-            tankItem.set(TankStorage.OptionsComponentType, TankOptions.DEFAULT);
-        return tankItem.get(TankStorage.OptionsComponentType);
     }
 
     public static TankOptions getOptionsOrDefault(ItemStack tankItem) {
