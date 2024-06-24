@@ -21,8 +21,11 @@ import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +73,8 @@ public class TankScreenHandler extends AbstractContainerMenu {
             this.trackedFluids = new ArrayList<>(this.tankType.size());
             for (int i = 0; i < this.tankType.size(); ++i) {
                 TankSingleFluidStorage tankSingleFluidStorage = this.tank.getPart(i);
-                this.trackedFluids.add(FluidSlotData.from(tankSingleFluidStorage));
+//                this.trackedFluids.add(FluidSlotData.from(tankSingleFluidStorage));
+                this.trackedFluids.add(new FluidSlotData(FluidStack.EMPTY, 0, 0, false));
             }
         }
 
@@ -226,7 +230,11 @@ public class TankScreenHandler extends AbstractContainerMenu {
         // TODO: fluid interaction
 //
 //        // this assumes fluidslots come first
-//        TankSingleFluidStorage slotFluidStorage = this.fluidStorage.getSingleFluidStorage(slotIndex);
+        TankSingleFluidStorage slotFluidStorage = this.tank.getPart(slotIndex);
+//        IFluidHandlerItem cursorFluidStorage = this.getCarried().getCapability(Capabilities.FluidHandler.ITEM);
+//        if (cursorFluidStorage == null)
+//            return;
+//
 //        ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerCursor(playerEntity, this);
 //
 //        Storage<FluidVariant> cursorFluidStorage = containerItemContext.find(FluidStorage.ITEM);
@@ -234,8 +242,15 @@ public class TankScreenHandler extends AbstractContainerMenu {
 //        if (cursorFluidStorage == null)
 //            return;
 //
-//        if (button == 1) {
-//            // insert into tank from cursor
+        IItemHandler playerInventory = player.getCapability(Capabilities.ItemHandler.ENTITY);
+        if (button == 1) {
+            // insert into tank from cursor
+            FluidActionResult result = FluidUtil.tryEmptyContainerAndStow(this.getCarried(), slotFluidStorage.getFluidHandler(), playerInventory, Integer.MAX_VALUE, player, true);
+            if (result.isSuccess()) {
+                this.tank.sync(((ServerPlayer) player));
+                Util.trySync(this.getCarried(), (ServerPlayer) player);
+                this.setCarried(result.getResult());
+            }
 //            if (!cursorFluidStorage.supportsExtraction())
 //                return;
 //
@@ -263,8 +278,14 @@ public class TankScreenHandler extends AbstractContainerMenu {
 //                    }
 //                }
 //            }
-//        } else {
+        } else {
 //            // extract from tank into cursor
+            FluidActionResult result = FluidUtil.tryFillContainerAndStow(this.getCarried(), slotFluidStorage.getFluidHandler(), playerInventory, Integer.MAX_VALUE, player, true);
+            if (result.isSuccess()) {
+                this.tank.sync((ServerPlayer) player);
+                Util.trySync(getCarried(), (ServerPlayer) player);
+                this.setCarried(result.getResult());
+            }
 //            if (!cursorFluidStorage.supportsInsertion())
 //                return;
 //
@@ -293,7 +314,7 @@ public class TankScreenHandler extends AbstractContainerMenu {
 //                    }
 //                }
 //            }
-//        }
+        }
     }
 
     // returns whether lock was valid

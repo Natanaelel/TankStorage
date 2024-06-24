@@ -13,9 +13,11 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
@@ -26,16 +28,11 @@ import java.math.MathContext;
 
 public class FluidRenderer {
 
-    public static void drawFluidInGui(GuiGraphics context, FluidStack fluidVariant, int x, int y) {
+    public static void drawFluidInGui(GuiGraphics guiGraphics, FluidStack fluid, float i, float j) {
 
-        float i = x;
-        float j = y;
-        int scale = 16;
-        int fractionUp = 1;
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
-
-        TextureAtlasSprite sprite = getSprite(fluidVariant);
-        int color = getColor(fluidVariant);
+        TextureAtlasSprite sprite = getSprite(fluid);
+        int color = getColor(fluid);
 
         if (sprite == null)
             return;
@@ -46,30 +43,29 @@ public class FluidRenderer {
         RenderSystem.disableDepthTest();
         RenderSystem.disableBlend();
 
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         float x0 = i;
         float y0 = j;
-        float x1 = x0 + scale;
-        float y1 = y0 + scale * fractionUp;
+        float x1 = x0 + 16;
+        float y1 = y0 + 16;
         float z = 0.5f;
         float u0 = sprite.getU0();
         float v1 = sprite.getV1();
-        float v0 = v1 + (sprite.getV0() - v1) * fractionUp;
+        float v0 = v1 + (sprite.getV0() - v1) * 1;
         float u1 = sprite.getU1();
 
-        Matrix4f model = context.pose().last().pose();
-        bufferBuilder.addVertex(model, x0, y1, z).setColor(r, g, b, 1).setUv(u0, v1);
-        bufferBuilder.addVertex(model, x1, y1, z).setColor(r, g, b, 1).setUv(u1, v1);
-        bufferBuilder.addVertex(model, x1, y0, z).setColor(r, g, b, 1).setUv(u1, v0);
-        bufferBuilder.addVertex(model, x0, y0, z).setColor(r, g, b, 1).setUv(u0, v0);
-        BufferUploader.draw(bufferBuilder.buildOrThrow());
+        Matrix4f model = guiGraphics.pose().last().pose();
+        bufferBuilder.addVertex(model, x0, y1, z).setUv(u0, v1).setColor(r, g, b, 1);
+        bufferBuilder.addVertex(model, x1, y1, z).setUv(u1, v1).setColor(r, g, b, 1);
+        bufferBuilder.addVertex(model, x1, y0, z).setUv(u1, v0).setColor(r, g, b, 1);
+        bufferBuilder.addVertex(model, x0, y0, z).setUv(u0, v0).setColor(r, g, b, 1);
+        BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
 
         RenderSystem.enableDepthTest();
 
-        // SodiumCompat.markSpriteActive(sprite);
-    }
 
+    }
 
     public static void drawFluidCount(Font textRenderer, GuiGraphics context, long amount, int x, int y) {
 
@@ -115,6 +111,10 @@ public class FluidRenderer {
         return Component.nullToEmpty(num + "M");
     }
 
+    public static IClientFluidTypeExtensions getExtensions(FluidStack variant) {
+        return IClientFluidTypeExtensions.of(variant.getFluid().getFluidType());
+    }
+
     @Nullable
     public static TextureAtlasSprite getSprite(FluidStack fluidVariant) {
         if (fluidVariant.isEmpty()) {
@@ -124,12 +124,7 @@ public class FluidRenderer {
                 .apply(getExtensions(fluidVariant).getStillTexture(fluidVariant));
     }
 
-    public static IClientFluidTypeExtensions getExtensions(FluidStack variant) {
-        return IClientFluidTypeExtensions.of(variant.getFluid().getFluidType());
-    }
-
     public static int getColor(FluidStack fluidVariant) {
         return getExtensions(fluidVariant).getTintColor(fluidVariant);
     }
-
 }

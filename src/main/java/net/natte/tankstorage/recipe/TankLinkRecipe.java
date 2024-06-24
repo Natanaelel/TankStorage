@@ -33,13 +33,13 @@ public class TankLinkRecipe extends ShapedRecipe {
         if (maybeTankItemStack.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        ItemStack bank = maybeTankItemStack.get();
-        if (!Util.hasUUID(bank)) {
+        ItemStack tank = maybeTankItemStack.get();
+        if (!Util.hasUUID(tank)) {
             return ItemStack.EMPTY;
         }
         ItemStack result = super.assemble(recipeInputInventory, registryLookup);
-        result.applyComponents(bank.getComponentsPatch());
-        result.set(TankStorage.TankTypeComponentType, Util.getType(bank));
+        result.applyComponents(tank.getComponentsPatch());
+        result.set(TankStorage.TankTypeComponentType, Util.getType(tank));
         return result;
     }
 

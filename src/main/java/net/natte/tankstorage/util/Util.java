@@ -40,10 +40,14 @@ public class Util {
         if (isLink(tankItem))
             return hasUUID(tankItem) ? getFluidStorage(getUUID(tankItem)) : null;
 
-        UUID uuid = hasUUID(tankItem) ? getUUID(tankItem) : UUID.randomUUID();
-        TankType type = getType(tankItem);
-
-        return TankStateManager.getState().getOrCreate(uuid, type);
+        if (hasUUID(tankItem))
+            return TankStateManager.getState().getOrCreate(getUUID(tankItem), getType(tankItem));
+        else {
+            UUID uuid = UUID.randomUUID();
+            TankType type = getType(tankItem);
+            tankItem.set(TankStorage.UUIDComponentType, uuid);
+            return TankStateManager.getState().getOrCreate(uuid, type);
+        }
     }
 
     // assumes stack has uuid
@@ -137,6 +141,7 @@ public class Util {
         if (tank == null)
             return;
         tank.sync(player);
+        clampSelectedSlot(stack, tank.getUniqueFluids().size() - 1);
     }
 
     // if in bucketmode: only allow extraction of selected fluid
@@ -163,7 +168,7 @@ public class Util {
                 } else {
                     selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
                     FluidStack selectedFluid = selectedslot == -1 ? FluidStack.EMPTY
-                            : cached.getUniqueFluids().get(selectedslot).fluidVariant();
+                            : cached.getUniqueFluids().get(selectedslot).fluid();
                     return cached.getFluidHandler(insertMode).withItem(itemStack).extractOnly(selectedFluid);
                 }
             }
@@ -212,17 +217,17 @@ public class Util {
 
             selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
             return selectedslot == -1 ? null
-                    : cached.getUniqueFluids().get(selectedslot).fluidVariant();
+                    : cached.getUniqueFluids().get(selectedslot).fluid();
 
         } else {
             TankFluidStorageState tank = getOrCreateFluidStorage(itemStack);
             if (tank == null)
                 return null;
 
-            List<FluidSlotData> fluids = tank.getUniqueFluids();
+            List<LargeFluidSlotData> fluids = tank.getUniqueFluids();
             selectedslot = clampSelectedSlot(itemStack, fluids.size() - 1);
             return selectedslot == -1 ? null
-                    : fluids.get(selectedslot).fluidVariant();
+                    : fluids.get(selectedslot).fluid();
         }
     }
 

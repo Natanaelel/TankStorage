@@ -2,6 +2,8 @@ package net.natte.tankstorage.storage;
 
 import net.natte.tankstorage.util.FluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.SimpleFluidContent;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 public class TankSingleFluidStorage {
 
@@ -129,5 +131,9 @@ public class TankSingleFluidStorage {
     public static TankSingleFluidStorage from(FluidSlotData fluidSlotData) {
         return new TankSingleFluidStorage(fluidSlotData.capacity(), fluidSlotData.amount(),
                 fluidSlotData.fluidVariant(), fluidSlotData.isLocked());
+    }
+
+    public IFluidHandler getFluidHandler() {
+        return new SlotFluidHandler(this);
     }
 }

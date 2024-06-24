@@ -1,5 +1,6 @@
 package net.natte.tankstorage.storage;
 
+import io.netty.util.HashedWheelTimer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -84,7 +85,6 @@ public class TankFluidHandler implements IFluidHandlerItem {
                     inserted = maxAmount;
             }
         }
-
         return inserted;
     }
 
@@ -152,7 +152,6 @@ public class TankFluidHandler implements IFluidHandlerItem {
             if (resource != null)
                 extracted += tank.extract(resource, maxAmount - extracted, action.simulate());
         }
-
         return resource == null ? FluidStack.EMPTY : resource.copyWithAmount(extracted);
     }
 

@@ -8,6 +8,7 @@ import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -27,7 +28,9 @@ public class TankFluidStorageState {
         this(type, uuid);
         this.fluidStorageParts = new ArrayList<>();
         for (FluidSlotData slot : fluidSlots) {
-            this.fluidStorageParts.add(new TankSingleFluidStorage(this.type.getCapacity(), slot.amount(), slot.fluidVariant(), slot.isLocked()));
+            TankSingleFluidStorage fluidSlot = new TankSingleFluidStorage(this.type.getCapacity(), slot.amount(), slot.fluidVariant(), slot.isLocked());
+            fluidSlot.setMarkDirtyListener(this::markDirty);
+            this.fluidStorageParts.add(fluidSlot);
         }
     }
 
@@ -129,19 +132,17 @@ public class TankFluidStorageState {
         return count;
     }
 
-    // TODO: large FluidSlotData with long amount
-    public List<FluidSlotData> getUniqueFluids() {
+    public List<LargeFluidSlotData> getUniqueFluids() {
         Map<FluidStack, Long> counts = new LinkedHashMap<>();
         for (TankSingleFluidStorage part : fluidStorageParts) {
             long count = counts.getOrDefault(part.getFluid(), 0L);
             count += part.getAmount();
             counts.put(part.getFluid(), count);
         }
-        List<FluidSlotData> uniqueFluids = new ArrayList<>();
+        List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
         counts.forEach((fluidVariant, count) -> {
             if (count > 0)
-//                uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
-                uniqueFluids.add(new FluidSlotData(fluidVariant, 0, count.intValue(), false));
+                uniqueFluids.add(new LargeFluidSlotData(fluidVariant, 0L, count, false));
         });
 
         return uniqueFluids;

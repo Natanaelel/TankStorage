@@ -35,5 +35,7 @@
   "key.tankstorage.lockslot": "Filter Slot",
   "key.tankstorage.opentankfromkeybind": "Open Tank",
   "key.tankstorage.toggleinsertmode": "Toggle Insert Mode",
-  "key.tankstorage.toggleinteractionmode": "Toggle Bucket Mode"
+  "key.tankstorage.toggleinteractionmode": "Toggle Bucket Mode",
+
+  "tag.item.tankstorage.tanks": "Tanks"
 }

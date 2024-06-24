@@ -43,26 +43,6 @@ public class FluidTextHelper {
         return numString.reverse().toString() + FRACTION_BAR + denomString.reverse().toString();
     }
 
-    /**
-     * Convert a non negative fluid amount in droplets to a unicode string
-     * representing the amount in millibuckets. For example, passing 163 will result
-     * in
-     * 
-     * <pre>
-     * 2 ¹⁄₈₁
-     * </pre>
-     * 
-     * .
-     */
-    public static String getUnicodeMillibuckets(long droplets, boolean simplify) {
-        String result = "" + droplets / 81;
-
-        if (droplets % 81 != 0) {
-            result += " " + getUnicodeFraction(droplets % 81, 81, simplify);
-        }
-
-        return result;
-    }
 
     private static final char[] SUPERSCRIPT = new char[] {
             '\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074', '\u2075', '\u2076', '\u2077', '\u2078', '\u2079' };

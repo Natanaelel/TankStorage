@@ -4,6 +4,7 @@ import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.*;
@@ -14,7 +15,7 @@ public class CachedFluidStorageState {
     private UUID uuid;
     private int revision;
     private List<FluidSlotData> fluids;
-    private List<FluidSlotData> uniqueFluids;
+    private List<LargeFluidSlotData> uniqueFluids;
 
     private List<TankSingleFluidStorage> parts;
 
@@ -41,8 +42,7 @@ public class CachedFluidStorageState {
         return new TankFluidHandler(parts, insertMode);
     }
 
-    // TODO: large FluidSlotData with long amount
-    public List<FluidSlotData> getUniqueFluids() {
+    public List<LargeFluidSlotData> getUniqueFluids() {
         if (uniqueFluids == null) {
             Map<FluidStack, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids) {
@@ -53,8 +53,7 @@ public class CachedFluidStorageState {
             uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {
                 if (count > 0)
-//                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0L, count, false));
-                    uniqueFluids.add(new FluidSlotData(fluidVariant, 0, count.intValue(), false));
+                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant, 0L, count, false));
             });
 
         }

@@ -17,8 +17,10 @@ import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
@@ -61,6 +63,7 @@ public class HudRenderer {
 
     private void updateTank() {
         boolean hadTank = this.hasTank;
+        @Nullable ItemStack oldTankItem = this.tankItem;
         if (canRenderFrom(this.client.player.getMainHandItem())) {
             this.renderingFromHand = InteractionHand.MAIN_HAND;
             this.hasTank = true;
@@ -81,11 +84,12 @@ public class HudRenderer {
                 ClientTankCache.markDirtyForPreview = false;
                 this.tank = ClientTankCache.get(uuid);
             }
-            if (!hadTank) {
+//            if (!hadTank) {
+            if (oldTankItem != this.tankItem) {
                 this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
             }
             if (this.tank != null) {
-                this.selectedSlot = Mth.clamp(this.selectedSlot, 0, this.tank.getUniqueFluids().size() - 1);
+                this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
             }
         }
     }
@@ -121,7 +125,7 @@ public class HudRenderer {
 
         GuiGraphics context = event.getGuiGraphics();
 
-        List<FluidSlotData> fluids = tank.getUniqueFluids();
+        List<LargeFluidSlotData> fluids = tank.getUniqueFluids();
 
         int scaledHeight = context.guiHeight();
         int scaledWidth = context.guiWidth();
@@ -171,8 +175,8 @@ public class HudRenderer {
     }
 
     private void renderHotbarFluid(GuiGraphics context, int x, int y, LocalPlayer player,
-                                   FluidSlotData fluidSlotData, int i) {
-        FluidRenderer.drawFluidInGui(context, fluidSlotData.fluidVariant(), x, y);
+                                   LargeFluidSlotData fluidSlotData, int i) {
+        FluidRenderer.drawFluidInGui(context, fluidSlotData.fluid(), x, y);
         FluidRenderer.drawFluidCount(client.font, context, fluidSlotData.amount(), x, y);
     }
 

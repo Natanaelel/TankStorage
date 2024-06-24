@@ -23,7 +23,7 @@ public class FluidHelper {
 
     public static Component getFluidAmount(long amount, long capacity) {
         if (capacity < 100 * BUCKET || Util.isShiftDown.get()) {
-            String text = FluidTextHelper.getUnicodeMillibuckets(amount, false) + " / " + capacity / 81;
+            String text = amount + " / " + capacity;
             return Component.literal(text + " mB");
         } else {
             var maxedAmount = TextHelper.getMaxedAmount((double) amount / BUCKET,

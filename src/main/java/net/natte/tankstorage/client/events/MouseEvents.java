@@ -49,7 +49,7 @@ public class MouseEvents {
 
         int selectedItemSlot = preview.selectedSlot;
 
-        int newSelectedItemSlot = Mth.clamp(selectedItemSlot + scroll, 0, cachedBankStorage.getUniqueFluids().size() - 1);
+        int newSelectedItemSlot = Mth.clamp(selectedItemSlot + scroll, -1, cachedBankStorage.getUniqueFluids().size() - 1);
         preview.selectedSlot = newSelectedItemSlot;
 
         PacketDistributor.sendToServer(new SelectedSlotPacketC2S(preview.renderingFromHand == InteractionHand.MAIN_HAND, newSelectedItemSlot));

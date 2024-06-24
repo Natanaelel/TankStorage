@@ -52,10 +52,10 @@ public class InsertModeButtonWidget extends Button {
 
         this.setTooltip(
                 Tooltip.create(
-                        Component.translatable("title.bankstorage.pickupmode." + name)
+                        Component.translatable("title.tankstorage.insertmode." + name)
                                 .append("\n")
                                 .append(
-                                        Component.translatable("tooltip.bankstorage.pickupmode." + name)
+                                        Component.translatable("tooltip.tankstorage.insertmode." + name)
                                                 .withStyle(ChatFormatting.DARK_GRAY)
                                 )));
     }

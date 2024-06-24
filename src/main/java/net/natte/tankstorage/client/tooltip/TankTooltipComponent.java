@@ -9,6 +9,7 @@ import net.minecraft.world.item.Items;
 import net.natte.tankstorage.client.rendering.FluidRenderer;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class TankTooltipComponent implements ClientTooltipComponent {
 
     public static final ResourceLocation TEXTURE = Util.ID("textures/gui/widgets.png");
 
-    private final List<FluidSlotData> fluids;
+    private final List<LargeFluidSlotData> fluids;
     private final int selectedSlot;
 
     // renders selected bucket before other slots if bucket is selected
@@ -74,7 +75,7 @@ public class TankTooltipComponent implements ClientTooltipComponent {
             context.renderItem(Items.BUCKET.getDefaultInstance(), x + col * 18 + 2, y + row * 18 + 2);
             ++col;
         }
-        for (FluidSlotData fluid : fluids) {
+        for (LargeFluidSlotData fluid : fluids) {
             drawFluidInSlot(fluid, context, textRenderer, x + col * 18 + 1, y + row * 18 + 1);
             ++col;
             if (col == 9) {
@@ -84,11 +85,11 @@ public class TankTooltipComponent implements ClientTooltipComponent {
         }
     }
 
-    private void drawFluidInSlot(FluidSlotData fluid, GuiGraphics context, Font textRenderer, int x, int y) {
+    private void drawFluidInSlot(LargeFluidSlotData fluid, GuiGraphics context, Font textRenderer, int x, int y) {
         // slot texture
         context.blit(TEXTURE, x, y, 1, 129, 18, 18);
         // fluid
-        FluidRenderer.drawFluidInGui(context, fluid.fluidVariant(), x + 1, y + 1);
+        FluidRenderer.drawFluidInGui(context, fluid.fluid(), x + 1, y + 1);
         // fluid count
         FluidRenderer.drawFluidCount(textRenderer, context, fluid.amount(), x + 1, y + 1);
     }

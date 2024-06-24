@@ -39,7 +39,7 @@ public record SelectedSlotPacketC2S(boolean isRight, int slot) implements Custom
         if (tank == null)
             return;
         int size = tank.getUniqueFluids().size();
-        int selectedSlot = Mth.clamp(packet.slot, 0, size - 1);
+        int selectedSlot = Mth.clamp(packet.slot, -1, size - 1);
         stack.set(TankStorage.SelectedSlotComponentType, selectedSlot);
     }
 }
