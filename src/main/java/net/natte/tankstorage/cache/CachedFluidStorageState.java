@@ -1,11 +1,14 @@
 package net.natte.tankstorage.cache;
 
+import net.minecraft.util.Mth;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -44,20 +47,24 @@ public class CachedFluidStorageState {
 
     public List<LargeFluidSlotData> getUniqueFluids() {
         if (uniqueFluids == null) {
-            Map<FluidStack, Long> counts = new LinkedHashMap<>();
-            for (FluidSlotData fluidSlotData : fluids) {
-                long count = counts.getOrDefault(fluidSlotData.fluidVariant(), 0L);
-                count += fluidSlotData.amount();
-                counts.put(fluidSlotData.fluidVariant(), count);
-            }
+            Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
+            for (FluidSlotData fluidSlotData : fluids)
+                counts.merge(new HashableFluidVariant(fluidSlotData.fluidVariant()), (long) fluidSlotData.amount(), Long::sum);
+
             uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {
                 if (count > 0)
-                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant, 0L, count, false));
+                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
             });
 
         }
 
         return uniqueFluids;
+    }
+
+    @Nullable
+    public FluidStack getSelectedFluid(int selectedSlot) {
+        selectedSlot = Mth.clamp(selectedSlot, -1, getUniqueFluids().size() - 1);
+        return selectedSlot == -1 ? null : getUniqueFluids().get(selectedSlot).fluid();
     }
 }

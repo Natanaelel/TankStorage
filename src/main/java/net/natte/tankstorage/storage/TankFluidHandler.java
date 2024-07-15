@@ -1,20 +1,18 @@
 package net.natte.tankstorage.storage;
 
-import io.netty.util.HashedWheelTimer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
 import java.util.List;
 
 public class TankFluidHandler implements IFluidHandlerItem {
 
-    private boolean insertOnly = false;
-    private FluidStack extractOnly = null;
+    private boolean canExtract = true;
+    private FluidStack extractFilter = null;
 
-    private List<TankSingleFluidStorage> parts;
-    private InsertMode insertMode;
+    private final List<TankSingleFluidStorage> parts;
+    private final InsertMode insertMode;
     private ItemStack item = ItemStack.EMPTY;
 
     public TankFluidHandler(List<TankSingleFluidStorage> parts, InsertMode insertMode) {
@@ -28,12 +26,12 @@ public class TankFluidHandler implements IFluidHandlerItem {
     }
 
     public TankFluidHandler insertOnly() {
-        this.insertOnly = true;
+        this.canExtract = false;
         return this;
     }
 
-    public TankFluidHandler extractOnly(FluidStack extractOnly) {
-        this.extractOnly = extractOnly;
+    public TankFluidHandler extractOnly(FluidStack extractFilter) {
+        this.extractFilter = extractFilter;
         return this;
     }
 
@@ -64,7 +62,7 @@ public class TankFluidHandler implements IFluidHandlerItem {
     public int fill(FluidStack resource, FluidAction action) {
         if (resource.isEmpty())
             return 0;
-        if (extractOnly != null && !FluidStack.isSameFluidSameComponents(extractOnly, resource))
+        if (extractFilter != null && !FluidStack.isSameFluidSameComponents(extractFilter, resource))
             return 0;
         int maxAmount = resource.getAmount();
         int inserted = 0;
@@ -132,7 +130,7 @@ public class TankFluidHandler implements IFluidHandlerItem {
 
     @Override
     public FluidStack drain(FluidStack resource, FluidAction action) {
-        if (insertOnly)
+        if (!canExtract(resource))
             return FluidStack.EMPTY;
         int maxAmount = resource.getAmount();
         int extracted = 0;
@@ -142,17 +140,28 @@ public class TankFluidHandler implements IFluidHandlerItem {
         return resource.copyWithAmount(extracted);
     }
 
+
     @Override
     public FluidStack drain(int maxAmount, FluidAction action) {
-        FluidStack resource = extractOnly;
+        if (!canExtract)
+            return FluidStack.EMPTY;
+        FluidStack resource = extractFilter;
         int extracted = 0;
         for (TankSingleFluidStorage tank : parts) {
-            if (resource == null && !tank.getFluid().isEmpty())
+            if (resource == null && !tank.getFluid().isEmpty() && tank.getAmount() > 0)
                 resource = tank.getFluid();
             if (resource != null)
                 extracted += tank.extract(resource, maxAmount - extracted, action.simulate());
         }
-        return resource == null ? FluidStack.EMPTY : resource.copyWithAmount(extracted);
+        return extracted == 0 ? FluidStack.EMPTY : resource.copyWithAmount(extracted);
+    }
+
+    private boolean canExtract(FluidStack resource) {
+        if (!canExtract)
+            return false;
+        if (extractFilter == null)
+            return true;
+        return FluidStack.isSameFluidSameComponents(extractFilter, resource);
     }
 
     @Override

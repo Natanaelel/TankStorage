@@ -5,7 +5,6 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.natte.tankstorage.client.screen.TankScreen;
 import net.natte.tankstorage.gui.FluidSlot;

@@ -1,10 +1,8 @@
 package net.natte.tankstorage.client.screen;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -13,14 +11,15 @@ import net.natte.tankstorage.client.helpers.FluidHelper;
 import net.natte.tankstorage.client.rendering.FluidRenderer;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.gui.FluidSlot;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankMenu;
+import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
+public class TankScreen extends AbstractContainerScreen<TankMenu> {
 
     private static final ResourceLocation WIDGETS_TEXTURE = Util.ID("textures/gui/widgets.png");
 
@@ -28,7 +27,7 @@ public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
     private final ResourceLocation texture;
     private boolean isLockSlotKeyDown = false;
 
-    public TankScreen(TankScreenHandler handler, Inventory inventory, Component title) {
+    public TankScreen(TankMenu handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
         this.type = handler.getTankType();
 
@@ -68,9 +67,10 @@ public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
 
         FluidStack fluidVariant = fluidSlot.getFluid();
         if (!fluidVariant.isEmpty()) {
-            FluidRenderer.drawFluidInGui(guiGraphics, fluidVariant, slot.x, slot.y);
+            FluidRenderer.drawFluidInGui(guiGraphics, fluidVariant, slot.x, slot.y, fluidSlot.getAmount() == 0);
             // draw fluid count
-            FluidRenderer.drawFluidCount(font, guiGraphics, fluidSlot.getAmount(), slot.x, slot.y);
+            if (fluidSlot.getAmount() > 0)
+                FluidRenderer.drawFluidCount(font, guiGraphics, fluidSlot.getAmount(), slot.x, slot.y);
         }
         if (fluidSlot.isLocked()) {
             // locked dither outline
@@ -93,8 +93,7 @@ public class TankScreen extends AbstractContainerScreen<TankScreenHandler> {
                         fluidSlot.getCapacity()));
 
             if (hasCursorStack)
-                tooltip.add(Component.translatable("tooltip.tankstorage.insert_or_extract_desc")
-                        .setStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
+                tooltip.add(Texts.FLUIDSLOT_HOVER_TOOLTIP);
 
             context.renderComponentTooltip(font, tooltip, x, y);
             return;

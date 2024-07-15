@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
@@ -19,6 +20,7 @@ import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.neoforged.neoforge.fluids.FluidActionResult;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
@@ -36,7 +38,7 @@ public class BucketInteraction {
         if (!world.isClientSide)
             tankState = Util.getFluidStorage(stack);
 
-        IFluidHandlerItem fluidStorage = Util.getFluidStorageFromItem(stack);
+        IFluidHandlerItem fluidStorage = Util.getFluidHandlerFromItem(stack);
 
         if (fluidStorage == null)
             return InteractionResult.FAIL;
@@ -85,18 +87,11 @@ public class BucketInteraction {
 
         BlockState blockState = world.getBlockState(blockPos);
 
-        // TODO: respect direction? maybe use old code instead
-        return FluidUtil.tryPlaceFluid(player, world, hand, blockPos, stack, fluidVariant).isSuccess() ? InteractionResult.SUCCESS : InteractionResult.FAIL;
-//
-//        long extractedSimulated = StorageUtil.simulateExtract(fluidStorage, FluidVariant.of(fluid),
-//                FluidConstants.BUCKET, null);
-//        boolean canInsertFluid = extractedSimulated == FluidConstants.BUCKET;
-//        if (!canInsertFluid) {
-//            return InteractionResult.FAIL;
-//        }
-//
-//        BlockPos blockPos3 = blockState.getBlock() instanceof FluidFillable && fluid == Fluids.WATER ? blockPos
-//                : blockPos2;
+        boolean canPlaceFluidInBlock = blockState.getBlock() instanceof LiquidBlockContainer liquidBlockContainer && liquidBlockContainer.canPlaceLiquid(player, world, blockPos, blockState, fluid);
+        BlockPos blockPos3 = canPlaceFluidInBlock ? blockPos : blockPos2;
+        FluidActionResult result = FluidUtil.tryPlaceFluid(player, world, hand, blockPos3, stack, fluidVariant.copyWithAmount(FluidType.BUCKET_VOLUME));
+        return result.isSuccess() ? InteractionResult.SUCCESS : InteractionResult.FAIL;
+
 //
 //        if (!(fluidVariant.getFluid().getBucketItem() instanceof BucketItem bucketItem))
 //            return InteractionResult.FAIL;

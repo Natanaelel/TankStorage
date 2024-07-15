@@ -22,7 +22,7 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
         poseStack.pushPose();
         poseStack.translate(0.5f, 0.5f, 0.5f);
         // prevent z-fighting
-        float scale = 2f - 0.0001f;
+        float scale = 0.9999f;
         poseStack.scale(scale, scale, scale);
 
         itemRenderer.renderStatic(tankDock.getTank(), ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack,

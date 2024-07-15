@@ -18,8 +18,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
+import net.natte.tankstorage.screenhandler.TankMenuFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
+import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
 
 public class TankDockBlock extends Block implements EntityBlock {
@@ -73,15 +74,15 @@ public class TankDockBlock extends Block implements EntityBlock {
             if (!world.isClientSide) {
                 TankFluidStorageState tank = Util.getOrCreateFluidStorage(tankDock.getTank());
                 if (tank == null) {
-                    player.displayClientMessage(Component.translatable("popup.tankstorage.unlinked"), true);
+                    player.displayClientMessage(Texts.UNLINKED, true);
                     return InteractionResult.FAIL;
                 }
-                TankScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
+                TankMenuFactory menu = new TankMenuFactory(
                         tank,
                         tankDock.getTank(),
                         -1,
                         ContainerLevelAccess.create(world, pos));
-                player.openMenu(screenHandlerFactory, screenHandlerFactory::writeScreenOpeningData);
+                menu.open(player);
             }
 
             return InteractionResult.SUCCESS;

@@ -10,6 +10,10 @@ import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.item.TankItem;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+
 public class TankType {
 
     public static final Codec<TankType> CODEC = Codec.STRING.xmap(TankType::fromName, t -> t.name);
@@ -25,6 +29,7 @@ public class TankType {
     public int guiImageHeight;
     public int guiTextureWidth;
     public int guiTextureHeight;
+    private UnaryOperator<Item.Properties> itemPropertyOperator = UnaryOperator.identity();
 
     public TankType(String name, int capacity, int width, int height) {
         this.name = name;
@@ -38,8 +43,13 @@ public class TankType {
         this.guiTextureHeight = Mth.ceil(this.guiImageHeight / 256d) * 256;
     }
 
+    public TankType itemProperty(UnaryOperator<Item.Properties> operator){
+        this.itemPropertyOperator = operator;
+        return this;
+    }
+
     public void register() {
-        this.item = TankStorage.ITEMS.register(this.name, () -> new TankItem(new Item.Properties().stacksTo(1), this));
+        this.item = TankStorage.ITEMS.register(this.name, () -> new TankItem(this.itemPropertyOperator.apply(new Item.Properties().stacksTo(1)), this));
     }
 
     public Item getItem() {
@@ -72,5 +82,15 @@ public class TankType {
 
     public int getCapacity() {
         return capacity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
     }
 }

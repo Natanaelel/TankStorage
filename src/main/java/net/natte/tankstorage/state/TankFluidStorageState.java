@@ -1,16 +1,20 @@
 package net.natte.tankstorage.state;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.packet.client.TankPacketS2C;
 import net.natte.tankstorage.storage.InsertMode;
 import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankSingleFluidStorage;
+import net.natte.tankstorage.sync.SyncSubscriptionManager;
 import net.natte.tankstorage.util.FluidSlotData;
+import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -23,6 +27,7 @@ public class TankFluidStorageState {
 
     private short revision = 0; // start different from client (0) to update client cache
     private final List<Runnable> listeners = new ArrayList<>();
+    private List<LargeFluidSlotData> uniqueFluids;
 
     public TankFluidStorageState(TankType type, UUID uuid, List<FluidSlotData> fluidSlots) {
         this(type, uuid);
@@ -133,19 +138,19 @@ public class TankFluidStorageState {
     }
 
     public List<LargeFluidSlotData> getUniqueFluids() {
-        Map<FluidStack, Long> counts = new LinkedHashMap<>();
-        for (TankSingleFluidStorage part : fluidStorageParts) {
-            long count = counts.getOrDefault(part.getFluid(), 0L);
-            count += part.getAmount();
-            counts.put(part.getFluid(), count);
+        if (this.uniqueFluids == null) {
+            Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
+            for (TankSingleFluidStorage part : fluidStorageParts) {
+                counts.merge(new HashableFluidVariant(part.getFluid()), ((long) part.getAmount()), Long::sum);
+            }
+            List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
+            counts.forEach((fluidVariant, count) -> {
+                if (count > 0)
+                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
+            });
+            this.uniqueFluids = uniqueFluids;
         }
-        List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
-        counts.forEach((fluidVariant, count) -> {
-            if (count > 0)
-                uniqueFluids.add(new LargeFluidSlotData(fluidVariant, 0L, count, false));
-        });
-
-        return uniqueFluids;
+        return this.uniqueFluids;
     }
 
     public short getRevision() {
@@ -158,9 +163,11 @@ public class TankFluidStorageState {
 
     // called only serverside
     public void markDirty() {
+        this.uniqueFluids = null;
         this.updateRevision();
         for (Runnable listener : this.listeners)
             listener.run();
+        SyncSubscriptionManager.setChanged(this.uuid);
     }
 
     // called only serverside
@@ -175,5 +182,11 @@ public class TankFluidStorageState {
 
     public UUID getUuid() {
         return uuid;
+    }
+
+    @Nullable
+    public FluidStack getSelectedFluid(int selectedSlot) {
+        selectedSlot = Mth.clamp(selectedSlot, -1, getUniqueFluids().size() - 1);
+        return selectedSlot == -1 ? null : getUniqueFluids().get(selectedSlot).fluid();
     }
 }

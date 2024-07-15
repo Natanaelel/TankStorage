@@ -9,7 +9,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 public record FluidSlotData(FluidStack fluidVariant, int capacity, int amount, boolean isLocked) {
 
     public static final StreamCodec<RegistryFriendlyByteBuf, FluidSlotData> STREAM_CODEC = StreamCodec.composite(
-            FluidStack.OPTIONAL_STREAM_CODEC,
+            FluidStack.OPTIONAL_STREAM_CODEC.map(a -> a.copyWithAmount(1), a -> a),
             FluidSlotData::fluidVariant,
             ByteBufCodecs.INT,
             FluidSlotData::capacity,

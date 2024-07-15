@@ -14,25 +14,23 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.natte.tankstorage.TankStorage;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
-import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
+import net.natte.tankstorage.screenhandler.TankMenuFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.util.BucketInteraction;
+import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
 
-import java.text.NumberFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 public class TankFunctionality extends Item {
-
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getNumberInstance(Locale.US);
 
     public TankFunctionality(Properties settings) {
         super(settings);
@@ -57,6 +55,11 @@ public class TankFunctionality extends Item {
         if (interactionMode == TankInteractionMode.BUCKET) {
             InteractionResult result = BucketInteraction.interactFluid(world, player, hand, stack);
             if (result == InteractionResult.PASS) {
+
+                // allow player to right-click flowing fluid without accidentally opening screen
+                if (preventOpenScreenOnFluidClick(world, player))
+                    return InteractionResultHolder.fail(stack);
+
                 if (player.isShiftKeyDown()) {
                     if (!world.isClientSide)
                         Util.onToggleInteractionMode(player, stack);
@@ -78,19 +81,25 @@ public class TankFunctionality extends Item {
         }
     }
 
+    private boolean preventOpenScreenOnFluidClick(Level level, Player player) {
+        Vec3 vec3 = player.getEyePosition();
+        Vec3 vec31 = vec3.add(player.calculateViewVector(player.getXRot(), player.getYRot()).scale(player.blockInteractionRange() + 1));
+        return level.clip(new ClipContext(vec3, vec31, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, player)).getType() != HitResult.Type.MISS;
+    }
+
     private InteractionResultHolder<ItemStack> tryOpenScreen(Level world, Player player, ItemStack stack) {
         if (world.isClientSide)
             return InteractionResultHolder.success(stack);
 
         TankFluidStorageState tank = Util.getOrCreateFluidStorage(stack);
         if (tank == null) {
-            player.displayClientMessage(Component.translatable("popup.tankstorage.unlinked"), true);
+            player.displayClientMessage(Texts.UNLINKED, true);
             return InteractionResultHolder.fail(stack);
         }
-        TankScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(tank, stack,
+        TankMenuFactory menu = new TankMenuFactory(tank, stack,
                 player.getInventory().selected,
                 ContainerLevelAccess.NULL);
-        player.openMenu(screenHandlerFactory, screenHandlerFactory::writeScreenOpeningData);
+        menu.open(player);
 
         return InteractionResultHolder.success(stack);
     }
@@ -129,9 +138,8 @@ public class TankFunctionality extends Item {
 
         TankType type = Util.getType(stack);
         if (type != null) {
-            Component formattedSlotSize = Component.literal(NUMBER_FORMAT.format(type.getCapacity() / TankStorage.BUCKET));
-            tooltip.add(Component.translatable("tooptip.tankstorage.slotsize", formattedSlotSize));
-            tooltip.add(Component.translatable("tooptip.tankstorage.numslots", Component.literal(String.valueOf(type.size()))));
+            tooltip.add(Texts.slotSizeTooltip(type.getCapacity()));
+            tooltip.add(Texts.slotCountTooltip(type.size()));
         }
         super.appendHoverText(stack, context, tooltip, tooltipType);
     }

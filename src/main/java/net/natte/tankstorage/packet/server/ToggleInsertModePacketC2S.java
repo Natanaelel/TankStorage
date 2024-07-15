@@ -8,8 +8,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.block.TankDockBlockEntity;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankMenu;
 import net.natte.tankstorage.storage.TankOptions;
+import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -29,19 +30,19 @@ public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
     public static void receive(ToggleInsertModePacketC2S packet, IPayloadContext context) {
 
         ServerPlayer player = ((ServerPlayer) context.player());
-        if (player.containerMenu instanceof TankScreenHandler tankScreenHandler)
-            toggleInsertModeOfScreenHandler(player, tankScreenHandler);
+        if (player.containerMenu instanceof TankMenu tankMenu)
+            toggleInsertModeOfScreenHandler(player, tankMenu);
         else
             toggleInsertModeOfHeldTank(player);
     }
 
     private static void toggleInsertModeOfScreenHandler(ServerPlayer player,
-                                                        TankScreenHandler tankScreenHandler) {
-        ItemStack tank = tankScreenHandler.getTankItem();
-        tank.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInsertMode);
+                                                        TankMenu tankMenu) {
+        ItemStack tank = tankMenu.getTankItem();
+        tank.update(TankStorage.OptionsComponentType, TankOptions.create(), TankOptions::nextInsertMode);
 
         // dock.markDirty if has dock pos
-        tankScreenHandler.getContext().execute(
+        tankMenu.getAccess().execute(
                 (world, blockPos) -> world
                         .getBlockEntity(blockPos, TankStorage.TANK_DOCK_BLOCK_ENTITY.get())
                         .ifPresent(TankDockBlockEntity::setChanged));
@@ -56,9 +57,8 @@ public record ToggleInsertModePacketC2S() implements CustomPacketPayload {
         else
             return;
 
-        stack.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInsertMode);
+        stack.update(TankStorage.OptionsComponentType, TankOptions.create(), TankOptions::nextInsertMode);
 
-        player.displayClientMessage(Component.translatable("popup.tankstorage.insertmode."
-                + Util.getInsertMode(stack).toString().toLowerCase()), true);
+        player.displayClientMessage(Texts.insertModePopup(Util.getInsertMode(stack)), true);
     }
 }

@@ -5,7 +5,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankMenu;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -33,8 +33,8 @@ public record SyncFluidPacketS2C(int syncId, int slot, FluidSlotData fluidSlotDa
         AbstractContainerMenu screenHandler = context.player().containerMenu;
         if (packet.syncId() != screenHandler.containerId)
             return;
-        if (!(screenHandler instanceof TankScreenHandler tankScreenHandler))
+        if (!(screenHandler instanceof TankMenu tankMenu))
             return;
-        tankScreenHandler.updateFluidSlot(packet.slot(), packet.fluidSlotData());
+        tankMenu.updateFluidSlot(packet.slot(), packet.fluidSlotData());
     }
 }

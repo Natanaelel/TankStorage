@@ -54,6 +54,7 @@ public class TankStorageClient {
         modBus.addListener(this::registerKeyBinds);
         modBus.addListener(this::registerTooltipComponents);
         modBus.addListener(this::registerRenderers);
+        modBus.addListener(this::initializeClientOnRenderThread);
 
         NeoForge.EVENT_BUS.addListener(this::handleTickEvents);
         NeoForge.EVENT_BUS.addListener(tankHudRenderer::render);
@@ -84,6 +85,10 @@ public class TankStorageClient {
             ItemProperties.register(TankStorage.TANK_LINK_ITEM.get(), ResourceLocation.withDefaultNamespace("has_color"), (stack, level, entity, seed) -> stack.has(DataComponents.DYED_COLOR) ? 1 : 0);
 
         });
+    }
+
+    private void initializeClientOnRenderThread(FMLClientSetupEvent event){
+        event.enqueueWork(() -> Util.isClient.set(true));
     }
 
     public void registerKeyBinds(RegisterKeyMappingsEvent event) {

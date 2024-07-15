@@ -49,7 +49,7 @@ public class TankSingleFluidStorage {
         if (insertedAmount > 0 && !simulate) {
             this.amount += insertedAmount;
             if (this.fluidVariant.isEmpty())
-                this.fluidVariant = insertedVariant;
+                this.fluidVariant = insertedVariant.copyWithAmount(1);
             markDirty();
         }
 
@@ -116,7 +116,7 @@ public class TankSingleFluidStorage {
     public void lock(FluidStack newFluidVariant, boolean shouldLock) {
         if (shouldLock) {
             if (this.amount == 0) {
-                this.fluidVariant = newFluidVariant;
+                this.fluidVariant = newFluidVariant.copyWithAmount(1);
                 this.isLocked = true;
             } else if (FluidStack.isSameFluid(this.fluidVariant, newFluidVariant)) {
                 this.isLocked = true;

@@ -7,8 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
-import net.natte.tankstorage.screenhandler.TankScreenHandlerFactory;
-import net.natte.tankstorage.state.TankFluidStorageState;
+import net.natte.tankstorage.screenhandler.TankMenuFactory;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -33,12 +32,12 @@ public record OpenTankFromKeyBindPacketC2S() implements CustomPacketPayload {
         if (slot == -1)
             return;
         ItemStack tank = player.getInventory().getItem(slot);
-        TankScreenHandlerFactory screenHandlerFactory = new TankScreenHandlerFactory(
+        TankMenuFactory menu = new TankMenuFactory(
                 Util.getOrCreateFluidStorage(tank),
                 tank,
                 slot,
                 ContainerLevelAccess.NULL);
-        player.openMenu(screenHandlerFactory, screenHandlerFactory::writeScreenOpeningData);
+        menu.open(player);
     }
 
     private static int findTank(ServerPlayer player) {

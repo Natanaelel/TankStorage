@@ -89,7 +89,7 @@ public class TankTooltipComponent implements ClientTooltipComponent {
         // slot texture
         context.blit(TEXTURE, x, y, 1, 129, 18, 18);
         // fluid
-        FluidRenderer.drawFluidInGui(context, fluid.fluid(), x + 1, y + 1);
+        FluidRenderer.drawFluidInGui(context, fluid.fluid(), x + 1, y + 1, false);
         // fluid count
         FluidRenderer.drawFluidCount(textRenderer, context, fluid.amount(), x + 1, y + 1);
     }

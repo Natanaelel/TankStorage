@@ -10,22 +10,25 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.state.TankFluidStorageState;
-import org.jetbrains.annotations.Nullable;
 
-public class TankScreenHandlerFactory implements MenuProvider {
+public class TankMenuFactory implements MenuProvider {
 
-    private @Nullable TankFluidStorageState tank;
-    private ItemStack tankItem;
+    private final TankFluidStorageState tank;
+    private final ItemStack tankItem;
     // which inventoryslot tank is in, or -1
-    private int slot;
-    private ContainerLevelAccess screenHandlerContext;
+    private final int slot;
+    private final ContainerLevelAccess access;
 
-    public TankScreenHandlerFactory(TankFluidStorageState tank, ItemStack tankItem, int slot,
-                                    ContainerLevelAccess screenHandlerContext) {
+    public TankMenuFactory(TankFluidStorageState tank, ItemStack tankItem, int slot,
+                           ContainerLevelAccess access) {
         this.tank = tank;
         this.tankItem = tankItem;
         this.slot = slot;
-        this.screenHandlerContext = screenHandlerContext;
+        this.access = access;
+    }
+
+    public void open(Player player){
+        player.openMenu(this, this::writeScreenOpeningData);
     }
 
     @Override
@@ -41,32 +44,28 @@ public class TankScreenHandlerFactory implements MenuProvider {
     }
 
     // called client side only
-    public static TankScreenHandler createClientScreenHandler(int syncId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
+    public static TankMenu createClientScreenHandler(int syncId, Inventory playerInventory, RegistryFriendlyByteBuf buf) {
 
         TankType tankType = TankType.fromName(buf.readUtf());
         ItemStack tankItem = ItemStack.STREAM_CODEC.decode(buf);
         int slot = buf.readInt();
 
-//        TankFluidStorageState tank = TankFluidStorageState.readNbt(buf.readNbt());
-
-        TankScreenHandler screenHandler = new TankScreenHandler(syncId, playerInventory,
+        return new TankMenu(syncId, playerInventory,
                 TankFluidStorageState.create(tankType, null), // dummy tank
                 tankType,
                 tankItem,
                 slot,
                 ContainerLevelAccess.NULL);
-        return screenHandler;
     }
 
     // called server side only
     @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory playerInventory, Player player) {
-        return new TankScreenHandler(syncId, playerInventory,
+        return new TankMenu(syncId, playerInventory,
                 this.tank,
                 this.tank.type,
                 this.tankItem,
                 this.slot,
-                this.screenHandlerContext);
+                this.access);
     }
-
 }

@@ -30,7 +30,7 @@ public record RequestTankPacketC2S(UUID uuid, int revision) implements CustomPac
 
     public static void receive(RequestTankPacketC2S packet, IPayloadContext context) {
         TankFluidStorageState tank = Util.getFluidStorage(packet.uuid);
-        if (tank.getRevision() != packet.revision) {
+        if (tank != null && tank.getRevision() != packet.revision) {
             context.reply(new TankPacketS2C(tank.uuid, tank.getRevision(), tank.getFluidSlots()));
         }
     }

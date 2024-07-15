@@ -110,10 +110,10 @@ dependencies {
     // optional emi dep
     compileOnly "dev.emi:emi-neoforge:${project.emi_version}"
     // optional rei dep
-    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
+//    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
 
-//    localRuntimeOnly "dev.emi:emi-neoforge:${project.emi_version}"
-    localRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
+    localRuntimeOnly "dev.emi:emi-neoforge:${project.emi_version}"
+//    localRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${project.rei_version}"
 
 
     // Example mod dependency using a mod jar from ./libs with a flat dir repository

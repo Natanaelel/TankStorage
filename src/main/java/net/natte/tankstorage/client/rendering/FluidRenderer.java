@@ -28,7 +28,7 @@ import java.math.MathContext;
 
 public class FluidRenderer {
 
-    public static void drawFluidInGui(GuiGraphics guiGraphics, FluidStack fluid, float i, float j) {
+    public static void drawFluidInGui(GuiGraphics guiGraphics, FluidStack fluid, float i, float j, boolean transparent) {
 
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
         TextureAtlasSprite sprite = getSprite(fluid);
@@ -41,7 +41,11 @@ public class FluidRenderer {
         float g = ((color >> 8) & 255) / 256f;
         float b = (color & 255) / 256f;
         RenderSystem.disableDepthTest();
-        RenderSystem.disableBlend();
+
+//        if (transparent)
+        RenderSystem.enableBlend();
+//        else
+//            RenderSystem.disableBlend();
 
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         BufferBuilder bufferBuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -55,16 +59,16 @@ public class FluidRenderer {
         float v0 = v1 + (sprite.getV0() - v1) * 1;
         float u1 = sprite.getU1();
 
+        float alpha = transparent ? 0.5f : 1f;
+//        float alpha = 1f;
         Matrix4f model = guiGraphics.pose().last().pose();
-        bufferBuilder.addVertex(model, x0, y1, z).setUv(u0, v1).setColor(r, g, b, 1);
-        bufferBuilder.addVertex(model, x1, y1, z).setUv(u1, v1).setColor(r, g, b, 1);
-        bufferBuilder.addVertex(model, x1, y0, z).setUv(u1, v0).setColor(r, g, b, 1);
-        bufferBuilder.addVertex(model, x0, y0, z).setUv(u0, v0).setColor(r, g, b, 1);
+        bufferBuilder.addVertex(model, x0, y1, z).setUv(u0, v1).setColor(r, g, b, alpha);
+        bufferBuilder.addVertex(model, x1, y1, z).setUv(u1, v1).setColor(r, g, b, alpha);
+        bufferBuilder.addVertex(model, x1, y0, z).setUv(u1, v0).setColor(r, g, b, alpha);
+        bufferBuilder.addVertex(model, x0, y0, z).setUv(u0, v0).setColor(r, g, b, alpha);
         BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
 
         RenderSystem.enableDepthTest();
-
-
     }
 
     public static void drawFluidCount(Font textRenderer, GuiGraphics context, long amount, int x, int y) {
@@ -87,14 +91,15 @@ public class FluidRenderer {
     }
 
     private static Component getFormattedFluidCount(long amount) {
-
+        if (amount == 0)
+            return Component.literal("0");
         final int BUCKET = 1000;
         // TOD0: clean
         // not today! hah!
         var significantDigits = new MathContext(3);
-        var roundedAmout = new BigDecimal(amount * 1d / BUCKET).round(significantDigits)
+        var roundedAmount = new BigDecimal(amount * 1d / BUCKET).round(significantDigits)
                 .multiply(new BigDecimal(BUCKET)).longValue();
-        amount = roundedAmout;
+        amount = roundedAmount;
         if (amount < BUCKET) {
             double num = (long) (amount * 1000L * 1000d / BUCKET / 1000d) / 1000d;// mB
             return Component.nullToEmpty(num > 1 ? num + "" : (num + "").substring(1));

@@ -3,6 +3,7 @@ package net.natte.tankstorage.util;
 import com.google.common.base.Supplier;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +17,7 @@ import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.state.TankPersistentState;
 import net.natte.tankstorage.state.TankStateManager;
 import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -29,6 +31,7 @@ import java.util.UUID;
 public class Util {
 
     public static Supplier<Boolean> isShiftDown = () -> false;
+    public static ThreadLocal<Boolean> isClient = ThreadLocal.withInitial(() -> false);
 
     public static ResourceLocation ID(String id) {
         return ResourceLocation.fromNamespaceAndPath(TankStorage.MOD_ID, id);
@@ -73,7 +76,7 @@ public class Util {
     }
 
     public static TankOptions getOptionsOrDefault(ItemStack tankItem) {
-        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT);
+        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create());
     }
 
     public static void setOptions(ItemStack stack, TankOptions options) {
@@ -81,7 +84,7 @@ public class Util {
     }
 
     public static InsertMode getInsertMode(ItemStack tankItem) {
-        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).insertMode();
+        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).insertMode();
     }
 
     public static int getSelectedSlot(ItemStack itemStack) {
@@ -147,56 +150,63 @@ public class Util {
     // if in bucketmode: only allow extraction of selected fluid
     @Nullable
     public static IFluidHandlerItem getFluidHandlerFromItem(ItemStack itemStack, Void v) {
-
-        if (!Util.hasUUID(itemStack))
-            return null;
-
-        InsertMode insertMode = Util.getInsertMode(itemStack);
-        int selectedslot = Util.getSelectedSlot(itemStack);
-        TankInteractionMode interactionMode = Util.getInteractionMode(itemStack);
-
-        boolean isClient = Thread.currentThread().getName().equals("Render thread");
-
-        if (isClient) {
-            CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
-            if (cached == null)
-                return null;
-
-            if (interactionMode == TankInteractionMode.BUCKET) {
-                if (selectedslot == -1) {
-                    return cached.getFluidHandler(insertMode).withItem(itemStack).insertOnly();
-                } else {
-                    selectedslot = Math.min(selectedslot, cached.getUniqueFluids().size() - 1);
-                    FluidStack selectedFluid = selectedslot == -1 ? FluidStack.EMPTY
-                            : cached.getUniqueFluids().get(selectedslot).fluid();
-                    return cached.getFluidHandler(insertMode).withItem(itemStack).extractOnly(selectedFluid);
-                }
-            }
-
-            return cached.getFluidHandler(insertMode);
-        } else {
-            TankFluidStorageState tank = getOrCreateFluidStorage(itemStack);
-            if (tank == null)
-                return null;
-
-            if (interactionMode == TankInteractionMode.BUCKET) {
-                if (selectedslot == -1) {
-                    return tank.getFluidHandler(insertMode).withItem(itemStack).insertOnly();
-                } else {
-                    List<FluidSlotData> fluids = tank.getNonEmptyFluids();
-                    selectedslot = clampSelectedSlot(itemStack, fluids.size() - 1);
-                    FluidStack selectedFluid = selectedslot == -1 ? FluidStack.EMPTY
-                            : fluids.get(selectedslot).fluidVariant();
-                    return tank.getFluidHandler(insertMode).withItem(itemStack).extractOnly(selectedFluid);
-                }
-            }
-            return tank.getFluidHandler(insertMode).withItem(itemStack);
-        }
+        return getFluidHandlerFromItem(itemStack);
     }
 
     @Nullable
-    public static IFluidHandlerItem getFluidStorageFromItem(ItemStack itemStack) {
-        return getFluidHandlerFromItem(itemStack, null);
+    public static IFluidHandlerItem getFluidHandlerFromItem(ItemStack itemStack) {
+        if (isClient())
+            return getClientFluidHandler(itemStack);
+        else
+            return getServerFluidHandler(itemStack);
+    }
+
+
+    @Nullable
+    private static IFluidHandlerItem getClientFluidHandler(ItemStack itemStack) {
+        if (!hasUUID(itemStack))
+            return null;
+        CachedFluidStorageState tank = ClientTankCache.getAndQueueThrottledUpdate(getUUID(itemStack), 20);
+        if (tank == null)
+            return null;
+
+        InsertMode insertMode = getInsertMode(itemStack);
+        TankInteractionMode interactionMode = getInteractionMode(itemStack);
+
+        TankFluidHandler fluidHandler = tank.getFluidHandler(insertMode).withItem(itemStack);
+
+        if (interactionMode == TankInteractionMode.OPEN_SCREEN)
+            return fluidHandler;
+
+        FluidStack selectedFluid = tank.getSelectedFluid(getSelectedSlot(itemStack));
+        if (selectedFluid == null)
+            return fluidHandler.insertOnly();
+
+        return fluidHandler.extractOnly(selectedFluid);
+    }
+
+    // does not create new tank
+    @Nullable
+    private static IFluidHandlerItem getServerFluidHandler(ItemStack itemStack) {
+        if (!hasUUID(itemStack))
+            return null;
+        TankFluidStorageState tank = getFluidStorage(getUUID(itemStack));
+        if (tank == null)
+            return null;
+
+        InsertMode insertMode = getInsertMode(itemStack);
+        TankInteractionMode interactionMode = getInteractionMode(itemStack);
+
+        TankFluidHandler fluidHandler = tank.getFluidHandler(insertMode).withItem(itemStack);
+
+        if (interactionMode == TankInteractionMode.OPEN_SCREEN)
+            return fluidHandler;
+
+        FluidStack selectedFluid = tank.getSelectedFluid(getSelectedSlot(itemStack));
+        if (selectedFluid == null)
+            return fluidHandler.insertOnly();
+
+        return fluidHandler.extractOnly(selectedFluid);
     }
 
     // never returns FluidStack.EMPTY but instead null
@@ -208,9 +218,7 @@ public class Util {
 
         int selectedslot = Util.getSelectedSlot(itemStack);
 
-        boolean isClient = Thread.currentThread().getName().equals("Render thread");
-
-        if (isClient) {
+        if (isClient()) {
             CachedFluidStorageState cached = ClientTankCache.getOrQueueUpdate(Util.getUUID(itemStack));
             if (cached == null)
                 return null;
@@ -238,10 +246,9 @@ public class Util {
 
     public static void onToggleInteractionMode(Player player, ItemStack stack) {
 
-        stack.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInteractionMode);
+        stack.update(TankStorage.OptionsComponentType, TankOptions.create(), TankOptions::nextInteractionMode);
         TankInteractionMode interactionMode = getInteractionMode(stack);
-        player.displayClientMessage(Component.translatable("popup.tankstorage.interactionmode."
-                + interactionMode.toString().toLowerCase()), true);
+        player.displayClientMessage(Texts.interactionMode(interactionMode), true);
     }
 
     @Nullable
@@ -258,5 +265,9 @@ public class Util {
 
     public static TankInteractionMode getInteractionMode(ItemStack stack) {
         return getOptionsOrDefault(stack).interactionMode();
+    }
+
+    public static boolean isClient() {
+        return isClient.get();
     }
 }

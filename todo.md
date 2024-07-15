@@ -1,3 +1,4 @@
+- [x] emi + rei compat
 - [x] fix unique fluids order is undefined
 - test
 - [x] textures

@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.natte.tankstorage.packet.server.ToggleInsertModePacketC2S;
 import net.natte.tankstorage.storage.InsertMode;
+import net.natte.tankstorage.util.Texts;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.time.Duration;
@@ -44,20 +45,12 @@ public class InsertModeButtonWidget extends Button {
     }
 
     public void refreshTooltip() {
-        String name = switch (this.insertMode) {
-            case ALL -> "all";
-            case FILTERED -> "filtered";
-            case VOID_OVERFLOW -> "void_overflow";
-        };
-
         this.setTooltip(
-                Tooltip.create(
-                        Component.translatable("title.tankstorage.insertmode." + name)
-                                .append("\n")
-                                .append(
-                                        Component.translatable("tooltip.tankstorage.insertmode." + name)
-                                                .withStyle(ChatFormatting.DARK_GRAY)
-                                )));
+                Tooltip.create(Texts.insertModeTitle(this.insertMode).copy()
+                        .append("\n")
+                        .append(Texts.insertModeTooltip(this.insertMode).copy()
+                                .withStyle(ChatFormatting.DARK_GRAY)
+                        )));
     }
 
     private static void onInsertModeButtonPress(InsertModeButtonWidget button) {

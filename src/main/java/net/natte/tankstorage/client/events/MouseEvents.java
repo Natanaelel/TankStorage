@@ -15,6 +15,7 @@ import net.natte.tankstorage.packet.server.SelectedSlotPacketC2S;
 import net.natte.tankstorage.packet.server.UpdateTankOptionsPacketC2S;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
+import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -38,14 +39,11 @@ public class MouseEvents {
 
         HudRenderer preview = TankStorageClient.tankHudRenderer;
 
-        if (!preview.isBucketMode())
+        if (!preview.isRendering())
             return;
 
-        CachedFluidStorageState cachedBankStorage = preview.tank;
 
-        if (cachedBankStorage == null)
-            return;
-
+        CachedFluidStorageState cachedBankStorage = preview.getFluidStorage();
 
         int selectedItemSlot = preview.selectedSlot;
 
@@ -67,13 +65,13 @@ public class MouseEvents {
         if (tankItem == null)
             return;
 
-        tankItem.update(TankStorage.OptionsComponentType, TankOptions.DEFAULT, TankOptions::nextInteractionMode);
-        TankInteractionMode interactionMode = Util.getInteractionMode(tankItem);
 
-        // TODO: make more robust
-        PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(Util.getOptionsOrDefault(tankItem)));
+        TankOptions options = tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).nextInteractionMode();
 
-        player.displayClientMessage(Component.translatable("popup.tankstorage.interactionmode."
-                + interactionMode.toString().toLowerCase()), true);
+        PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(options, false));
+
+        TankInteractionMode interactionMode = options.interactionMode();
+
+        player.displayClientMessage(Texts.interactionMode(interactionMode), true);
     }
 }

@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.natte.tankstorage.gui.FluidSlot;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
-import net.natte.tankstorage.screenhandler.TankScreenHandler;
+import net.natte.tankstorage.screenhandler.TankMenu;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -35,12 +35,12 @@ public record LockSlotPacketC2S(int syncId, int slot, FluidStack fluid,
     }
 
     public static void receive(LockSlotPacketC2S packet, IPayloadContext context) {
-        if (context.player().containerMenu instanceof TankScreenHandler tankScreenHandler && packet.syncId == tankScreenHandler.containerId) {
+        if (context.player().containerMenu instanceof TankMenu tankMenu && packet.syncId == tankMenu.containerId) {
 
 
-            if (!tankScreenHandler.lockSlot(packet.slot, packet.fluid, packet.shouldLock)) {
+            if (!tankMenu.lockSlot(packet.slot, packet.fluid, packet.shouldLock)) {
                 // lock was invalid, update client to tell them to revert optimistic update
-                if (packet.slot >= 0 && packet.slot < tankScreenHandler.slots.size() && tankScreenHandler.getSlot(packet.slot) instanceof FluidSlot fluidSlot) {
+                if (packet.slot >= 0 && packet.slot < tankMenu.slots.size() && tankMenu.getSlot(packet.slot) instanceof FluidSlot fluidSlot) {
                     FluidSlotData fluidSlotData = new FluidSlotData(fluidSlot.getFluid(), fluidSlot.getCapacity(), fluidSlot.getAmount(), fluidSlot.isLocked());
                     context.reply(new SyncFluidPacketS2C(packet.syncId, packet.slot, fluidSlotData));
                 }

@@ -14,12 +14,14 @@ import net.minecraft.world.item.Items;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
+import net.natte.tankstorage.packet.server.SyncSubscribePacketC2S;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -42,6 +44,7 @@ public class HudRenderer {
     private ItemStack tankItem = ItemStack.EMPTY;
     private HumanoidArm mainArm;
     private TankInteractionMode bucketMode;
+    private short uniqueId = 0;
 
     public void reset() {
         this.client = null;
@@ -63,7 +66,7 @@ public class HudRenderer {
 
     private void updateTank() {
         boolean hadTank = this.hasTank;
-        @Nullable ItemStack oldTankItem = this.tankItem;
+        short oldUniqueId = this.uniqueId;
         if (canRenderFrom(this.client.player.getMainHandItem())) {
             this.renderingFromHand = InteractionHand.MAIN_HAND;
             this.hasTank = true;
@@ -76,21 +79,26 @@ public class HudRenderer {
         if (this.hasTank) {
             this.tankItem = this.client.player.getItemInHand(this.renderingFromHand);
             this.uuid = Util.getUUID(this.tankItem);
-            this.bucketMode = this.tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode();
+            this.bucketMode = this.tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).interactionMode();
             this.mainArm = this.client.player.getMainArm();
             this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
             this.options = Util.getOptionsOrDefault(this.tankItem);
+            this.uniqueId = options.uniqueId();
             if (ClientTankCache.markDirtyForPreview) {
                 ClientTankCache.markDirtyForPreview = false;
                 this.tank = ClientTankCache.get(uuid);
             }
 //            if (!hadTank) {
-            if (oldTankItem != this.tankItem) {
+            if (oldUniqueId != this.options.uniqueId()) {
                 this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
+                PacketDistributor.sendToServer(SyncSubscribePacketC2S.subscribe(this.uuid));
             }
             if (this.tank != null) {
                 this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
             }
+        } else {
+            if (hadTank)
+                PacketDistributor.sendToServer(SyncSubscribePacketC2S.unsubscribe(this.uuid));
         }
     }
 
@@ -99,9 +107,9 @@ public class HudRenderer {
             return false;
         if (!Util.hasUUID(stack))
             return false;
-        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.DEFAULT).interactionMode() != TankInteractionMode.BUCKET)
+        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).interactionMode() != TankInteractionMode.BUCKET)
             return false;
-        CachedFluidStorageState cachedBankStorage = ClientTankCache.get(Util.getUUID(stack));
+        CachedFluidStorageState cachedBankStorage = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 20);
         if (cachedBankStorage == null)
             return false;
         return true;
@@ -137,10 +145,10 @@ public class HudRenderer {
 
 
         int handXOffset = this.arm == HumanoidArm.LEFT ? -169 : 118;
-        if (client.player.getMainArm() == HumanoidArm.LEFT)
+        if (mainArm == HumanoidArm.LEFT)
             handXOffset += 29;
 
-        if (fluids.size() == 0) {
+        if (fluids.isEmpty()) {
             context.blit(WIDGET_TEXTURE,
                     scaledWidth / 2 + handXOffset, scaledHeight - 22, 0, 0, 22, 22);
         } else if (selectedSlot == -1 || selectedSlot == fluids.size() - 1) {
@@ -176,7 +184,7 @@ public class HudRenderer {
 
     private void renderHotbarFluid(GuiGraphics context, int x, int y, LocalPlayer player,
                                    LargeFluidSlotData fluidSlotData, int i) {
-        FluidRenderer.drawFluidInGui(context, fluidSlotData.fluid(), x, y);
+        FluidRenderer.drawFluidInGui(context, fluidSlotData.fluid(), x, y, false);
         FluidRenderer.drawFluidCount(client.font, context, fluidSlotData.amount(), x, y);
     }
 
@@ -186,5 +194,13 @@ public class HudRenderer {
 
     public boolean isBucketMode() {
         return hasTank && bucketMode == TankInteractionMode.BUCKET;
+    }
+
+    public boolean isRendering() {
+        return hasTank && tank != null;
+    }
+
+    public CachedFluidStorageState getFluidStorage() {
+        return tank;
     }
 }
