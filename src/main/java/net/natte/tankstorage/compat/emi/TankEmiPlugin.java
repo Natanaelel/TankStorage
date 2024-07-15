@@ -10,5 +10,6 @@ public class TankEmiPlugin implements EmiPlugin {
     @Override
     public void register(EmiRegistry registry) {
         registry.addDragDropHandler(TankScreen.class, new TankDragDropHandler());
+        registry.addStackProvider(TankScreen.class, new TankFluidStackProvider());
     }
 }
