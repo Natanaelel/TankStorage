@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
-import net.natte.tankstorage.screenhandler.TankMenuFactory;
+import net.natte.tankstorage.menu.TankMenuFactory;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 

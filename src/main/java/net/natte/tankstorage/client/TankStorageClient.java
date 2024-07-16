@@ -1,5 +1,6 @@
 package net.natte.tankstorage.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.item.ItemProperties;
@@ -25,6 +26,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
@@ -35,10 +37,10 @@ import java.util.UUID;
 @Mod(value = TankStorage.MOD_ID, dist = Dist.CLIENT)
 public class TankStorageClient {
 
-    public static final KeyMapping lockSlotKeyBinding = ClientUtil.keyBind("lockslot", GLFW.GLFW_KEY_LEFT_ALT);
-    public static final KeyMapping toggleInsertModeKeyBinding = ClientUtil.keyBind("toggleinsertmode");
-    public static final KeyMapping toggleInteractionModeKeyBinding = ClientUtil.keyBind("toggleinteractionmode");
-    public static final KeyMapping openTankFromKeyBinding = ClientUtil.keyBind("opentankfromkeybind");
+    public static final KeyMapping lockSlotKeyBinding = new KeyMapping("key.tankstorage.lockslot", KeyConflictContext.GUI, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_LEFT_ALT, "category.tankstorage");
+    public static final KeyMapping toggleInsertModeKeyBinding = new KeyMapping("key.tankstorage.toggleinsertmode", KeyConflictContext.IN_GAME, InputConstants.UNKNOWN, "category.tankstorage");
+    public static final KeyMapping toggleInteractionModeKeyBinding = new KeyMapping("key.tankstorage.toggleinteractionmode", KeyConflictContext.IN_GAME, InputConstants.UNKNOWN, "category.tankstorage");
+    public static final KeyMapping openTankFromKeyBinding = new KeyMapping("key.tankstorage.opentankfromkeybind", KeyConflictContext.IN_GAME, InputConstants.UNKNOWN, "category.tankstorage");
 
     public static final HudRenderer tankHudRenderer = new HudRenderer();
 
@@ -48,7 +50,7 @@ public class TankStorageClient {
 
     public TankStorageClient(IEventBus modBus) {
 
-        modBus.addListener(this::registerHandledScreens);
+        modBus.addListener(this::registerMenuScreens);
         modBus.addListener(this::registerItemColors);
         modBus.addListener(this::registerModelPredicates);
         modBus.addListener(this::registerKeyBinds);
@@ -62,7 +64,7 @@ public class TankStorageClient {
     }
 
 
-    private void registerHandledScreens(RegisterMenuScreensEvent event) {
+    private void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(TankStorage.TANK_MENU.get(), TankScreen::new);
     }
 
@@ -83,11 +85,10 @@ public class TankStorageClient {
                 ItemProperties.register(type.getItem(), ResourceLocation.withDefaultNamespace("has_color"), (stack, level, entity, seed) -> stack.has(DataComponents.DYED_COLOR) ? 1 : 0);
             }
             ItemProperties.register(TankStorage.TANK_LINK_ITEM.get(), ResourceLocation.withDefaultNamespace("has_color"), (stack, level, entity, seed) -> stack.has(DataComponents.DYED_COLOR) ? 1 : 0);
-
         });
     }
 
-    private void initializeClientOnRenderThread(FMLClientSetupEvent event){
+    private void initializeClientOnRenderThread(FMLClientSetupEvent event) {
         event.enqueueWork(() -> Util.isClient.set(true));
     }
 
@@ -103,7 +104,6 @@ public class TankStorageClient {
         tankHudRenderer.tick();
         ClientTankCache.advanceThrottledQueue();
         sendQueuedRequests();
-
     }
 
     private void handleInputs() {
@@ -113,11 +113,9 @@ public class TankStorageClient {
         while (toggleInteractionModeKeyBinding.consumeClick())
             MouseEvents.onToggleInteractionMode();
 
-
         while (openTankFromKeyBinding.consumeClick())
             PacketDistributor.sendToServer(OpenTankFromKeyBindPacketC2S.INSTANCE);
     }
-
 
     private void registerTooltipComponents(RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(TankTooltipData.class, TankTooltipComponent::new);

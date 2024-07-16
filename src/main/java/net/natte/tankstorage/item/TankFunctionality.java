@@ -20,15 +20,17 @@ import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
-import net.natte.tankstorage.screenhandler.TankMenuFactory;
+import net.natte.tankstorage.menu.TankMenuFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.util.BucketInteraction;
 import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
+import net.neoforged.neoforge.common.util.Lazy;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class TankFunctionality extends Item {
 
@@ -51,34 +53,51 @@ public class TankFunctionality extends Item {
         ItemStack stack = player.getItemInHand(hand);
 
         TankInteractionMode interactionMode = Util.getInteractionMode(stack);
+        Supplier<InteractionResult> bucketInteractionResult = Lazy.of(() -> BucketInteraction.interactFluid(world, player, hand, stack));
 
-        if (interactionMode == TankInteractionMode.BUCKET) {
-            InteractionResult result = BucketInteraction.interactFluid(world, player, hand, stack);
-            if (result == InteractionResult.PASS) {
-
-                // allow player to right-click flowing fluid without accidentally opening screen
-                if (preventOpenScreenOnFluidClick(world, player))
-                    return InteractionResultHolder.fail(stack);
-
-                if (player.isShiftKeyDown()) {
-                    if (!world.isClientSide)
-                        Util.onToggleInteractionMode(player, stack);
-                    return InteractionResultHolder.success(stack);
-                } else {
-                    return tryOpenScreen(world, player, stack);
-                }
-            } else {
-                return result.consumesAction() ? InteractionResultHolder.success(stack) : InteractionResultHolder.fail(stack);
-            }
-        } else {
-            if (player.isShiftKeyDown()) {
-                if (!world.isClientSide)
-                    Util.onToggleInteractionMode(player, stack);
-                return InteractionResultHolder.success(stack);
-            } else {
-                return tryOpenScreen(world, player, stack);
-            }
+        boolean shouldToggle = player.isShiftKeyDown() && (interactionMode == TankInteractionMode.OPEN_SCREEN || bucketInteractionResult.get() == InteractionResult.PASS);
+        if (shouldToggle) {
+            if (!world.isClientSide)
+                Util.onToggleInteractionMode(player, stack);
+            return InteractionResultHolder.success(stack);
         }
+
+        boolean shouldOpenScreen = interactionMode == TankInteractionMode.OPEN_SCREEN || (bucketInteractionResult.get() == InteractionResult.PASS && !preventOpenScreenOnFluidClick(world, player));
+        if (shouldOpenScreen) {
+            return tryOpenScreen(world, player, stack);
+        }
+        return bucketInteractionResult.get().consumesAction() ? InteractionResultHolder.success(stack) : InteractionResultHolder.fail(stack);
+
+//        return
+//        System.out.println(shouldOpenScreen);
+
+//        if (interactionMode == TankInteractionMode.BUCKET) {
+//            InteractionResult result = BucketInteraction.interactFluid(world, player, hand, stack);
+//            if (result == InteractionResult.PASS) {
+//
+//                // allow player to right-click flowing fluid without accidentally opening screen
+//
+//                if (player.isShiftKeyDown()) {
+//                    if (!world.isClientSide)
+//                        Util.onToggleInteractionMode(player, stack);
+//                    return InteractionResultHolder.success(stack);
+//                } else if (preventOpenScreenOnFluidClick(world, player))
+//                    return InteractionResultHolder.fail(stack);
+//                else {
+//                    return tryOpenScreen(world, player, stack);
+//                }
+//            } else {
+//                return result.consumesAction() ? InteractionResultHolder.success(stack) : InteractionResultHolder.fail(stack);
+//            }
+//        } else {
+//            if (player.isShiftKeyDown()) {
+//                if (!world.isClientSide)
+//                    Util.onToggleInteractionMode(player, stack);
+//                return InteractionResultHolder.success(stack);
+//            } else {
+//                return tryOpenScreen(world, player, stack);
+//            }
+//        }
     }
 
     private boolean preventOpenScreenOnFluidClick(Level level, Player player) {

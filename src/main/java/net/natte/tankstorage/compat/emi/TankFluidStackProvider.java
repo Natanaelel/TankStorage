@@ -11,7 +11,6 @@ import net.neoforged.neoforge.fluids.FluidType;
 public class TankFluidStackProvider implements EmiStackProvider<TankScreen> {
     @Override
     public EmiStackInteraction getStackAt(TankScreen screen, int x, int y) {
-
         if (!(screen.getSlotUnderMouse() instanceof FluidSlot fluidSlot))
             return EmiStackInteraction.EMPTY;
 

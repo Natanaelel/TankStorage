@@ -1,14 +1,13 @@
 package net.natte.tankstorage.packet.server;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.block.TankDockBlockEntity;
-import net.natte.tankstorage.screenhandler.TankMenu;
+import net.natte.tankstorage.menu.TankMenu;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;

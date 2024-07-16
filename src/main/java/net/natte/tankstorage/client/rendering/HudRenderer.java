@@ -17,12 +17,10 @@ import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.packet.server.SyncSubscribePacketC2S;
 import net.natte.tankstorage.storage.TankInteractionMode;
 import net.natte.tankstorage.storage.TankOptions;
-import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,10 +44,6 @@ public class HudRenderer {
     private TankInteractionMode bucketMode;
     private short uniqueId = 0;
 
-    public void reset() {
-        this.client = null;
-    }
-
     public void tick() {
         if (this.client == null)
             this.client = Minecraft.getInstance();
@@ -61,16 +55,15 @@ public class HudRenderer {
 
         if (this.uuid != null && this.bucketMode == TankInteractionMode.BUCKET)
             tank = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 2 * 20);
-
     }
 
     private void updateTank() {
         boolean hadTank = this.hasTank;
         short oldUniqueId = this.uniqueId;
-        if (canRenderFrom(this.client.player.getMainHandItem())) {
+        if (shouldTryRenderFrom(this.client.player.getMainHandItem())) {
             this.renderingFromHand = InteractionHand.MAIN_HAND;
             this.hasTank = true;
-        } else if (canRenderFrom(this.client.player.getOffhandItem())) {
+        } else if (shouldTryRenderFrom(this.client.player.getOffhandItem())) {
             this.renderingFromHand = InteractionHand.OFF_HAND;
             this.hasTank = true;
         } else
@@ -88,7 +81,6 @@ public class HudRenderer {
                 ClientTankCache.markDirtyForPreview = false;
                 this.tank = ClientTankCache.get(uuid);
             }
-//            if (!hadTank) {
             if (oldUniqueId != this.options.uniqueId()) {
                 this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
                 PacketDistributor.sendToServer(SyncSubscribePacketC2S.subscribe(this.uuid));
@@ -102,17 +94,8 @@ public class HudRenderer {
         }
     }
 
-    private boolean canRenderFrom(ItemStack stack) {
-        if (!Util.isTankLike(stack))
-            return false;
-        if (!Util.hasUUID(stack))
-            return false;
-        if (stack.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).interactionMode() != TankInteractionMode.BUCKET)
-            return false;
-        CachedFluidStorageState cachedBankStorage = ClientTankCache.getAndQueueThrottledUpdate(Util.getUUID(stack), 20);
-        if (cachedBankStorage == null)
-            return false;
-        return true;
+    private boolean shouldTryRenderFrom(ItemStack stack) {
+        return Util.isTankLike(stack) && Util.hasUUID(stack) && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET;
     }
 
     private boolean shouldRender() {

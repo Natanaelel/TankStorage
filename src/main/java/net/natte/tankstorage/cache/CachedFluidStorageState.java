@@ -7,6 +7,7 @@ import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
+import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,16 +15,13 @@ import java.util.*;
 
 public class CachedFluidStorageState {
 
-    @SuppressWarnings("unused")
-    private UUID uuid;
-    private int revision;
-    private List<FluidSlotData> fluids;
+    private final int revision;
+    private final List<FluidSlotData> fluids;
     private List<LargeFluidSlotData> uniqueFluids;
 
     private List<TankSingleFluidStorage> parts;
 
-    public CachedFluidStorageState(UUID uuid, List<FluidSlotData> fluids, int revision) {
-        this.uuid = uuid;
+    public CachedFluidStorageState(List<FluidSlotData> fluids, int revision) {
         this.fluids = fluids;
         this.revision = revision;
     }
@@ -49,7 +47,8 @@ public class CachedFluidStorageState {
         if (uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids)
-                counts.merge(new HashableFluidVariant(fluidSlotData.fluidVariant()), (long) fluidSlotData.amount(), Long::sum);
+                if (Util.canPlaceFluid(fluidSlotData.fluidVariant().getFluid()))
+                    counts.merge(new HashableFluidVariant(fluidSlotData.fluidVariant()), (long) fluidSlotData.amount(), Long::sum);
 
             uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {

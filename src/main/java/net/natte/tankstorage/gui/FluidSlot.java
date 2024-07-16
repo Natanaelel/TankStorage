@@ -6,7 +6,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 public class FluidSlot extends NonBackedSlot {
 
-    private TankSingleFluidStorage fluidStorage;
+    private final TankSingleFluidStorage fluidStorage;
 
     public FluidSlot(TankSingleFluidStorage fluidStorage, int x, int y) {
         super(x, y);
@@ -32,10 +32,6 @@ public class FluidSlot extends NonBackedSlot {
 
     public int getCapacity() {
         return fluidStorage.getCapacity();
-    }
-
-    public boolean canInsert(FluidStack fluidVariant) {
-        return fluidStorage.canInsert(fluidVariant);
     }
 
     public boolean isLocked() {

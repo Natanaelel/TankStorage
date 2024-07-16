@@ -4,14 +4,11 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.item.TankItem;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
-import java.util.Objects;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public class TankType {
@@ -19,16 +16,12 @@ public class TankType {
     public static final Codec<TankType> CODEC = Codec.STRING.xmap(TankType::fromName, t -> t.name);
     public static final StreamCodec<ByteBuf, TankType> STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(TankType::fromName, t -> t.name);
 
-    private String name;
-    private int capacity;
-    private int width;
-    private int height;
+    private final String name;
+    private final int capacity;
+    private final int width;
+    private final int height;
     private DeferredHolder<Item, TankItem> item;
 
-    public int guiImageWidth;
-    public int guiImageHeight;
-    public int guiTextureWidth;
-    public int guiTextureHeight;
     private UnaryOperator<Item.Properties> itemPropertyOperator = UnaryOperator.identity();
 
     public TankType(String name, int capacity, int width, int height) {
@@ -36,14 +29,9 @@ public class TankType {
         this.capacity = capacity;
         this.width = width;
         this.height = height;
-
-        this.guiImageWidth = 176;
-        this.guiImageHeight = 114 + this.height * 18;
-        this.guiTextureWidth = Mth.ceil(this.guiImageWidth / 256d) * 256;
-        this.guiTextureHeight = Mth.ceil(this.guiImageHeight / 256d) * 256;
     }
 
-    public TankType itemProperty(UnaryOperator<Item.Properties> operator){
+    public TankType itemProperty(UnaryOperator<Item.Properties> operator) {
         this.itemPropertyOperator = operator;
         return this;
     }

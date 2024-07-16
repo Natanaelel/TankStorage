@@ -18,7 +18,6 @@ public class TankDragDropHandler implements EmiDragDropHandler<TankScreen> {
 
     @Override
     public boolean dropStack(TankScreen screen, EmiIngredient ingredient, int x, int y) {
-
         if (!(screen.getSlotUnderMouse() instanceof FluidSlot fluidSlot))
             return false;
 

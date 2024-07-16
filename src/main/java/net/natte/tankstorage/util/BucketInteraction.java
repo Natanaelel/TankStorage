@@ -2,6 +2,7 @@ package net.natte.tankstorage.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -70,6 +71,10 @@ public class BucketInteraction {
         assert !fluidVariant.isEmpty() : "cannot place blank fluid";
 
         Fluid fluid = fluidVariant.getFluid();
+
+        if (!Util.canPlaceFluid(fluid))
+            return InteractionResult.PASS;
+
         BlockHitResult hit = TankFunctionality.raycast(world, player, ClipContext.Fluid.NONE);
 
         if (hit.getType() == HitResult.Type.MISS) {

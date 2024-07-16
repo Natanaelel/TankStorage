@@ -2,7 +2,6 @@ package net.natte.tankstorage.client.events;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -30,18 +29,12 @@ public class MouseEvents {
         int scroll = -(int) Math.signum(event.getScrollDeltaY());
 
         LocalPlayer player = Minecraft.getInstance().player;
-
-        if (player == null)
-            return;
-
-        if (!player.isShiftKeyDown())
+        if (player == null || !player.isShiftKeyDown())
             return;
 
         HudRenderer preview = TankStorageClient.tankHudRenderer;
-
         if (!preview.isRendering())
             return;
-
 
         CachedFluidStorageState cachedBankStorage = preview.getFluidStorage();
 
@@ -59,12 +52,12 @@ public class MouseEvents {
     public static void onToggleInteractionMode() {
 
         Player player = Minecraft.getInstance().player;
-
-        ItemStack tankItem = Util.getHeldTank(player);
-
-        if (tankItem == null)
+        if (player == null)
             return;
 
+        ItemStack tankItem = Util.getHeldTank(player);
+        if (tankItem == null)
+            return;
 
         TankOptions options = tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).nextInteractionMode();
 

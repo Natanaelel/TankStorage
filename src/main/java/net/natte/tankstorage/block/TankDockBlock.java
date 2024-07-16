@@ -1,13 +1,11 @@
 package net.natte.tankstorage.block;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.ItemStack;
@@ -18,7 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.natte.tankstorage.screenhandler.TankMenuFactory;
+import net.natte.tankstorage.menu.TankMenuFactory;
 import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.util.Texts;
 import net.natte.tankstorage.util.Util;
@@ -27,11 +25,6 @@ public class TankDockBlock extends Block implements EntityBlock {
 
     public TankDockBlock(BlockBehaviour.Properties settings) {
         super(settings);
-    }
-
-    @Override
-    protected ItemInteractionResult useItemOn(ItemStack pStack, BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHitResult) {
-        return super.useItemOn(pStack, pState, pLevel, pPos, pPlayer, pHand, pHitResult);
     }
 
     @Override

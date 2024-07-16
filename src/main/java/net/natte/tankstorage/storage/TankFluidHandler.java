@@ -68,6 +68,8 @@ public class TankFluidHandler implements IFluidHandlerItem {
         int inserted = 0;
         switch (insertMode) {
             case ALL -> {
+                inserted += fillLockedSlots(resource, maxAmount - inserted, action.simulate());
+                inserted += fillNonEmptySlots(resource, maxAmount - inserted, action.simulate());
                 inserted += fillAnySlots(resource, maxAmount - inserted, action.simulate());
             }
             case FILTERED -> {

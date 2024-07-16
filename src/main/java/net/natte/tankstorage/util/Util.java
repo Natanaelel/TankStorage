@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
@@ -31,7 +32,7 @@ import java.util.UUID;
 public class Util {
 
     public static Supplier<Boolean> isShiftDown = () -> false;
-    public static ThreadLocal<Boolean> isClient = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Boolean> isClient = ThreadLocal.withInitial(() -> false);
 
     public static ResourceLocation ID(String id) {
         return ResourceLocation.fromNamespaceAndPath(TankStorage.MOD_ID, id);
@@ -269,5 +270,9 @@ public class Util {
 
     public static boolean isClient() {
         return isClient.get();
+    }
+
+    public static boolean canPlaceFluid(Fluid fluid) {
+        return !fluid.defaultFluidState().createLegacyBlock().getFluidState().isEmpty();
     }
 }

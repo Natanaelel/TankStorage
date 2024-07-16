@@ -35,6 +35,6 @@ public record TankPacketS2C(UUID uuid, int revision, List<FluidSlotData> fluids)
 
     public static void receive(TankPacketS2C packet, IPayloadContext context) {
         ClientTankCache.put(packet.uuid,
-                new CachedFluidStorageState(packet.uuid, packet.fluids, packet.revision));
+                new CachedFluidStorageState(packet.fluids, packet.revision));
     }
 }

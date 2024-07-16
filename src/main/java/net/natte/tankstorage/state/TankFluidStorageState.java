@@ -12,6 +12,7 @@ import net.natte.tankstorage.sync.SyncSubscriptionManager;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
+import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -84,13 +85,19 @@ public class TankFluidStorageState {
         for (int i = 0; i < this.fluidStorageParts.size(); ++i) {
             TankSingleFluidStorage oldFluidStorage = this.fluidStorageParts.get(i);
 
-            tank.fluidStorageParts.add(new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
-                    oldFluidStorage.getFluid(), oldFluidStorage.isLocked()));
+            TankSingleFluidStorage newFluidSlot = new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
+                    oldFluidStorage.getFluid(), oldFluidStorage.isLocked());
+            newFluidSlot.setMarkDirtyListener(tank::markDirty);
+            tank.fluidStorageParts.add(newFluidSlot);
         }
+
         for (int i = this.fluidStorageParts.size(); i < type.size(); ++i) {
-            tank.fluidStorageParts.add(new TankSingleFluidStorage(type.getCapacity(), 0,
-                    FluidStack.EMPTY, false));
+            TankSingleFluidStorage newFluidSlot = new TankSingleFluidStorage(type.getCapacity(), 0,
+                    FluidStack.EMPTY, false);
+            newFluidSlot.setMarkDirtyListener(tank::markDirty);
+            tank.fluidStorageParts.add(newFluidSlot);
         }
+        tank.markDirty();
         return tank;
     }
 
@@ -141,7 +148,8 @@ public class TankFluidStorageState {
         if (this.uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (TankSingleFluidStorage part : fluidStorageParts) {
-                counts.merge(new HashableFluidVariant(part.getFluid()), ((long) part.getAmount()), Long::sum);
+                if (Util.canPlaceFluid(part.getFluid().getFluid()))
+                    counts.merge(new HashableFluidVariant(part.getFluid()), ((long) part.getAmount()), Long::sum);
             }
             List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {

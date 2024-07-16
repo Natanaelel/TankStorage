@@ -8,7 +8,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.Items;
 import net.natte.tankstorage.client.rendering.FluidRenderer;
 import net.natte.tankstorage.item.tooltip.TankTooltipData;
-import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 
@@ -72,7 +71,7 @@ public class TankTooltipComponent implements ClientTooltipComponent {
         if (selectedSlot == -1) {
             // slot texture
             context.blit(TEXTURE, x + 1, y + 1, 1, 129, 18, 18);
-            context.renderItem(Items.BUCKET.getDefaultInstance(), x + col * 18 + 2, y + row * 18 + 2);
+            context.renderItem(Items.BUCKET.getDefaultInstance(), x + 2, y + 2);
             ++col;
         }
         for (LargeFluidSlotData fluid : fluids) {

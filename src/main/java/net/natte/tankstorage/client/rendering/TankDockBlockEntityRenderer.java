@@ -19,6 +19,9 @@ public class TankDockBlockEntityRenderer implements BlockEntityRenderer<TankDock
     @Override
     public void render(TankDockBlockEntity tankDock, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
 
+        if (!tankDock.hasTank())
+            return;
+
         poseStack.pushPose();
         poseStack.translate(0.5f, 0.5f, 0.5f);
         // prevent z-fighting

@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.natte.tankstorage.gui.FluidSlot;
 import net.natte.tankstorage.packet.screenHandler.SyncFluidPacketS2C;
-import net.natte.tankstorage.screenhandler.TankMenu;
+import net.natte.tankstorage.menu.TankMenu;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;

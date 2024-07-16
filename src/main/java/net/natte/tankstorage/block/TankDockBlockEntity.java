@@ -50,7 +50,7 @@ public class TankDockBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public IFluidHandler getFluidHandler(@Nullable Direction direction) {
+    public IFluidHandler getFluidHandler(@Nullable Direction ignored) {
         if (this.fluidHandler == null)
             this.fluidHandler = createFluidHandler();
 
@@ -74,6 +74,7 @@ public class TankDockBlockEntity extends BlockEntity {
     @Override
     public void setChanged() {
         fluidHandler = null;
+        invalidateCapabilities();
         super.setChanged();
     }
 

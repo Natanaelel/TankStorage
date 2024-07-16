@@ -9,7 +9,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.block.TankDockBlockEntity;
-import net.natte.tankstorage.screenhandler.TankMenu;
+import net.natte.tankstorage.menu.TankMenu;
 import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.network.handling.IPayloadContext;

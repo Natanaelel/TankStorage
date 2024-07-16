@@ -1,4 +1,4 @@
-package net.natte.tankstorage.screenhandler;
+package net.natte.tankstorage.menu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;

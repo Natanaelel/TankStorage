@@ -1,4 +1,4 @@
-package net.natte.tankstorage.screenhandler;
+package net.natte.tankstorage.menu;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;

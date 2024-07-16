@@ -8,36 +8,33 @@ package net.natte.tankstorage.client.helpers;
 
 public class TextHelper {
 
-    public record Amount(String digit, String unit) {
-    }
-
     public record MaxedAmount(String digit, String maxDigit, String unit) {
     }
 
-    public static final String[] units = new String[] { "k", "M", "G", "T", "P", "E" };
-    public static final long[] nums = new long[] {
-            1000L, 1000_000L, 1000_000_000L, 1000_000_000_000L, 1000_000_000_000_000L, 1000_000_000_000_000_000L };
+    public static final String[] units = new String[]{"k", "M", "G", "T", "P", "E"};
 
-    public static String getAmount(double amount, long num) {
-        double fract = amount / num;
-        if (fract < 10) {
-            return String.format("%.3f", fract);
-        } else if (fract < 100) {
-            return String.format("%.2f", fract);
-        } else {
-            return String.format("%.1f", fract);
-        }
+    private static String getAmount(double frac) {
+        if (frac < 10)
+            return String.format("%.3f", frac);
+        else if (frac < 100)
+            return String.format("%.2f", frac);
+        else
+            return String.format("%.1f", frac);
     }
 
     public static MaxedAmount getMaxedAmount(double amount, double max) {
-        if (max < 100000) {
-            return new MaxedAmount(getAmount(amount, 1), getAmount(max, 1), "");
+        if (max < 100_000) {
+            return new MaxedAmount(getAmount(amount), getAmount(max), "");
         } else {
             int i = 0;
-            while (max / nums[i] >= 1000) {
+            double maxAdj = max;
+            double numAdj = amount;
+            while (maxAdj >= 1000) {
                 i++;
+                maxAdj /= 1000;
+                numAdj /= 1000;
             }
-            return new MaxedAmount(getAmount(amount, nums[i]), getAmount(max, nums[i]), units[i]);
+            return new MaxedAmount(getAmount(numAdj), getAmount(maxAdj), units[i]);
         }
     }
 }
