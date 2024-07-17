@@ -28,7 +28,7 @@
   "title.tankstorage.insertmode.void_overflow": "Void Overflow",
   "tooltip.tankstorage.insertmode.void_overflow": "Overflowing fluids will get voided",
 
-  "tooltip.tankstorage.slotsize": "§7Slot size: %sB",
+  "tooltip.tankstorage.slotsize": "§7Slot size: %s",
   "tooltip.tankstorage.numslots": "§7Number of slots: %s",
 
   "category.tankstorage": "Tank Storage",

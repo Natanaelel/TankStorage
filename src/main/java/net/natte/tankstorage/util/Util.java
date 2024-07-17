@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
@@ -273,6 +274,6 @@ public class Util {
     }
 
     public static boolean canPlaceFluid(Fluid fluid) {
-        return !fluid.defaultFluidState().createLegacyBlock().getFluidState().isEmpty();
+        return fluid instanceof FlowingFluid;
     }
 }
