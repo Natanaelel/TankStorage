@@ -75,8 +75,6 @@ public class TankFluidHandler implements IFluidHandlerItem {
             case FILTERED -> {
                 inserted += fillLockedSlots(resource, maxAmount - inserted, action.simulate());
                 inserted += fillNonEmptySlots(resource, maxAmount - inserted, action.simulate());
-                if (hasSlotWithFluid(resource))
-                    inserted += fillAnySlots(resource, maxAmount - inserted, action.simulate());
             }
             case VOID_OVERFLOW -> {
                 inserted += fillLockedSlots(resource, maxAmount - inserted, action.simulate());

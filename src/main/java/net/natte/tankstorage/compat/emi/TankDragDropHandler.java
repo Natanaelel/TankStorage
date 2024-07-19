@@ -4,6 +4,7 @@ import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.Holder;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.level.material.Fluid;
 import net.natte.tankstorage.client.screen.TankScreen;
@@ -52,7 +53,7 @@ public class TankDragDropHandler implements EmiDragDropHandler<TankScreen> {
     private FluidStack getFluid(EmiIngredient ingredient) {
         EmiStack emiStack = ingredient.getEmiStacks().getFirst();
         if (emiStack.getKey() instanceof Fluid fluid)
-            return new FluidStack(fluid.builtInRegistryHolder(), 1, emiStack.getComponentChanges());
+            return new FluidStack(Holder.direct(fluid), 1, emiStack.getComponentChanges());
         return FluidUtil.getFluidContained(emiStack.getItemStack()).orElse(null);
     }
 }

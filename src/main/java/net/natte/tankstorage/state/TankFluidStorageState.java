@@ -125,25 +125,6 @@ public class TankFluidStorageState {
         return fluids;
     }
 
-    public List<FluidSlotData> getNonEmptyFluids() {
-        List<FluidSlotData> fluids = new ArrayList<>();
-        for (TankSingleFluidStorage part : fluidStorageParts) {
-            if (part.getAmount() > 0)
-                fluids.add(new FluidSlotData(part.getFluid(), this.type.getCapacity(), part.getAmount(),
-                        part.isLocked()));
-        }
-        return fluids;
-    }
-
-    public int getNonEmptyFluidsSize() {
-        int count = 0;
-        for (TankSingleFluidStorage part : fluidStorageParts) {
-            if (part.getAmount() > 0)
-                count++;
-        }
-        return count;
-    }
-
     public List<LargeFluidSlotData> getUniqueFluids() {
         if (this.uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();

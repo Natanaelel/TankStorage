@@ -78,22 +78,28 @@ public class Util {
     }
 
     public static TankOptions getOptionsOrDefault(ItemStack tankItem) {
-        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create());
-    }
-
-    public static void setOptions(ItemStack stack, TankOptions options) {
-        stack.set(TankStorage.OptionsComponentType, options);
+        if (tankItem.has(TankStorage.OptionsComponentType))
+            return tankItem.get(TankStorage.OptionsComponentType);
+        return TankOptions.create();
     }
 
     public static InsertMode getInsertMode(ItemStack tankItem) {
-        return tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).insertMode();
+        if (tankItem.has(TankStorage.OptionsComponentType))
+            return tankItem.get(TankStorage.OptionsComponentType).insertMode();
+        return InsertMode.ALL;
+    }
+
+    public static TankInteractionMode getInteractionMode(ItemStack tankItem) {
+        if (tankItem.has(TankStorage.OptionsComponentType))
+            return tankItem.get(TankStorage.OptionsComponentType).interactionMode();
+        return TankInteractionMode.OPEN_SCREEN;
     }
 
     public static int getSelectedSlot(ItemStack itemStack) {
         return itemStack.getOrDefault(TankStorage.SelectedSlotComponentType, -1);
     }
 
-    public static int clampSelectedSlot(ItemStack itemStack, int max) {
+    private static int clampSelectedSlot(ItemStack itemStack, int max) {
         int selectedSlot = getSelectedSlot(itemStack);
         int clampedSelectedSlot = Math.min(selectedSlot, max);
         if (clampedSelectedSlot != selectedSlot)
@@ -105,10 +111,6 @@ public class Util {
         if (stack.getItem() instanceof TankItem tankItem)
             return tankItem.type;
         return stack.getOrDefault(TankStorage.TankTypeComponentType, TankStorage.TANK_TYPES[0]);
-    }
-
-    public static void setType(ItemStack stack, TankType type) {
-        stack.set(TankStorage.TankTypeComponentType, type);
     }
 
     public static boolean isTank(ItemStack stack) {
@@ -242,12 +244,11 @@ public class Util {
     }
 
     public static void clampSelectedSlotServer(ItemStack stack) {
-        int max = getFluidStorage(stack).getNonEmptyFluidsSize() - 1;
+        int max = getFluidStorage(stack).getUniqueFluids().size() - 1;
         clampSelectedSlot(stack, max);
     }
 
     public static void onToggleInteractionMode(Player player, ItemStack stack) {
-
         stack.update(TankStorage.OptionsComponentType, TankOptions.create(), TankOptions::nextInteractionMode);
         TankInteractionMode interactionMode = getInteractionMode(stack);
         player.displayClientMessage(Texts.interactionMode(interactionMode), true);
@@ -263,10 +264,6 @@ public class Util {
             return player.getOffhandItem();
 
         return null;
-    }
-
-    public static TankInteractionMode getInteractionMode(ItemStack stack) {
-        return getOptionsOrDefault(stack).interactionMode();
     }
 
     public static boolean isClient() {

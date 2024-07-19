@@ -9,7 +9,6 @@
   "item.tankstorage.tank_link": "Tank Link",
   "block.tankstorage.tank_dock": "Tank Dock",
 
-  "tooltip.tankstorage.emptyfluid": "Empty",
   "tooltip.tankstorage.insert_or_extract_desc": "Right Click to Insert, Left Click to Extract",
 
   "popup.tankstorage.interactionmode.bucket": "Bucket Mode",
@@ -28,7 +27,7 @@
   "title.tankstorage.insertmode.void_overflow": "Void Overflow",
   "tooltip.tankstorage.insertmode.void_overflow": "Overflowing fluids will get voided",
 
-  "tooltip.tankstorage.slotsize": "§7Slot size: %s",
+  "tooltip.tankstorage.slotsize": "§7Slot capacity: %s buckets",
   "tooltip.tankstorage.numslots": "§7Number of slots: %s",
 
   "category.tankstorage": "Tank Storage",

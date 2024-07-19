@@ -121,10 +121,8 @@ public class TankMenu extends AbstractContainerMenu {
 
     // when shift clicking on an item containing fluids, try to insert that fluid
     // into max 1 fluid slot
-    // TODO: restore
-//    @Override
+    @Override
     public ItemStack quickMoveStack(Player playerEntity, int slotIndex) {
-//        return ItemStack.EMPTY;
 
         Slot slot = this.slots.get(slotIndex);
         if (slot instanceof FluidSlot)
@@ -132,7 +130,6 @@ public class TankMenu extends AbstractContainerMenu {
 
         IItemHandler playerInventory = playerEntity.getCapability(Capabilities.ItemHandler.ENTITY);
 
-        // TODO: check that int max transfer is not too much
         FluidActionResult result = FluidUtil.tryEmptyContainerAndStow(slot.getItem(), this.fluidStorage, playerInventory, Integer.MAX_VALUE, playerEntity, true);
 
         if (result.isSuccess()) {
@@ -144,7 +141,6 @@ public class TankMenu extends AbstractContainerMenu {
                 for (int i = 0; i < this.trackedFluids.size(); ++i)
                     syncFluidSlot(i, this.player);
             }
-            // TODO: ??
             return ItemStack.EMPTY;
         } else {
             // if no fluids moved, normal quickMove
@@ -274,21 +270,11 @@ public class TankMenu extends AbstractContainerMenu {
         if (world.isClientSide)
             return;
 
-        // TODO: fluid interaction
-//
-//        // this assumes fluidslots come first
+
+        // this assumes fluidslots come first
         TankSingleFluidStorage slotFluidStorage = this.tank.getPart(slotIndex);
-//        IFluidHandlerItem cursorFluidStorage = this.getCarried().getCapability(Capabilities.FluidHandler.ITEM);
-//        if (cursorFluidStorage == null)
-//            return;
-//
-//        ContainerItemContext containerItemContext = ContainerItemContext.ofPlayerCursor(playerEntity, this);
-//
-//        Storage<FluidVariant> cursorFluidStorage = containerItemContext.find(FluidStorage.ITEM);
-//
-//        if (cursorFluidStorage == null)
-//            return;
-//
+
+
         IItemHandler playerInventory = player.getCapability(Capabilities.ItemHandler.ENTITY);
         if (button == 1) {
             // insert into tank from cursor
@@ -298,69 +284,14 @@ public class TankMenu extends AbstractContainerMenu {
                 this.tank.sync(((ServerPlayer) player));
                 Util.trySync(this.getCarried(), (ServerPlayer) player);
             }
-//            if (!cursorFluidStorage.supportsExtraction())
-//                return;
-//
-//            try (Transaction transaction = Transaction.openOuter()) {
-//                for (StorageView<FluidVariant> cursorFluidView : cursorFluidStorage.nonEmptyViews()) {
-//
-//                    FluidVariant fluidVariant = cursorFluidView.getResource();
-//                    long maxAmount = cursorFluidView.getAmount();
-//
-//                    long inserted = slotFluidStorage.insert(fluidVariant, maxAmount, transaction);
-//                    long extracted = cursorFluidView.extract(fluidVariant, inserted, transaction);
-//
-//                    if (inserted > 0) {
-//                        // *should* always be true
-//                        if (extracted == inserted) {
-//                            transaction.commit();
-//                            playerEntity.playSound(
-//                                    FluidVariantAttributes.getEmptySound(fluidVariant), SoundCategory.BLOCKS, 1, 1);
-//                            this.tank.sync(player);
-//                            Util.trySync(getCursorStack(), player);
-//                        } else {
-//                            transaction.abort();
-//                        }
-//                        break;
-//                    }
-//                }
-//            }
         } else {
-//            // extract from tank into cursor
+            // extract from tank into cursor
             FluidActionResult result = FluidUtil.tryFillContainerAndStow(this.getCarried(), slotFluidStorage.getFluidHandler(), playerInventory, Integer.MAX_VALUE, player, true);
             if (result.isSuccess()) {
                 this.tank.sync((ServerPlayer) player);
                 Util.trySync(getCarried(), (ServerPlayer) player);
                 this.setCarried(result.getResult());
             }
-//            if (!cursorFluidStorage.supportsInsertion())
-//                return;
-//
-//            try (Transaction transaction = Transaction.openOuter()) {
-//                FluidVariant fluidVariant = slotFluidStorage.getResource();
-//                if (fluidVariant.isBlank())
-//                    return;
-//
-//                long maxAmount = slotFluidStorage.getAmount();
-//                if (Util.isTankLike(this.getCursorStack()))
-//                    maxAmount = Math.min(maxAmount, Util.getType(this.getCursorStack()).getCapacity());
-//
-//                long inserted = cursorFluidStorage.insert(fluidVariant, maxAmount, transaction);
-//                long extracted = slotFluidStorage.extract(fluidVariant, inserted, transaction);
-//
-//                if (inserted > 0) {
-//                    // *should* always be true
-//                    if (extracted == inserted) {
-//                        transaction.commit();
-//                        player.playSound(
-//                                FluidVariantAttributes.getFillSound(fluidVariant), SoundCategory.BLOCKS, 1, 1);
-//                        this.tank.sync((ServerPlayerEntity) player);
-//                        Util.trySync(getCursorStack(), (ServerPlayerEntity) player);
-//                    } else {
-//                        transaction.abort();
-//                    }
-//                }
-//            }
         }
     }
 

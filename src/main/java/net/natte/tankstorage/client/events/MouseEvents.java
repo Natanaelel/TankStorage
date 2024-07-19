@@ -59,7 +59,7 @@ public class MouseEvents {
         if (tankItem == null)
             return;
 
-        TankOptions options = tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).nextInteractionMode();
+        TankOptions options = Util.getOptionsOrDefault(tankItem).nextInteractionMode();
 
         PacketDistributor.sendToServer(new UpdateTankOptionsPacketC2S(options, false));
 

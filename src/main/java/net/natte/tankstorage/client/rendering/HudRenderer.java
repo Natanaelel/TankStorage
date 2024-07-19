@@ -72,7 +72,7 @@ public class HudRenderer {
         if (this.hasTank) {
             this.tankItem = this.client.player.getItemInHand(this.renderingFromHand);
             this.uuid = Util.getUUID(this.tankItem);
-            this.bucketMode = this.tankItem.getOrDefault(TankStorage.OptionsComponentType, TankOptions.create()).interactionMode();
+            this.bucketMode = Util.getInteractionMode(this.tankItem);
             this.mainArm = this.client.player.getMainArm();
             this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
             this.options = Util.getOptionsOrDefault(this.tankItem);
