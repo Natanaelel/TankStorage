@@ -33,15 +33,14 @@ public class TankDockBlock extends Block implements EntityBlock {
         if (!(blockEntity instanceof TankDockBlockEntity tankDock))
             return InteractionResult.PASS;
 
-        InteractionHand hand = player.getUsedItemHand();
-        ItemStack stackInHand = player.getItemInHand(hand);
+        ItemStack stackInHand = player.getMainHandItem();
         if (tankDock.hasTank()) {
 
             // pick up tank from dock
             if (stackInHand.isEmpty() && player.isShiftKeyDown()) {
                 ItemStack tankInDock = tankDock.pickUpTank();
                 tankInDock.setPopTime(5);
-                player.setItemInHand(hand, tankInDock);
+                player.setItemInHand(InteractionHand.MAIN_HAND, tankInDock.copyAndClear());
 
                 world.playSound(null, player, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
                         (player.getRandom().nextFloat() - player.getRandom().nextFloat()) * 1.4f + 2.0f);
@@ -50,10 +49,10 @@ public class TankDockBlock extends Block implements EntityBlock {
 
             // swap hand and dock
             if (Util.isTankLike(stackInHand)) {
-                player.setItemInHand(hand, ItemStack.EMPTY);
+                player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                 ItemStack tankInDock = tankDock.pickUpTank();
                 tankInDock.setPopTime(5);
-                player.setItemInHand(hand, tankInDock);
+                player.setItemInHand(InteractionHand.MAIN_HAND, tankInDock);
                 world.playSound(null, pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f,
                         SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.2f, 0.0f);
                 world.playSound(null, player, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 0.2f,
@@ -82,8 +81,8 @@ public class TankDockBlock extends Block implements EntityBlock {
         } else {
             // place tank in dock
             if (Util.isTankLike(stackInHand)) {
-                tankDock.putTank(player.getItemInHand(hand));
-                player.setItemInHand(hand, ItemStack.EMPTY);
+                tankDock.putTank(player.getMainHandItem());
+                player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                 world.playSound(null, pos.getX() + 0.5f, pos.getY() + 0.5f, pos.getZ() + 0.5f,
                         SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 0.2f, 0.0f);
 

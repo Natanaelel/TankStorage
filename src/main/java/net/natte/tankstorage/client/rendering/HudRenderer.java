@@ -88,7 +88,7 @@ public class HudRenderer {
         if (ClientTankCache.markDirtyForPreview) {
             ClientTankCache.markDirtyForPreview = false;
             this.tank = ClientTankCache.get(uuid);
-            if(this.tank != null){
+            if (this.tank != null) {
                 this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
             }
         }
@@ -112,6 +112,8 @@ public class HudRenderer {
         if (hand == null)
             return this.hasTank;
         if (!this.hasTank)
+            return true;
+        if (hand != renderingFromHand)
             return true;
         ItemStack tankItem = client.player.getItemInHand(hand);
         return Util.getUniqueId(tankItem) != this.uniqueId;
