@@ -11,9 +11,7 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.natte.tankstorage.TankStorage;
-import net.natte.tankstorage.state.TankFluidStorageState;
 import net.natte.tankstorage.storage.TankFluidHandler;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -65,10 +63,7 @@ public class TankDockBlockEntity extends BlockEntity {
             return null;
         if (!hasTank())
             return null;
-        TankFluidStorageState tank = Util.getOrCreateFluidStorage(tankItem);
-        if (tank == null)
-            return null;
-        return tank.getFluidHandler(Util.getInsertMode(tankItem));
+        return Util.getFluidHandlerFromItem(tankItem);
     }
 
     @Override

@@ -21,6 +21,7 @@ import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +42,6 @@ public class HudRenderer {
     public InteractionHand renderingFromHand;
     private ItemStack tankItem = ItemStack.EMPTY;
     private HumanoidArm mainArm;
-    private TankInteractionMode bucketMode;
     private short uniqueId = 0;
 
     public void tick() {
@@ -51,46 +51,46 @@ public class HudRenderer {
         if (client.player == null)
             return;
 
-        updateTank();
 
-        if (this.uuid != null && this.bucketMode == TankInteractionMode.BUCKET)
-            tank = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 2 * 20);
+        if (didHeldTankChange())
+            updateTank();
+        if (hasTank)
+            tickTank();
     }
 
     private void updateTank() {
-        boolean hadTank = this.hasTank;
-        short oldUniqueId = this.uniqueId;
-        if (shouldTryRenderFrom(this.client.player.getMainHandItem())) {
-            this.renderingFromHand = InteractionHand.MAIN_HAND;
-            this.hasTank = true;
-        } else if (shouldTryRenderFrom(this.client.player.getOffhandItem())) {
-            this.renderingFromHand = InteractionHand.OFF_HAND;
-            this.hasTank = true;
-        } else
-            this.hasTank = false;
-
         if (this.hasTank) {
-            this.tankItem = this.client.player.getItemInHand(this.renderingFromHand);
-            this.uuid = Util.getUUID(this.tankItem);
-            this.bucketMode = Util.getInteractionMode(this.tankItem);
+            PacketDistributor.sendToServer(SyncSubscribePacketC2S.unsubscribe(this.uuid));
+        }
+
+        @Nullable InteractionHand handWithTank = getHandToRenderFrom();
+        if (handWithTank != null) {
+            this.hasTank = true;
+            this.tankItem = client.player.getItemInHand(handWithTank);
+            this.uuid = Util.getUUID(tankItem);
+            this.renderingFromHand = handWithTank;
             this.mainArm = this.client.player.getMainArm();
             this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
             this.options = Util.getOptionsOrDefault(this.tankItem);
             this.uniqueId = options.uniqueId();
-            if (ClientTankCache.markDirtyForPreview) {
-                ClientTankCache.markDirtyForPreview = false;
-                this.tank = ClientTankCache.get(uuid);
-            }
-            if (oldUniqueId != this.options.uniqueId()) {
-                this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
-                PacketDistributor.sendToServer(SyncSubscribePacketC2S.subscribe(this.uuid));
-            }
-            if (this.tank != null) {
+            this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
+            this.tank = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 20);
+            if (this.tank != null)
+                this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
+
+            PacketDistributor.sendToServer(SyncSubscribePacketC2S.subscribe(this.uuid));
+        } else {
+            this.hasTank = false;
+        }
+    }
+
+    private void tickTank() {
+        if (ClientTankCache.markDirtyForPreview) {
+            ClientTankCache.markDirtyForPreview = false;
+            this.tank = ClientTankCache.get(uuid);
+            if(this.tank != null){
                 this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
             }
-        } else {
-            if (hadTank)
-                PacketDistributor.sendToServer(SyncSubscribePacketC2S.unsubscribe(this.uuid));
         }
     }
 
@@ -98,16 +98,27 @@ public class HudRenderer {
         return Util.isTankLike(stack) && Util.hasUUID(stack) && Util.getInteractionMode(stack) == TankInteractionMode.BUCKET;
     }
 
+    @Nullable
+    private InteractionHand getHandToRenderFrom() {
+        if (shouldTryRenderFrom(client.player.getMainHandItem()))
+            return InteractionHand.MAIN_HAND;
+        if (shouldTryRenderFrom(client.player.getOffhandItem()))
+            return InteractionHand.OFF_HAND;
+        return null;
+    }
+
+    private boolean didHeldTankChange() {
+        @Nullable InteractionHand hand = getHandToRenderFrom();
+        if (hand == null)
+            return this.hasTank;
+        if (!this.hasTank)
+            return true;
+        ItemStack tankItem = client.player.getItemInHand(hand);
+        return Util.getUniqueId(tankItem) != this.uniqueId;
+    }
+
     private boolean shouldRender() {
-        if (!hasTank)
-            return false;
-        if (tank == null)
-            return false;
-        if (options == null)
-            return false;
-        if (options.interactionMode() != TankInteractionMode.BUCKET)
-            return false;
-        return true;
+        return hasTank && tank != null;
     }
 
     public void render(RenderGuiEvent.Post event) {
@@ -173,10 +184,6 @@ public class HudRenderer {
 
     public ItemStack getItem() {
         return tankItem;
-    }
-
-    public boolean isBucketMode() {
-        return hasTank && bucketMode == TankInteractionMode.BUCKET;
     }
 
     public boolean isRendering() {

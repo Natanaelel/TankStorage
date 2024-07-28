@@ -6,7 +6,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.client.TankStorageClient;
 import net.natte.tankstorage.client.rendering.HudRenderer;

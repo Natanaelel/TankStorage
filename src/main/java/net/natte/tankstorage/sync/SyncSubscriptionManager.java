@@ -8,7 +8,6 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.*;
 
-
 public class SyncSubscriptionManager {
     private static final Map<UUID, Set<UUID>> subscriptions = new HashMap<>();
     private static final Set<UUID> uuidsToSync = new HashSet<>();

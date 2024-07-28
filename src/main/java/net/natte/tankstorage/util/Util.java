@@ -1,9 +1,7 @@
 package net.natte.tankstorage.util;
 
 import com.google.common.base.Supplier;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -13,6 +11,7 @@ import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.cache.CachedFluidStorageState;
 import net.natte.tankstorage.cache.ClientTankCache;
 import net.natte.tankstorage.container.TankType;
+import net.natte.tankstorage.item.TankFunctionality;
 import net.natte.tankstorage.item.TankItem;
 import net.natte.tankstorage.item.TankLinkItem;
 import net.natte.tankstorage.state.TankFluidStorageState;
@@ -99,6 +98,12 @@ public class Util {
         return itemStack.getOrDefault(TankStorage.SelectedSlotComponentType, -1);
     }
 
+    public static short getUniqueId(ItemStack tankItem) {
+        if (!tankItem.has(TankStorage.OptionsComponentType))
+            return 0;
+        return tankItem.get(TankStorage.OptionsComponentType).uniqueId();
+    }
+
     private static int clampSelectedSlot(ItemStack itemStack, int max) {
         int selectedSlot = getSelectedSlot(itemStack);
         int clampedSelectedSlot = Math.min(selectedSlot, max);
@@ -122,7 +127,7 @@ public class Util {
     }
 
     public static boolean isTankLike(ItemStack stack) {
-        return isTank(stack) || isLink(stack);
+        return stack.getItem() instanceof TankFunctionality;
     }
 
 
@@ -158,7 +163,7 @@ public class Util {
     }
 
     @Nullable
-    public static IFluidHandlerItem getFluidHandlerFromItem(ItemStack itemStack) {
+    public static TankFluidHandler getFluidHandlerFromItem(ItemStack itemStack) {
         if (isClient())
             return getClientFluidHandler(itemStack);
         else
@@ -167,7 +172,7 @@ public class Util {
 
 
     @Nullable
-    private static IFluidHandlerItem getClientFluidHandler(ItemStack itemStack) {
+    private static TankFluidHandler getClientFluidHandler(ItemStack itemStack) {
         if (!hasUUID(itemStack))
             return null;
         CachedFluidStorageState tank = ClientTankCache.getAndQueueThrottledUpdate(getUUID(itemStack), 20);
@@ -191,7 +196,7 @@ public class Util {
 
     // does not create new tank
     @Nullable
-    private static IFluidHandlerItem getServerFluidHandler(ItemStack itemStack) {
+    private static TankFluidHandler getServerFluidHandler(ItemStack itemStack) {
         if (!hasUUID(itemStack))
             return null;
         TankFluidStorageState tank = getFluidStorage(getUUID(itemStack));
@@ -273,4 +278,6 @@ public class Util {
     public static boolean canPlaceFluid(Fluid fluid) {
         return fluid instanceof FlowingFluid;
     }
+
+
 }

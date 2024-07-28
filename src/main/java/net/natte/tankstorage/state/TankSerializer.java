@@ -17,7 +17,6 @@ public class TankSerializer {
             Codec.BOOL.fieldOf("locked").forGetter(FluidSlotData::isLocked)
     ).apply(instance, FluidSlotData::new));
 
-
     private static final Codec<TankFluidStorageState> TANK_CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     TankType.CODEC.fieldOf("type").forGetter(TankFluidStorageState::getType),

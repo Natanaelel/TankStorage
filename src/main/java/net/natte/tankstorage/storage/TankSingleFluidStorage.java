@@ -2,7 +2,6 @@ package net.natte.tankstorage.storage;
 
 import net.natte.tankstorage.util.FluidSlotData;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.SimpleFluidContent;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 
 public class TankSingleFluidStorage {
@@ -126,6 +125,7 @@ public class TankSingleFluidStorage {
             if (this.amount == 0)
                 this.fluidVariant = FluidStack.EMPTY;
         }
+        markDirty();
     }
 
     public static TankSingleFluidStorage from(FluidSlotData fluidSlotData) {

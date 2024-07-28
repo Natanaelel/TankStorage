@@ -137,9 +137,6 @@ public class TankMenu extends AbstractContainerMenu {
             if(!playerEntity.level().isClientSide){
                 this.tank.sync((ServerPlayer) playerEntity);
                 Util.trySync(slot.getItem(), (ServerPlayer) playerEntity);
-                // force sync all fluid slots TODO ??
-                for (int i = 0; i < this.trackedFluids.size(); ++i)
-                    syncFluidSlot(i, this.player);
             }
             return ItemStack.EMPTY;
         } else {

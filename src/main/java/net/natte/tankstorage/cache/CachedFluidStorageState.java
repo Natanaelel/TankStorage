@@ -7,11 +7,13 @@ import net.natte.tankstorage.storage.TankSingleFluidStorage;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
-import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CachedFluidStorageState {
 
@@ -47,13 +49,12 @@ public class CachedFluidStorageState {
         if (uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids)
-                if (Util.canPlaceFluid(fluidSlotData.fluidVariant().getFluid()))
+                if(fluidSlotData.amount() > 0 || fluidSlotData.isLocked())
                     counts.merge(new HashableFluidVariant(fluidSlotData.fluidVariant()), (long) fluidSlotData.amount(), Long::sum);
 
             uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {
-                if (count > 0)
-                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
+                uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
             });
 
         }

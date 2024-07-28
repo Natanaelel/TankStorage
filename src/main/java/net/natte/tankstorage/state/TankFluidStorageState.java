@@ -12,7 +12,6 @@ import net.natte.tankstorage.sync.SyncSubscriptionManager;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
-import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +105,9 @@ public class TankFluidStorageState {
         TankFluidStorageState tank = new TankFluidStorageState(type, uuid);
         List<TankSingleFluidStorage> fluidStorageParts = new ArrayList<>(type.size());
         for (int i = 0; i < type.size(); ++i) {
-            fluidStorageParts.add(new TankSingleFluidStorage(type.getCapacity()));
+            TankSingleFluidStorage tankSingleFluidStorage = new TankSingleFluidStorage(type.getCapacity());
+            tankSingleFluidStorage.setMarkDirtyListener(tank::markDirty);
+            fluidStorageParts.add(tankSingleFluidStorage);
         }
         tank.fluidStorageParts = fluidStorageParts;
         return tank;
@@ -129,13 +130,12 @@ public class TankFluidStorageState {
         if (this.uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (TankSingleFluidStorage part : fluidStorageParts) {
-                if (Util.canPlaceFluid(part.getFluid().getFluid()))
+                if(part.getAmount() > 0 || part.isLocked())
                     counts.merge(new HashableFluidVariant(part.getFluid()), ((long) part.getAmount()), Long::sum);
             }
             List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
             counts.forEach((fluidVariant, count) -> {
-                if (count > 0)
-                    uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
+                uniqueFluids.add(new LargeFluidSlotData(fluidVariant.fluidStack(), 0L, count, false));
             });
             this.uniqueFluids = uniqueFluids;
         }
