@@ -50,9 +50,14 @@ public class Util {
         if (!hasUUID(tankItem))
             setUUID(tankItem, UUID.randomUUID());
         UUID uuid = getUUID(tankItem);
+        TankType type = getType(tankItem);
         TankFluidStorageState tank = getFluidStorage(uuid);
         if (tank == null) {
-            tank = TankFluidStorageState.create(getType(tankItem), uuid);
+            tank = TankFluidStorageState.create(type, uuid);
+            TankStateManager.getState().set(uuid, tank);
+        }
+        if(tank.type != type){
+            tank = tank.asType(type);
             TankStateManager.getState().set(uuid, tank);
         }
         return tank;

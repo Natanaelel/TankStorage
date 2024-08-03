@@ -65,10 +65,9 @@ public class TankFluidStorageState {
         TankStorage.LOGGER
                 .debug("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
 
-        TankFluidStorageState tank = new TankFluidStorageState(type, this.uuid);
-
+        TankFluidStorageState tank = create(type, this.uuid);
         for (int i = 0; i < this.fluidStorageParts.size(); ++i) {
-            TankSingleFluidStorage oldFluidStorage = tank.fluidStorageParts.get(i);
+            TankSingleFluidStorage oldFluidStorage = this.fluidStorageParts.get(i);
 
             tank.fluidStorageParts.set(i,
                     new TankSingleFluidStorage(type.getCapacity(), oldFluidStorage.getAmount(),
