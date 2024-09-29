@@ -3,7 +3,7 @@ package net.natte.tankstorage.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.WrapWithCondition;
 
 import net.minecraft.client.Mouse;
 import net.minecraft.entity.player.PlayerInventory;
