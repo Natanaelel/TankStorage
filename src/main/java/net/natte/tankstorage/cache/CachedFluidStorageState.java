@@ -49,7 +49,7 @@ public class CachedFluidStorageState {
         if (uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (FluidSlotData fluidSlotData : fluids)
-                if(fluidSlotData.amount() > 0 || fluidSlotData.isLocked())
+                if(fluidSlotData.amount() > 0 || (fluidSlotData.isLocked() && !fluidSlotData.fluidVariant().isEmpty()))
                     counts.merge(new HashableFluidVariant(fluidSlotData.fluidVariant()), (long) fluidSlotData.amount(), Long::sum);
 
             uniqueFluids = new ArrayList<>();

@@ -130,7 +130,7 @@ public class TankFluidStorageState {
         if (this.uniqueFluids == null) {
             Map<HashableFluidVariant, Long> counts = new LinkedHashMap<>();
             for (TankSingleFluidStorage part : fluidStorageParts) {
-                if(part.getAmount() > 0 || part.isLocked())
+                if (part.getAmount() > 0 || (part.isLocked() && !part.getFluid().isEmpty()))
                     counts.merge(new HashableFluidVariant(part.getFluid()), ((long) part.getAmount()), Long::sum);
             }
             List<LargeFluidSlotData> uniqueFluids = new ArrayList<>();
