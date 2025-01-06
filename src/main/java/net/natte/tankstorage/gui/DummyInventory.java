@@ -8,46 +8,43 @@ public class DummyInventory implements Container {
 
     @Override
     public void clearContent() {
-        throw new UnsupportedOperationException("Unimplemented method 'clear'");
     }
 
     @Override
     public int getContainerSize() {
-        throw new UnsupportedOperationException("Unimplemented method 'size'");
+        return 0;
     }
 
     @Override
     public boolean isEmpty() {
-        throw new UnsupportedOperationException("Unimplemented method 'isEmpty'");
+        return true;
     }
 
     @Override
     public ItemStack getItem(int var1) {
-        throw new UnsupportedOperationException("Unimplemented method 'getStack'");
+        return ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeItem(int var1, int var2) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeStack'");
+        return ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeItemNoUpdate(int var1) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeStack'");
+        return ItemStack.EMPTY;
     }
 
     @Override
     public void setItem(int var1, ItemStack var2) {
-        throw new UnsupportedOperationException("Unimplemented method 'setStack'");
     }
 
     @Override
     public void setChanged() {
-        throw new UnsupportedOperationException("Unimplemented method 'markDirty'");
     }
 
     @Override
     public boolean stillValid(Player var1) {
-        throw new UnsupportedOperationException("Unimplemented method 'canPlayerUse'");
+        return true;
     }
 }
