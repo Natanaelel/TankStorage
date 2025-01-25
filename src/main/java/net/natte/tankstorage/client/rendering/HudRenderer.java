@@ -5,7 +5,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
@@ -20,6 +22,7 @@ import net.natte.tankstorage.storage.TankOptions;
 import net.natte.tankstorage.util.LargeFluidSlotData;
 import net.natte.tankstorage.util.Util;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +47,10 @@ public class HudRenderer {
     private HumanoidArm mainArm;
     private short uniqueId = 0;
 
+    private FluidStack lastFluidHighlight = FluidStack.EMPTY;
+    private int fluidHighlightTimer = 0;
+    private int lastSelectedSlot = -1;
+
     public void tick() {
         if (this.client == null)
             this.client = Minecraft.getInstance();
@@ -51,11 +58,26 @@ public class HudRenderer {
         if (client.player == null)
             return;
 
+        this.mainArm = this.client.player.getMainArm();
+        this.arm = this.renderingFromHand == InteractionHand.MAIN_HAND ? mainArm : mainArm.getOpposite();
+
 
         if (didHeldTankChange())
             updateTank();
         if (hasTank)
             tickTank();
+
+        if (hasTank)
+            this.lastFluidHighlight = this.selectedSlot == -1 ? FluidStack.EMPTY : this.tank.getSelectedFluid(this.selectedSlot);
+
+        if (this.lastSelectedSlot != this.selectedSlot) {
+            this.fluidHighlightTimer = (int) (40.0 * this.client.options.notificationDisplayTime().get());
+            this.lastSelectedSlot = this.selectedSlot;
+        } else {
+            if (this.fluidHighlightTimer > 0) {
+                this.fluidHighlightTimer--;
+            }
+        }
     }
 
     private void updateTank() {
@@ -82,6 +104,8 @@ public class HudRenderer {
         } else {
             this.hasTank = false;
         }
+        this.fluidHighlightTimer = 0;
+        this.lastSelectedSlot = this.selectedSlot;
     }
 
     private void tickTank() {
@@ -176,6 +200,34 @@ public class HudRenderer {
         matrixStack.popPose();
 
         RenderSystem.disableBlend();
+
+        renderSelectedFluidName(event.getGuiGraphics());
+    }
+
+    public void renderSelectedFluidName(GuiGraphics guiGraphics) {
+
+
+        if (this.fluidHighlightTimer > 0) {
+
+            Component highlightTip = this.lastFluidHighlight.isEmpty() ? Items.BUCKET.getDescription() : this.lastFluidHighlight.getHoverName();
+            int i = this.client.font.width(highlightTip);
+            int j = (guiGraphics.guiWidth() - i) / 2;
+            int k = guiGraphics.guiHeight() - 45;
+
+
+            int l = (int) ((float) this.fluidHighlightTimer * 256.0F / 10.0F);
+            if (l > 255) {
+                l = 255;
+            }
+            int handXOffset = this.arm == HumanoidArm.LEFT ? -158 : 129;
+            if (mainArm == HumanoidArm.LEFT)
+                handXOffset += 29;
+            j += handXOffset;
+            if (l > 0) {
+                guiGraphics.drawStringWithBackdrop(client.font, highlightTip, j, k, i, FastColor.ARGB32.color(l, -1));
+            }
+        }
+
     }
 
     private void renderHotbarFluid(GuiGraphics context, int x, int y, LocalPlayer player,
