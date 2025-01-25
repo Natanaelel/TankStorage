@@ -48,7 +48,7 @@ public class TankLinkRecipe extends ShapedRecipe {
         NonNullList<ItemStack> defaultedList = NonNullList.withSize(recipeInputInventory.size(), ItemStack.EMPTY);
         for (int i = 0; i < defaultedList.size(); ++i) {
             ItemStack stack = recipeInputInventory.getItem(i);
-            if (Util.isTank(stack))
+            if (Util.isTankLike(stack))
                 defaultedList.set(i, stack.copyWithCount(1));
         }
         return defaultedList;
