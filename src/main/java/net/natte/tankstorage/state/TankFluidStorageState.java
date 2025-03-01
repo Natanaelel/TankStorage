@@ -53,14 +53,6 @@ public class TankFluidStorageState {
         this.listeners.remove(listener);
     }
 
-//    // called only serverside
-//    public TankFluidStorage getFluidStorage(InsertMode insertMode) {
-//        TankFluidStorage fluidStorage = new TankFluidStorage(fluidStorageParts, insertMode);
-//        fluidStorage.setMarkDirtyListener(this::markDirty);
-//        // fluidStorage.
-//        return fluidStorage;
-//    }
-
     public TankFluidHandler getFluidHandler(InsertMode insertMode) {
         return new TankFluidHandler(fluidStorageParts, insertMode);
     }
@@ -164,7 +156,6 @@ public class TankFluidStorageState {
     public void sync(ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, new TankPacketS2C(uuid, getRevision(), getFluidSlots()));
     }
-
 
     public TankType getType() {
         return type;

@@ -1,0 +1,7 @@
+{
+  "type": "emi:info",
+  "stacks": [
+    "#item:tankstorage:tanks"
+  ],
+  "text": "emi.info.tankstorage.tanks"
+}

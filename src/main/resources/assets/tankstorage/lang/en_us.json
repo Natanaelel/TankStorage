@@ -36,5 +36,7 @@
   "key.tankstorage.toggleinsertmode": "Toggle Insert Mode",
   "key.tankstorage.toggleinteractionmode": "Toggle Bucket Mode",
 
-  "tag.item.tankstorage.tanks": "Tanks"
+  "tag.item.tankstorage.tanks": "Tanks",
+
+  "emi.info.tankstorage.tanks": "§lOverview§r\nTank Storage adds tanks to store fluids. There are 7 tiers of tanks, with increasing fluid capacity and slot count.\n\nTank Links work similarly to ender chests. Craft it with another tank to link them together. Fluids can now be accessed in multiple places at the same time.\n\nThe Tank Dock allows you to place your tank in the world, to allow for interaction with fluid pipes and such.\n\n§lFeatures§r\n- Slot filtering: Hold alt and click a slot to set the filter. You can Also drag a fluid from EMI/REI.\n\n- Bucket mode: Pick up and place fluids directly from the Tank. Right click while crouching to toggle bucket mode. Scroll while crouching to choose fluid. The selected fluid decides which fluid can be inserted or extracted. Disable bucket mode to allow all fluids.\n\n- Insert modes: Choose what happens when trying to insert fluids."
 }

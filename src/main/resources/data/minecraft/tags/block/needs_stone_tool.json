@@ -1,4 +1,6 @@
 {
-    "replace": false,
-    "values": ["tankstorage:tank_dock"]
+  "replace": false,
+  "values": [
+    "tankstorage:tank_dock"
+  ]
 }

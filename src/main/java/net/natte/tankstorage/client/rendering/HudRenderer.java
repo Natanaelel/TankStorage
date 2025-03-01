@@ -87,7 +87,6 @@ public class HudRenderer {
 
         @Nullable InteractionHand handWithTank = getHandToRenderFrom();
         if (handWithTank != null) {
-            this.hasTank = true;
             this.tankItem = client.player.getItemInHand(handWithTank);
             this.uuid = Util.getUUID(tankItem);
             this.renderingFromHand = handWithTank;
@@ -97,9 +96,10 @@ public class HudRenderer {
             this.uniqueId = options.uniqueId();
             this.selectedSlot = this.tankItem.getOrDefault(TankStorage.SelectedSlotComponentType, 0);
             this.tank = ClientTankCache.getAndQueueThrottledUpdate(this.uuid, 20);
-            if (this.tank != null)
+            if (this.tank != null) {
+                this.hasTank = true;
                 this.selectedSlot = Mth.clamp(this.selectedSlot, -1, this.tank.getUniqueFluids().size() - 1);
-
+            }
             PacketDistributor.sendToServer(SyncSubscribePacketC2S.subscribe(this.uuid));
         } else {
             this.hasTank = false;

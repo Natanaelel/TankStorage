@@ -28,7 +28,6 @@ public class InsertModeButtonWidget extends Button {
 
         this.refreshTooltip();
         updateUOffset();
-        this.setTooltipDelay(Duration.ofMillis(700));
     }
 
     @Override
