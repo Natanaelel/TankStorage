@@ -12,6 +12,7 @@ import net.natte.tankstorage.sync.SyncSubscriptionManager;
 import net.natte.tankstorage.util.FluidSlotData;
 import net.natte.tankstorage.util.HashableFluidVariant;
 import net.natte.tankstorage.util.LargeFluidSlotData;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +76,8 @@ public class TankFluidStorageState {
     }
 
     public TankFluidStorageState changeType(TankType type) {
-        TankStorage.LOGGER
-                .debug("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
+        if (!FMLLoader.isProduction())
+            TankStorage.LOGGER.debug("Upgrading tank from " + this.type.getName() + " to " + type.getName() + " uuid " + this.uuid);
 
         TankFluidStorageState tank = new TankFluidStorageState(type, this.uuid);
         tank.fluidStorageParts = new ArrayList<>();

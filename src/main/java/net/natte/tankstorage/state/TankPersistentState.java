@@ -7,6 +7,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.container.TankType;
+import net.neoforged.fml.loading.FMLLoader;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -29,7 +30,8 @@ public class TankPersistentState extends SavedData {
 
         state.TANK_MAP.clear();
 
-        TankStorage.LOGGER.debug("Loading tanks from nbt");
+        if (!FMLLoader.isProduction())
+            TankStorage.LOGGER.debug("Loading tanks from nbt");
 
         Tag tankNbt = nbtCompound.get(TANK_DATA_KEY);
         List<TankFluidStorageState> tanks = TankSerializer.CODEC.parse(registryLookup.createSerializationContext(NbtOps.INSTANCE), tankNbt).getOrThrow();
@@ -37,7 +39,8 @@ public class TankPersistentState extends SavedData {
             state.TANK_MAP.put(tank.uuid, tank);
 
 
-        TankStorage.LOGGER.debug("Loading done");
+        if (!FMLLoader.isProduction())
+            TankStorage.LOGGER.debug("Loading done");
 
         return state;
     }
@@ -45,13 +48,15 @@ public class TankPersistentState extends SavedData {
     @Override
     public CompoundTag save(CompoundTag nbtCompound, HolderLookup.Provider registryLookup) {
 
-        TankStorage.LOGGER.debug("Saving tanks to nbt");
+        if (!FMLLoader.isProduction())
+            TankStorage.LOGGER.debug("Saving tanks to nbt");
 
         List<TankFluidStorageState> tanks = List.copyOf(TANK_MAP.values());
         Tag tankNbt = TankSerializer.CODEC.encodeStart(registryLookup.createSerializationContext(NbtOps.INSTANCE), tanks).getOrThrow();
         nbtCompound.put(TANK_DATA_KEY, tankNbt);
 
-        TankStorage.LOGGER.debug("Saving done");
+        if (!FMLLoader.isProduction())
+            TankStorage.LOGGER.debug("Saving done");
 
         return nbtCompound;
     }
