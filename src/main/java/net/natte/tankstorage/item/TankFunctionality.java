@@ -68,36 +68,6 @@ public class TankFunctionality extends Item {
         }
         return bucketInteractionResult.get().consumesAction() ? InteractionResultHolder.success(stack) : InteractionResultHolder.fail(stack);
 
-//        return
-//        System.out.println(shouldOpenScreen);
-
-//        if (interactionMode == TankInteractionMode.BUCKET) {
-//            InteractionResult result = BucketInteraction.interactFluid(world, player, hand, stack);
-//            if (result == InteractionResult.PASS) {
-//
-//                // allow player to right-click flowing fluid without accidentally opening screen
-//
-//                if (player.isShiftKeyDown()) {
-//                    if (!world.isClientSide)
-//                        Util.onToggleInteractionMode(player, stack);
-//                    return InteractionResultHolder.success(stack);
-//                } else if (preventOpenScreenOnFluidClick(world, player))
-//                    return InteractionResultHolder.fail(stack);
-//                else {
-//                    return tryOpenScreen(world, player, stack);
-//                }
-//            } else {
-//                return result.consumesAction() ? InteractionResultHolder.success(stack) : InteractionResultHolder.fail(stack);
-//            }
-//        } else {
-//            if (player.isShiftKeyDown()) {
-//                if (!world.isClientSide)
-//                    Util.onToggleInteractionMode(player, stack);
-//                return InteractionResultHolder.success(stack);
-//            } else {
-//                return tryOpenScreen(world, player, stack);
-//            }
-//        }
     }
 
     private boolean preventOpenScreenOnFluidClick(Level level, Player player) {

@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.Level;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.util.Util;
 
@@ -21,8 +22,17 @@ public class TankLinkRecipe extends ShapedRecipe {
     }
 
     @Override
-    public boolean isSpecial() {
-        return true;
+    public boolean matches(CraftingInput input, Level level) {
+        if (!super.matches(input, level))
+            return false;
+
+        return input
+                .items()
+                .stream()
+                .filter(Util::isTankLike)
+                .findFirst()
+                .map(Util::hasUUID)
+                .orElse(false);
     }
 
     @Override
@@ -45,13 +55,13 @@ public class TankLinkRecipe extends ShapedRecipe {
 
     @Override
     public NonNullList<ItemStack> getRemainingItems(CraftingInput recipeInputInventory) {
-        NonNullList<ItemStack> defaultedList = NonNullList.withSize(recipeInputInventory.size(), ItemStack.EMPTY);
-        for (int i = 0; i < defaultedList.size(); ++i) {
+        NonNullList<ItemStack> remainingItems = super.getRemainingItems(recipeInputInventory);
+        for (int i = 0; i < remainingItems.size(); ++i) {
             ItemStack stack = recipeInputInventory.getItem(i);
             if (Util.isTankLike(stack))
-                defaultedList.set(i, stack.copyWithCount(1));
+                remainingItems.set(i, stack.copyWithCount(1));
         }
-        return defaultedList;
+        return remainingItems;
     }
 
     @Override

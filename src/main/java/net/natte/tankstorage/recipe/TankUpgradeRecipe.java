@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.Level;
 import net.natte.tankstorage.TankStorage;
 import net.natte.tankstorage.util.Util;
 
@@ -18,12 +19,6 @@ public class TankUpgradeRecipe extends ShapedRecipe {
     public TankUpgradeRecipe(ShapedRecipe recipe) {
         super(recipe.getGroup(), recipe.category(), recipe.pattern, recipe.result);
     }
-
-    @Override
-    public boolean isSpecial() {
-        return true;
-    }
-
 
     @Override
     public ItemStack assemble(CraftingInput recipeInputInventory, HolderLookup.Provider registryLookup) {
