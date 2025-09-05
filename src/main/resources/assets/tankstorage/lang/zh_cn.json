@@ -1,0 +1,39 @@
+{
+  "item.tankstorage.tank_1": "储罐核心T1",
+  "item.tankstorage.tank_2": "储罐核心T2",
+  "item.tankstorage.tank_3": "储罐核心T3",
+  "item.tankstorage.tank_4": "储罐核心T4",
+  "item.tankstorage.tank_5": "储罐核心T5",
+  "item.tankstorage.tank_6": "储罐核心T6",
+  "item.tankstorage.tank_7": "储罐核心T7",
+  "item.tankstorage.tank_link": "储罐核心链接器",
+  "block.tankstorage.tank_dock": "储罐基座",
+
+  "tooltip.tankstorage.emptyfluid": "空",
+  "tooltip.tankstorage.insert_or_extract_desc": "右键存入，左键取出",
+
+  "popup.tankstorage.interactionmode.bucket": "桶模式",
+  "popup.tankstorage.interactionmode.open_screen": "储罐模式",
+
+  "popup.tankstorage.unlinked": "此链接器未绑定储罐核心，请用储罐核心制作一个链接器来绑定它。",
+
+  "popup.tankstorage.insertmode.all": "存入所有",
+  "popup.tankstorage.insertmode.filtered": "存入过滤",
+  "popup.tankstorage.insertmode.void_overflow": "溢出销毁",
+
+  "title.tankstorage.insertmode.all": "存入所有",
+  "tooltip.tankstorage.insertmode.all": "所有流体均可存入",
+  "title.tankstorage.insertmode.filtered": "存入过滤",
+  "tooltip.tankstorage.insertmode.filtered": "仅已存在的流体会被存入",
+  "title.tankstorage.insertmode.void_overflow": "溢出销毁",
+  "tooltip.tankstorage.insertmode.void_overflow": "超出容量的流体将被销毁",
+
+  "tooptip.tankstorage.slotsize": "§7槽位容量: %s",
+  "tooptip.tankstorage.numslots": "§7槽位数量: %s",
+
+  "category.tankstorage": "核心罐储",
+  "key.tankstorage.lockslot": "锁定槽位",
+  "key.tankstorage.opentankfromkeybind": "打开流体核心",
+  "key.tankstorage.toggleinsertmode": "切换存入模式",
+  "key.tankstorage.toggleinteractionmode": "切换桶模式"
+}
